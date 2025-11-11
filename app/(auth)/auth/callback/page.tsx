@@ -1,22 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { verifyEmail } from '@/app/lib/auth';
 
-export default function CallbackPage() {
+function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const email = searchParams.get('email');
+  const token = searchParams.get('token');
+  const verified = searchParams.get('verified');
+
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'pending'>('loading');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const email = searchParams.get('email');
-    const token = searchParams.get('token');
-    const verified = searchParams.get('verified');
-
     // 회원가입 후 이메일 인증 대기 상태
     if (verified === 'false') {
       setStatus('pending');
@@ -42,7 +42,7 @@ export default function CallbackPage() {
       setStatus('error');
       setMessage('잘못된 접근입니다.');
     }
-  }, [searchParams, router]);
+  }, [email, token, verified, router]);
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-8">
@@ -61,6 +61,7 @@ export default function CallbackPage() {
           </div>
         </div>
 
+
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
           {status === 'loading' && (
             <div className="text-center">
@@ -77,7 +78,7 @@ export default function CallbackPage() {
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
                   <svg width="40" height="40" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M16.667 5L7.5 14.167L3.333 10" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16.667 5L7.5 14.167L3.333 10" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               </div>
@@ -97,7 +98,7 @@ export default function CallbackPage() {
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                   <svg width="40" height="40" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 5L5 15M5 5L15 15" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M15 5L5 15M5 5L15 15" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               </div>
@@ -125,7 +126,7 @@ export default function CallbackPage() {
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
                   <svg width="40" height="40" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               </div>
@@ -161,13 +162,50 @@ export default function CallbackPage() {
             className="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             메인으로 돌아가기
           </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center p-8">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8">
+              <div className="mb-6 flex justify-center">
+                <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-lg">
+                  <Image
+                    src="/logo-192.png"
+                    alt="시온"
+                    width={80}
+                    height={80}
+                    className="h-20 w-auto"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+              <div className="text-center">
+                <div className="mb-4 flex justify-center">
+                  <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">로딩 중...</h2>
+                <p className="text-gray-600">페이지를 불러오는 중입니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <CallbackContent />
+    </Suspense>
   );
 }
 

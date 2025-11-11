@@ -26,7 +26,7 @@ const MOCK_USERS = [
 ];
 
 // Store for registered users (in a real app, this would be in a database)
-let registeredUsers = [...MOCK_USERS];
+const registeredUsers = [...MOCK_USERS];
 
 export function login(email: string, password: string): User | null {
   if (typeof window === 'undefined') return null;
