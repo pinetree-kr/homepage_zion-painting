@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -92,15 +93,16 @@ export default function Header() {
               {/* 드롭다운 메뉴는 추후 구현 */}
             </div>
 
-            <button 
-              className={`px-5 py-2.5 rounded-xl text-base font-normal transition-colors ${
+            <Link
+              href="/auth/sign-in"
+              className={`px-4 py-2 rounded-lg text-base font-normal transition-colors ${
                 isScrolled 
-                  ? 'bg-[#1A2C6D] text-white hover:bg-[#15204f]' 
-                  : 'bg-white/10 border border-white/20 text-white hover:bg-white/20'
+                  ? 'text-gray-700 hover:bg-gray-100' 
+                  : 'text-white hover:bg-white/10'
               }`}
             >
               로그인
-            </button>
+            </Link>
           </div>
 
           {/* 모바일 메뉴 버튼 */}
@@ -135,9 +137,12 @@ export default function Header() {
                   {item.label}
                 </button>
               ))}
-              <button className="px-5 py-2.5 bg-[#1A2C6D] text-white rounded-xl text-base font-normal w-fit">
+              <Link 
+                href="/auth/sign-in"
+                className="px-4 py-2 bg-[#1A2C6D] text-white rounded-lg text-base font-normal w-fit hover:bg-[#15204f] transition-colors"
+              >
                 로그인
-              </button>
+              </Link>
             </div>
           </div>
         )}
