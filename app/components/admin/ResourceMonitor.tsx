@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ResourceUsage } from '@/app/lib/types';
+import { ResourceUsage } from '@/src/entities';
 import { 
   Server, 
   HardDrive, 

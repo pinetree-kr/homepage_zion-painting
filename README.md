@@ -1,5 +1,22 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 🏗️ 아키텍처
+
+이 프로젝트는 **Clean Feature-Sliced Design (FSD)** 아키텍처를 따릅니다.
+
+자세한 아키텍처 가이드는 [guide/ARCHITECTURE.md](./guide/ARCHITECTURE.md)를 참고하세요.
+
+### 주요 구조
+
+```
+src/
+├── shared/      # 공유 레이어 (UI 컴포넌트, 유틸리티)
+├── entities/    # 엔티티 레이어 (비즈니스 엔티티 타입)
+├── features/    # 기능 레이어 (인증, 관리자 기능)
+├── widgets/     # 위젯 레이어 (복합 컴포넌트)
+└── pages/       # 페이지 레이어 (페이지 섹션 컴포넌트)
+```
+
 ## Getting Started
 
 First, run the development server:

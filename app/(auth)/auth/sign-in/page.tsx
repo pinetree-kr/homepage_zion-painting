@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { login, isAdmin } from '@/app/lib/auth';
-import { Input } from '@/app/components/ui/Input';
-import { Label } from '@/app/components/ui/Label';
-import { Checkbox } from '@/app/components/ui/Checkbox';
+import { login, isAdmin } from '@/src/features/auth';
+import { Input } from '@/src/shared/ui';
+import { Label } from '@/src/shared/ui';
+import { Checkbox } from '@/src/shared/ui';
 
 export default function SignInPage() {
   const router = useRouter();

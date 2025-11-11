@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
-import { Toaster } from './components/ui/Toaster';
+import { Toaster } from '@/src/shared/ui';
 
 export default function RootLayout({
   children,

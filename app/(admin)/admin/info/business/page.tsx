@@ -1,6 +1,6 @@
 'use client';
 
-import BusinessInfo from '@/app/components/admin/BusinessInfo';
+import BusinessInfo from '@/src/features/admin/ui/BusinessInfo';
 
 export default function BusinessInfoPage() {
   return <BusinessInfo />;

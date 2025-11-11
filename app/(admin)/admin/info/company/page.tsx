@@ -1,6 +1,6 @@
 'use client';
 
-import CompanyInfo from '@/app/components/admin/CompanyInfo';
+import CompanyInfo from '@/src/features/admin/ui/CompanyInfo';
 
 export default function CompanyInfoPage() {
   return <CompanyInfo />;

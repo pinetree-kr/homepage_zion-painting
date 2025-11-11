@@ -1,10 +1,5 @@
-import Header from './components/layout/Header';
-import Hero from './components/sections/Hero';
-import About from './components/sections/About';
-import Business from './components/sections/Business';
-import Products from './components/sections/Products';
-import Contact from './components/sections/Contact';
-import Footer from './components/sections/Footer';
+import { Header } from '@/src/widgets/header';
+import { Hero, About, Business, Products, Contact, Footer } from '@/src/pages/home';
 
 export default function Home() {
   return (

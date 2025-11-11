@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ActivityLog, BugReport } from '@/app/lib/types';
+import { ActivityLog, BugReport } from '@/src/entities';
 import { 
   Activity, 
   AlertCircle, 

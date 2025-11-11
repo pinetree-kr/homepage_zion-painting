@@ -1,6 +1,6 @@
 'use client';
 
-import LogManagement from '@/app/components/admin/LogManagement';
+import LogManagement from '@/src/features/admin/ui/LogManagement';
 
 export default function LogsPage() {
   return <LogManagement />;

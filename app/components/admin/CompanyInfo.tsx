@@ -9,7 +9,7 @@ import { Card } from '../ui/Card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { EditorComponent } from './EditorComponent';
 import { toast } from 'sonner';
-import { HistoryItem } from '@/app/lib/types';
+import { HistoryItem } from '@/src/entities';
 
 export default function CompanyInfo() {
   const [aboutContent, setAboutContent] = useState('');

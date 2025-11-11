@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { verifyEmail } from '@/app/lib/auth';
+import { verifyEmail } from '@/src/features/auth';
 
 function CallbackContent() {
   const router = useRouter();

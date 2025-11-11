@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/Dialog';
 import { EditorComponent } from './EditorComponent';
 import { toast } from 'sonner';
-import { BusinessArea, Achievement } from '@/app/lib/types';
+import { BusinessArea, Achievement } from '@/src/entities';
 import { Textarea } from '../ui/Textarea';
 import { DataTable, DataTableColumn, DataTableAction } from '../ui/DataTable';
 import { Badge } from '../ui/Badge';

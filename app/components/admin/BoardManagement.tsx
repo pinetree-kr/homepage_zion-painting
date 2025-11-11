@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../ui/Badge';
 import { EditorComponent } from './EditorComponent';
 import { toast } from 'sonner';
-import { Post } from '@/app/lib/types';
+import { Post } from '@/src/entities';
 import { DataTable, DataTableColumn, DataTableAction } from '../ui/DataTable';
 
 interface BoardManagementProps {

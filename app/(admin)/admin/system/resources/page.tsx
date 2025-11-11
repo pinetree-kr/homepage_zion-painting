@@ -1,6 +1,6 @@
 'use client';
 
-import ResourceMonitor from '@/app/components/admin/ResourceMonitor';
+import ResourceMonitor from '@/src/features/admin/ui/ResourceMonitor';
 
 export default function ResourcesPage() {
   return <ResourceMonitor />;

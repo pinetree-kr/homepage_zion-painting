@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { getCurrentUser, isAdmin, logout } from '@/app/lib/auth';
-import { User } from '@/app/lib/auth';
-import AdminLayout from '@/app/components/admin/AdminLayout';
+import { getCurrentUser, isAdmin, logout, User } from '@/src/features/auth';
+import { AdminLayout } from '@/src/widgets/admin-layout';
 
 export default function AdminLayoutWrapper({
   children,

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../ui/Badge';
 import { EditorComponent } from './EditorComponent';
 import { toast } from 'sonner';
-import { Product } from '@/app/lib/types';
+import { Product } from '@/src/entities';
 import { DataTable, DataTableColumn, DataTableAction } from '../ui/DataTable';
 
 export default function ProductsAdmin() {

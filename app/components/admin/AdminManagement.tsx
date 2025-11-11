@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Member } from '@/app/lib/types';
+import { Member } from '@/src/entities';
 import { 
   Shield, 
   UserPlus, 

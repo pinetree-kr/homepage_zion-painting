@@ -1,6 +1,6 @@
 'use client';
 
-import ContactInfo from '@/app/components/admin/ContactInfo';
+import ContactInfo from '@/src/features/admin/ui/ContactInfo';
 
 export default function ContactInfoPage() {
   return <ContactInfo />;
