@@ -7,7 +7,7 @@
 ```
 src/
 ├── shared/          # 공유 레이어 - 프로젝트 전반에서 사용되는 공통 코드
-│   ├── ui/         # UI 컴포넌트 (Button, Card, Input, Dialog 등)
+│   ├── ui/         # UI 컴포넌트 (Button, Card, Input, Dialog, Carousel 등)
 │   └── lib/        # 공유 유틸리티 함수
 ├── entities/        # 엔티티 레이어 - 비즈니스 엔티티의 타입 정의
 │   ├── user/       # 사용자 엔티티
@@ -49,9 +49,14 @@ import { cn } from '@/src/shared/ui';
 ```
 
 **포함 내용:**
-- UI 컴포넌트: Button, Card, Input, Dialog, Select, Tabs 등
+- UI 컴포넌트: Button, Card, Input, Dialog, Select, Tabs, Carousel 등
 - 레이아웃 컴포넌트: Container, Section
 - 유틸리티: cn (className 유틸리티)
+
+**주요 컴포넌트 목록:**
+- Badge, Button, Card, Carousel, Checkbox, Container, DataTable
+- Dialog, DropdownMenu, Input, Label, Section, Select
+- Tabs, Textarea, Toaster, utils
 
 ### 2. Entities (엔티티 레이어)
 
@@ -242,18 +247,23 @@ Next.js App Router (`app/` 디렉토리)에서는 `src/` 디렉토리의 컴포�
 
 ### Re-export 구조
 
+`app/components/` 디렉토리는 단순히 `src/` 디렉토리의 컴포넌트를 re-export하는 역할만 수행합니다.
+
 ```typescript
 // app/components/index.ts
+// Re-export from src for backward compatibility
 export * from '@/src/shared/ui';
-export * from '@/src/widgets/header';
-export * from '@/src/widgets/footer';
 export * from '@/src/widgets/admin-layout';
-export * from '@/src/pages/home';
 
 // app/lib/index.ts
 export * from '@/src/features/auth';
 export * from '@/src/entities';
 ```
+
+**중요 사항:**
+- 모든 실제 컴포넌트는 `src/` 디렉토리에 위치합니다.
+- `app/components/ui/`, `app/components/admin/`, `app/components/sections/`, `app/components/layout/` 등 레거시 디렉토리는 모두 삭제되었습니다.
+- FSD 아키텍처를 준수하기 위해 모든 컴포넌트는 적절한 레이어에 위치합니다.
 
 ### 사용 예시
 
@@ -393,6 +403,25 @@ find src/entities -name "*.ts" -o -name "*.tsx"
 2. **기능 추가**: `src/features/`에 새 기능 디렉토리 생성
 3. **위젯 추가**: `src/widgets/`에 새 위젯 디렉토리 생성
 4. **Public API**: 각 슬라이스의 `index.ts`에서 export 확인
+
+---
+
+## 📋 마이그레이션 완료 내역
+
+### 레거시 컴포넌트 정리 (2024년)
+
+모든 레거시 컴포넌트를 FSD 아키텍처에 맞게 정리했습니다:
+
+- ✅ `app/components/ui/` → `src/shared/ui/`로 통합
+- ✅ `app/components/admin/` → `src/features/admin/ui/`로 통합
+- ✅ `app/components/sections/` → `src/pages/home/`로 통합
+- ✅ `app/components/layout/` → `src/shared/ui/`로 통합 (Container, Section)
+
+### 새로 추가된 컴포넌트
+
+- ✅ `Carousel`: 이미지 슬라이드 컴포넌트 (`src/shared/ui/Carousel.tsx`)
+  - embla-carousel-react 기반
+  - Hero 섹션에 적용 완료
 
 ---
 

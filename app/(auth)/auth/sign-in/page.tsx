@@ -22,6 +22,9 @@ export default function SignInPage() {
 
     const user = login(email, password);
     if (user) {
+      // Header 컴포넌트에 로그인 상태 변경 알림
+      window.dispatchEvent(new Event('auth-change'));
+      
       if (isAdmin(user)) {
         router.push('/admin');
       } else {

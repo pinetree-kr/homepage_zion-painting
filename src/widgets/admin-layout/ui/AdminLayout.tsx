@@ -134,6 +134,13 @@ const LogOutIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const HomeIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+);
+
 const UserCogIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -209,8 +216,8 @@ export default function AdminLayout({ user, activeTab, onTabChange, onLogout, on
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40">
-        <div className="flex items-center justify-between px-6 py-4">
+      <div className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 h-[73px]">
+        <div className="flex items-center justify-between px-6 py-4 h-full">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -258,6 +265,7 @@ export default function AdminLayout({ user, activeTab, onTabChange, onLogout, on
                     <UserCogIcon className="h-4 w-4" />
                     사용자 정보 수정
                   </button>
+                  <div className="my-1 border-t border-gray-200" />
                   <button
                     onClick={onLogout}
                     className="w-full text-left px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
@@ -272,19 +280,22 @@ export default function AdminLayout({ user, activeTab, onTabChange, onLogout, on
         </div>
       </div>
 
-      <div className="flex pt-[73px]">
+      <div className="flex pt-[73px] h-[calc(100vh)]">
         {/* Sidebar */}
         <aside className={`
-          fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 mt-[73px] lg:mt-0 overflow-y-auto
+          fixed lg:static left-0 z-30 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 
+          top-[73px] bottom-0 lg:top-[73px] lg:bottom-auto
+          flex flex-col h-[calc(100vh-73px)] lg:h-full
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
-          <div className="p-6">
-            <div className="mb-8">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] flex items-center justify-center text-white shadow-lg mb-3">
+          {/* 스크롤 가능한 메뉴 영역 */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 min-h-0 pb-4">
+            <div className="mb-4">
+              {/* <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] flex items-center justify-center text-white shadow-lg mb-3">
                 <Building2Icon className="h-6 w-6" />
               </div>
-              <h3 className="text-gray-900 mb-1 font-semibold">시온 도장설비</h3>
-              <p className="text-gray-500 text-sm">관리자 대시보드</p>
+              <h3 className="text-gray-900 mb-1 font-semibold">시온 도장설비</h3> */}
+              <p className="text-gray-500 text-sm">관리자모드</p>
             </div>
 
             <nav className="space-y-2">
@@ -337,10 +348,21 @@ export default function AdminLayout({ user, activeTab, onTabChange, onLogout, on
               })}
             </nav>
           </div>
+
+          {/* 관리자모드 나가기 버튼 - 사이드바 최하단 고정 */}
+          <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
+            <Link
+              href="/"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <HomeIcon className="h-4 w-4 flex-shrink-0" />
+              <span>관리자모드 나가기</span>
+            </Link>
+          </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-8 overflow-y-auto">
+        <main className="flex-1 p-8 overflow-y-auto h-full ml-0 lg:ml-0">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

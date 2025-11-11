@@ -41,7 +41,7 @@ Pages → Widgets → Features → Entities → Shared
 ### src/ 디렉토리
 
 - **shared/**: 프로젝트 전반에서 사용되는 공통 코드
-  - `ui/`: UI 컴포넌트 (Button, Card, Input, Dialog 등)
+  - `ui/`: UI 컴포넌트 (Button, Card, Input, Dialog, Carousel 등)
   - `lib/`: 공유 유틸리티 함수
 
 - **entities/**: 비즈니스 엔티티 타입 정의
@@ -69,10 +69,14 @@ Pages → Widgets → Features → Entities → Shared
 
 - `(auth)/`: 인증 관련 라우트 그룹
 - `(admin)/`: 관리자 페이지 라우트 그룹
-- `components/`: 레거시 컴포넌트 (src로 마이그레이션 완료)
+- `components/`: `src/` 디렉토리의 컴포넌트를 re-export하는 진입점
+  - `index.ts`: `@/src/shared/ui`와 `@/src/widgets/admin-layout`를 re-export
 - `lib/`: 레거시 라이브러리 (src로 마이그레이션 완료)
 
-**중요**: `app/` 디렉토리의 파일들은 `src/` 디렉토리의 컴포넌트를 re-export하여 사용합니다.
+**중요**: 
+- `app/components/` 디렉토리는 단순히 `src/` 디렉토리의 컴포넌트를 re-export하는 역할만 수행합니다.
+- 모든 실제 컴포넌트는 `src/` 디렉토리에 위치하며, FSD 아키텍처를 따릅니다.
+- 레거시 파일들(`app/components/ui`, `app/components/admin`, `app/components/sections`, `app/components/layout`)은 모두 삭제되었습니다.
 
 ## 🔧 기술 스택
 
@@ -90,6 +94,7 @@ Pages → Widgets → Features → Entities → Shared
   - `@radix-ui/react-dropdown-menu`
   - `@radix-ui/react-select`
   - `@radix-ui/react-tabs`
+- **embla-carousel-react**: Carousel 컴포넌트용 라이브러리
 - **lucide-react**: 아이콘 라이브러리
 - **sonner**: 토스트 알림
 - **recharts**: 차트 라이브러리
@@ -199,7 +204,7 @@ import { User, Member } from '@/src/entities/user';
 
 - **위치**: `src/pages/home/`
 - **섹션**:
-  - `Hero`: 메인 히어로 섹션
+  - `Hero`: 메인 히어로 섹션 (Carousel UI 포함)
   - `About`: 회사 소개
   - `Business`: 사업 소개
   - `Products`: 제품 소개
@@ -293,6 +298,13 @@ npm run build
 - ✅ App Router에서 re-export 설정
 - ✅ TypeScript 경로 alias 설정
 - ✅ 모든 import 경로 업데이트
+- ✅ 레거시 컴포넌트 정리 완료
+  - `app/components/ui/` 삭제 → `src/shared/ui/`로 통합
+  - `app/components/admin/` 삭제 → `src/features/admin/ui/`로 통합
+  - `app/components/sections/` 삭제 → `src/pages/home/`로 통합
+  - `app/components/layout/` 삭제 → `src/shared/ui/`로 통합
+- ✅ Carousel UI 컴포넌트 추가 (`src/shared/ui/Carousel.tsx`)
+- ✅ Hero 섹션에 Carousel 적용
 
 ### 향후 개선 사항
 

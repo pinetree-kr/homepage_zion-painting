@@ -3,10 +3,16 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { getCurrentUser, isAdmin, logout, type User } from '@/src/features/auth';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/src/shared/ui';
+import { LogOut, Settings } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -15,6 +21,36 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // 로그인 상태 확인
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+
+    // localStorage 변경 감지
+    const handleStorageChange = () => {
+      const user = getCurrentUser();
+      setCurrentUser(user);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // 커스텀 이벤트로 같은 탭 내 변경도 감지
+    window.addEventListener('auth-change', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-change', handleStorageChange);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    setCurrentUser(null);
+    router.push('/');
+    router.refresh();
+    // 같은 탭 내에서도 변경 감지
+    window.dispatchEvent(new Event('auth-change'));
+  };
 
   // 모바일 메뉴 열릴 때 body 스크롤 방지
   useEffect(() => {
@@ -131,16 +167,58 @@ export default function Header() {
                 {/* 드롭다운 메뉴는 추후 구현 */}
               </div>
 
-              <Link
-                href="/auth/sign-in"
-                className={`px-4 py-2 rounded-lg text-base font-normal transition-colors ${
-                  isScrolled 
-                    ? 'text-gray-700 hover:bg-gray-100' 
-                    : 'text-white hover:bg-white/10'
-                }`}
-              >
-                로그인
-              </Link>
+              {/* 로그인/사용자 메뉴 */}
+              {currentUser ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-base font-normal transition-colors ${
+                        isScrolled 
+                          ? 'text-gray-700 hover:bg-gray-100' 
+                          : 'text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#1A2C6D] flex items-center justify-center text-white text-sm font-medium">
+                        {currentUser.name.charAt(0)}
+                      </div>
+                      <span className="hidden lg:inline">{currentUser.name}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <div className="px-2 py-1.5">
+                      <p className="text-sm font-medium text-gray-900">{currentUser.name}</p>
+                      <p className="text-xs text-gray-500">{currentUser.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    {isAdmin(currentUser) && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin" className="flex items-center gap-2 cursor-pointer">
+                            <Settings className="h-4 w-4" />
+                            <span>관리자 모드</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      <span>로그아웃</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  href="/auth/sign-in"
+                  className={`px-4 py-2 rounded-lg text-base font-normal transition-colors ${
+                    isScrolled 
+                      ? 'text-gray-700 hover:bg-gray-100' 
+                      : 'text-white hover:bg-white/10'
+                  }`}
+                >
+                  로그인
+                </Link>
+              )}
             </div>
 
             {/* 모바일: 우측 여백 (햄버거 버튼과 대칭) */}
@@ -226,13 +304,42 @@ export default function Header() {
 
           {/* 사이드 메뉴 푸터 */}
           <div className="p-6 border-t border-gray-200">
-            <Link
-              href="/auth/sign-in"
-              onClick={() => setIsMenuOpen(false)}
-              className="block w-full px-4 py-3 bg-[#1A2C6D] text-white rounded-lg text-base font-normal text-center hover:bg-[#15204f] transition-colors"
-            >
-              로그인
-            </Link>
+            {currentUser ? (
+              <div className="space-y-3">
+                <div className="px-4 py-2 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-medium text-gray-900">{currentUser.name}</p>
+                  <p className="text-xs text-gray-500">{currentUser.email}</p>
+                </div>
+                {isAdmin(currentUser) && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2 w-full px-4 py-3 bg-[#1A2C6D] text-white rounded-lg text-base font-normal text-center hover:bg-[#15204f] transition-colors"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>관리자 모드</span>
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg text-base font-normal hover:bg-gray-50 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>로그아웃</span>
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/auth/sign-in"
+                onClick={() => setIsMenuOpen(false)}
+                className="block w-full px-4 py-3 bg-[#1A2C6D] text-white rounded-lg text-base font-normal text-center hover:bg-[#15204f] transition-colors"
+              >
+                로그인
+              </Link>
+            )}
           </div>
         </div>
       </aside>
