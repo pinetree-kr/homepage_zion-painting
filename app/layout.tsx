@@ -39,17 +39,20 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
+import { Toaster } from './components/ui/Toaster';
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );
