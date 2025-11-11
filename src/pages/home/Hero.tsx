@@ -1,16 +1,77 @@
-import { Container } from '@/src/shared/ui';
+'use client';
+
+import { Container, Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/src/shared/ui';
+import Image from 'next/image';
+
+// TODO: 관리자 모드에서 관리할 이미지 데이터
+// 나중에 API나 데이터베이스에서 가져올 수 있도록 구조화
+const heroImages = [
+  {
+    id: 1,
+    src: '/images/hero/hero-1.jpg',
+    alt: '도장설비 이미지 1',
+  },
+  {
+    id: 2,
+    src: '/images/hero/hero-2.jpg',
+    alt: '도장설비 이미지 2',
+  },
+  {
+    id: 3,
+    src: '/images/hero/hero-3.jpg',
+    alt: '도장설비 이미지 3',
+  },
+];
 
 export default function Hero() {
   return (
     <section 
       id="home"
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
-      style={{
-        background: 'linear-gradient(180deg, rgba(26, 44, 109, 1) 0%, rgba(44, 167, 219, 1) 50%, rgba(26, 44, 109, 1) 100%)'
-      }}
     >
+      {/* Carousel 배경 */}
+      <div className="absolute inset-0 z-0">
+        <Carousel
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          className="w-full h-full"
+        >
+          <CarouselContent className="h-screen">
+            {heroImages.map((image) => (
+              <CarouselItem key={image.id} className="h-screen p-0">
+                <div className="relative w-full h-full">
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    fill
+                    className="object-cover"
+                    priority={image.id === 1}
+                    sizes="100vw"
+                    onError={(e) => {
+                      // 이미지 로드 실패 시 그라데이션 배경 표시
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      if (target.parentElement) {
+                        target.parentElement.style.background = 
+                          'linear-gradient(180deg, rgba(26, 44, 109, 1) 0%, rgba(44, 167, 219, 1) 50%, rgba(26, 44, 109, 1) 100%)';
+                      }
+                    }}
+                  />
+                  {/* 이미지 위 어두운 오버레이 */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="left-4 md:left-8 text-white border-white/30 hover:bg-white/20 hover:border-white/50" />
+          <CarouselNext className="right-4 md:right-8 text-white border-white/30 hover:bg-white/20 hover:border-white/50" />
+        </Carousel>
+      </div>
+
       {/* 배경 원형 요소들 */}
-      <div className="absolute inset-0 opacity-20">
+      <div className="absolute inset-0 opacity-20 z-[1]">
         <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
         <div className="absolute top-40 right-10 md:right-40 w-72 h-72 bg-[#A5C93E] rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#2CA7DB] rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '4s' }}></div>
@@ -20,12 +81,12 @@ export default function Hero() {
         <div className="flex flex-col items-center text-center gap-6">
           {/* 제목 */}
           <div className="flex flex-col gap-6">
-            <h1 className="text-4xl md:text-5xl font-normal text-white leading-tight">
+            <h1 className="text-4xl md:text-5xl font-normal text-white leading-tight drop-shadow-lg">
               최첨단 도장설비로
               <br />
               완벽한 품질을 실현합니다
             </h1>
-            <p className="text-xl md:text-2xl font-normal text-white/90 max-w-3xl mx-auto leading-[1.33]">
+            <p className="text-xl md:text-2xl font-normal text-white/90 max-w-3xl mx-auto leading-[1.33] drop-shadow-md">
               40년 이상의 경험과 기술력으로 산업 도장설비 분야를 선도합니다
             </p>
           </div>

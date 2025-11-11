@@ -2,6 +2,7 @@
 export { Badge } from './Badge';
 export { Button, buttonVariants } from './Button';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
+export { type CarouselApi, Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from './Carousel';
 export { Checkbox } from './Checkbox';
 export { DataTable, type DataTableColumn, type DataTableAction } from './DataTable';
 export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './Dialog';
