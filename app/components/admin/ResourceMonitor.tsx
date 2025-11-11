@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Badge } from '../ui/Badge';
 
 const generateMockData = (): ResourceUsage[] => {
   const data: ResourceUsage[] = [];
