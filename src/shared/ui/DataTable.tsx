@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useState } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown, MoreVertical } from 'lucide-react';
 import { Checkbox } from './Checkbox';
-import { Button } from './Button';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,7 +67,7 @@ export function DataTable<T>({
       newSelection.add(rowId);
     }
     setSelectedRows(newSelection);
-    
+
     const selectedData = data.filter(row => newSelection.has(getRowId(row)));
     onSelectionChange?.(selectedData);
   };
@@ -86,17 +88,17 @@ export function DataTable<T>({
 
   const sortedData = React.useMemo(() => {
     if (!sortColumn) return data;
-    
+
     const column = columns.find(col => col.id === sortColumn);
     if (!column) return data;
 
     return [...data].sort((a, b) => {
       const aValue = column.accessor(a);
       const bValue = column.accessor(b);
-      
+
       const aString = typeof aValue === 'string' ? aValue : String(aValue);
       const bString = typeof bValue === 'string' ? bValue : String(bValue);
-      
+
       if (sortDirection === 'asc') {
         return aString.localeCompare(bString);
       } else {
@@ -167,7 +169,7 @@ export function DataTable<T>({
                 const rowId = getRowId(row);
                 const isSelected = selectedRows.has(rowId);
                 const isHovered = hoveredRow === rowId;
-                
+
                 return (
                   <tr
                     key={rowId}
@@ -212,7 +214,7 @@ export function DataTable<T>({
                               {actions.map((action, index) => {
                                 const label = typeof action.label === 'function' ? action.label(row) : action.label;
                                 const icon = typeof action.icon === 'function' ? action.icon(row) : action.icon;
-                                
+
                                 return (
                                   <DropdownMenuItem
                                     key={index}

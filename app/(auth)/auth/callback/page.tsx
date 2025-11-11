@@ -9,9 +9,9 @@ import { verifyEmail } from '@/src/features/auth';
 function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams.get('email');
-  const token = searchParams.get('token');
-  const verified = searchParams.get('verified');
+  const email = searchParams?.get('email') ?? '';
+  const token = searchParams?.get('token') ?? '';
+  const verified = searchParams?.get('verified') ?? '';
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'pending'>('loading');
   const [message, setMessage] = useState('');

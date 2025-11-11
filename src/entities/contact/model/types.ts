@@ -1,4 +1,4 @@
-import { LocationInfo } from '../company/model/types';
+import { LocationInfo } from '@/src/entities/company/model/types';
 
 export interface ContactInfo {
   id: string;

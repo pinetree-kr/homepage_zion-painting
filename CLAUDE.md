@@ -105,8 +105,7 @@ Pages → Widgets → Features → Entities → Shared
 
 ```json
 {
-  "@/*": ["./*"],
-  "@/src/*": ["./src/*"]
+  "@/*": ["./*"]
 }
 ```
 

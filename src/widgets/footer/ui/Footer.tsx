@@ -1,4 +1,4 @@
-import Container from '../layout/Container';
+import { Container } from '@/src/shared/ui';
 import Image from 'next/image';
 
 // Social Media Icons (lucide-react 기반)

@@ -2,22 +2,33 @@
 
 import { useState, useEffect } from 'react';
 import { ResourceUsage } from '@/src/entities/system';
-import { 
-  Server, 
-  HardDrive, 
-  Cpu, 
+import {
+  Server,
+  HardDrive,
+  Cpu,
   Activity,
   TrendingUp,
   TrendingDown,
   Database,
   Wifi
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Badge } from '@/src/shared/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Badge
+} from '@/src/shared/ui';
 
 const generateMockData = (): ResourceUsage[] => {
   const data: ResourceUsage[] = [];
   const now = Date.now();
-  
+
   for (let i = 23; i >= 0; i--) {
     const timestamp = new Date(now - i * 60 * 60 * 1000).toISOString();
     data.push({
@@ -38,7 +49,7 @@ const generateMockData = (): ResourceUsage[] => {
       }
     });
   }
-  
+
   return data;
 };
 
@@ -91,7 +102,7 @@ export default function ResourceMonitor() {
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-[#1A2C6D] h-2 rounded-full transition-all"
                 style={{ width: `${currentUsage.memory.percentage}%` }}
               />
@@ -114,7 +125,7 @@ export default function ResourceMonitor() {
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-[#A5C93E] h-2 rounded-full transition-all"
                 style={{ width: `${currentUsage.storage.percentage}%` }}
               />
