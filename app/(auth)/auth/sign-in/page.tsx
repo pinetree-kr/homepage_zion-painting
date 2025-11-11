@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { login } from '@/app/lib/auth';
+import { login, isAdmin } from '@/app/lib/auth';
 import { Input } from '@/app/components/ui/Input';
 import { Label } from '@/app/components/ui/Label';
 import { Checkbox } from '@/app/components/ui/Checkbox';
@@ -22,7 +22,11 @@ export default function SignInPage() {
 
     const user = login(email, password);
     if (user) {
-      router.push('/');
+      if (isAdmin(user)) {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
       router.refresh();
     } else {
       setError('이메일 또는 비밀번호가 올바르지 않습니다');
