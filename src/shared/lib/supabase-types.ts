@@ -24,7 +24,7 @@ export interface Profile {
 // administrators 테이블 타입 정의
 export interface Administrator {
   id: string;
-  role: 'system_admin' | 'content_admin';
+  role: 'system' | 'contents';
   created_at: string;
   updated_at: string;
 }

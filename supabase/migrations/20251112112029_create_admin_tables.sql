@@ -19,7 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_profiles_status ON profiles(status);
 -- 0-1. 관리자 테이블 (auth.users와 연동)
 CREATE TABLE IF NOT EXISTS administrators (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role VARCHAR(50) NOT NULL DEFAULT 'system_admin' CHECK (role IN ('system_admin', 'content_admin')),
+  role VARCHAR(50) NOT NULL DEFAULT 'system' CHECK (role IN ('system', 'contents')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -341,7 +341,7 @@ CREATE POLICY "System admin write access for prologue_settings" ON prologue_sett
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
@@ -350,7 +350,7 @@ CREATE POLICY "System admin write access for prologue_carousel_items" ON prologu
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
@@ -359,7 +359,7 @@ CREATE POLICY "System admin write access for company_info" ON company_info
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
@@ -368,7 +368,7 @@ CREATE POLICY "System admin write access for company_history" ON company_history
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
@@ -377,7 +377,7 @@ CREATE POLICY "System admin write access for business_areas" ON business_areas
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
@@ -386,7 +386,7 @@ CREATE POLICY "System admin write access for business_achievements" ON business_
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
@@ -395,7 +395,7 @@ CREATE POLICY "System admin write access for contact_info" ON contact_info
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
@@ -404,7 +404,7 @@ CREATE POLICY "System admin write access for products" ON products
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
@@ -419,7 +419,7 @@ CREATE POLICY "Authors and admins can update posts" ON posts
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
@@ -429,7 +429,7 @@ CREATE POLICY "Authors and admins can delete posts" ON posts
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
@@ -455,7 +455,7 @@ CREATE POLICY "Authors and admins can delete comments" ON comments
     EXISTS (
       SELECT 1 FROM administrators 
       WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system_admin'
+      AND administrators.role = 'system'
     )
   );
 
