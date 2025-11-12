@@ -45,23 +45,8 @@ function CallbackContent() {
   }, [email, token, verified, router]);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-8">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="mb-6 flex justify-center">
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-lg">
-              <Image
-                src="/logo-192.png"
-                alt="시온"
-                width={80}
-                height={80}
-                className="h-20 w-auto"
-              />
-            </div>
-          </div>
-        </div>
-
-
+    <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
+      <div className="w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
           {status === 'loading' && (
             <div className="text-center">
@@ -176,21 +161,8 @@ export default function CallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center p-8">
+        <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
           <div className="w-full max-w-md">
-            <div className="text-center mb-8">
-              <div className="mb-6 flex justify-center">
-                <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-lg">
-                  <Image
-                    src="/logo-192.png"
-                    alt="시온"
-                    width={80}
-                    height={80}
-                    className="h-20 w-auto"
-                  />
-                </div>
-              </div>
-            </div>
             <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
               <div className="text-center">
                 <div className="mb-4 flex justify-center">

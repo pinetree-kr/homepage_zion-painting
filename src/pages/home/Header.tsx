@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, isAdmin, logout, type User } from '@/src/features/auth';
+import { isAdmin, type User } from '@/src/features/auth';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/src/shared/ui';
+import { checkSupabaseSession, getSupabaseUser, supabase, onAuthStateChange } from '@/src/shared/lib';
+import type { Profile } from '@/src/shared/lib/supabase-types';
 import { LogOut, Settings } from 'lucide-react';
 
 export default function Header() {
@@ -22,34 +24,85 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 로그인 상태 확인
+  // Supabase 로그인 상태 확인
   useEffect(() => {
-    const user = getCurrentUser();
-    setCurrentUser(user);
+    const checkAuth = async () => {
+      try {
+        const hasSession = await checkSupabaseSession();
+        if (!hasSession) {
+          setCurrentUser(null);
+          return;
+        }
 
-    // localStorage 변경 감지
-    const handleStorageChange = () => {
-      const user = getCurrentUser();
-      setCurrentUser(user);
+        const supabaseUser = await getSupabaseUser();
+        if (!supabaseUser) {
+          setCurrentUser(null);
+          return;
+        }
+
+        // profiles 테이블에서 사용자 프로필 정보 가져오기
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, name, email, status, email_verified, last_login, phone, created_at')
+          .eq('id', supabaseUser.id)
+          .single<Profile>();
+
+        // administrators 테이블에서 관리자 권한 확인 (role은 여기서 결정)
+        const { data: adminData } = await supabase
+          .from('administrators')
+          .select('id, role')
+          .eq('id', supabaseUser.id)
+          .single();
+
+        // User 타입으로 변환 (Profile과 Administrator 데이터 사용)
+        const userData: User = {
+          id: supabaseUser.id,
+          email: profileData?.email || supabaseUser.email || '',
+          name: profileData?.name || supabaseUser.user_metadata?.name || '사용자',
+          role: adminData ? 'admin' : 'user', // Administrator 테이블에서 결정
+          emailVerified: profileData?.email_verified ?? (supabaseUser.email_confirmed_at !== null),
+          createdAt: profileData?.created_at,
+          status: profileData?.status || undefined,
+          lastLogin: profileData?.last_login || undefined,
+          phone: profileData?.phone || undefined,
+        };
+
+        setCurrentUser(userData);
+      } catch (error) {
+        console.error('인증 상태 확인 중 오류 발생:', error);
+        setCurrentUser(null);
+      }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    // 커스텀 이벤트로 같은 탭 내 변경도 감지
-    window.addEventListener('auth-change', handleStorageChange);
+    checkAuth();
+
+    // Supabase 인증 상태 변경 리스너 설정
+    const { data: { subscription } } = onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        await checkAuth();
+      } else if (event === 'SIGNED_OUT') {
+        setCurrentUser(null);
+      }
+    });
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('auth-change', handleStorageChange);
+      subscription.unsubscribe();
     };
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    setCurrentUser(null);
-    router.push('/');
-    router.refresh();
-    // 같은 탭 내에서도 변경 감지
-    window.dispatchEvent(new Event('auth-change'));
+  const handleLogout = async () => {
+    try {
+      // Supabase 로그아웃
+      await supabase.auth.signOut();
+      setCurrentUser(null);
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      console.error('로그아웃 중 오류 발생:', error);
+      setCurrentUser(null);
+      router.push('/');
+      router.refresh();
+    }
   };
 
   // 모바일 메뉴 열릴 때 body 스크롤 방지
@@ -81,14 +134,14 @@ export default function Header() {
 
   return (
     <>
-      <header 
+      <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           // 모바일/태블릿: 항상 앱처럼 보이게 (배경색과 그림자)
           // 데스크톱: 스크롤 시에만 배경색
           isScrolled || isMenuOpen
-            ? 'bg-white shadow-lg' 
+            ? 'bg-white shadow-lg'
             : 'bg-white shadow-md md:bg-transparent md:shadow-none'
-        }`}
+          }`}
       >
         <div className="max-w-[1497px] mx-auto px-4 sm:px-6 md:px-8">
           <nav className="flex items-center justify-between h-16 md:h-20">
@@ -100,19 +153,18 @@ export default function Header() {
             >
               {isMenuOpen ? (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               ) : (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
             </button>
 
             {/* 로고 - 모바일에서는 중앙, 데스크톱에서는 좌측 */}
-            <div className={`flex-1 flex justify-center md:flex-none md:justify-start ${
-              isMenuOpen ? 'md:flex-1 md:justify-center' : ''
-            }`}>
+            <div className={`flex-1 flex justify-center md:flex-none md:justify-start ${isMenuOpen ? 'md:flex-1 md:justify-center' : ''
+              }`}>
               <div className="w-10 h-10 md:w-[52px] md:h-[52px] bg-white rounded-xl border-2 border-[#E5E7EB] shadow-sm p-2 md:p-2.5 flex items-center justify-center">
                 <Image
                   src="/logo-192.png"
@@ -131,20 +183,18 @@ export default function Header() {
                 <button
                   key={index}
                   onClick={() => handleNavClick(item.href)}
-                  className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] ${
-                    isScrolled ? 'text-[#101828]' : 'text-white'
-                  }`}
+                  className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] ${isScrolled ? 'text-[#101828]' : 'text-white'
+                    }`}
                 >
                   {item.label}
                 </button>
               ))}
-              
+
               {/* 고객센터 드롭다운 */}
               <div className="relative group">
                 <button
-                  className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] flex items-center gap-1 ${
-                    isScrolled ? 'text-[#101828]' : 'text-white'
-                  }`}
+                  className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] flex items-center gap-1 ${isScrolled ? 'text-[#101828]' : 'text-white'
+                    }`}
                 >
                   고객센터
                   <svg
@@ -172,11 +222,10 @@ export default function Header() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-base font-normal transition-colors ${
-                        isScrolled 
-                          ? 'text-gray-700 hover:bg-gray-100' 
-                          : 'text-white hover:bg-white/10'
-                      }`}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-base font-normal transition-colors ${isScrolled
+                        ? 'text-gray-700 hover:bg-gray-100'
+                        : 'text-white hover:bg-white/10'
+                        }`}
                     >
                       <div className="w-8 h-8 rounded-full bg-[#1A2C6D] flex items-center justify-center text-white text-sm font-medium">
                         {currentUser.name.charAt(0)}
@@ -210,11 +259,10 @@ export default function Header() {
               ) : (
                 <Link
                   href="/auth/sign-in"
-                  className={`px-4 py-2 rounded-lg text-base font-normal transition-colors ${
-                    isScrolled 
-                      ? 'text-gray-700 hover:bg-gray-100' 
-                      : 'text-white hover:bg-white/10'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-base font-normal transition-colors ${isScrolled
+                    ? 'text-gray-700 hover:bg-gray-100'
+                    : 'text-white hover:bg-white/10'
+                    }`}
                 >
                   로그인
                 </Link>
@@ -229,18 +277,16 @@ export default function Header() {
 
       {/* 모바일 사이드 메뉴 오버레이 */}
       <div
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden ${
-          isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={() => setIsMenuOpen(false)}
         aria-hidden="true"
       />
 
       {/* 모바일 좌측 사이드 메뉴 */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-out md:hidden ${
-          isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-out md:hidden ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* 사이드 메뉴 헤더 */}
@@ -264,7 +310,7 @@ export default function Header() {
               aria-label="메뉴 닫기"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>

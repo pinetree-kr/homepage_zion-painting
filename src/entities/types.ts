@@ -86,16 +86,9 @@ export interface ContactInfo {
   location: LocationInfo;
 }
 
-export interface Member {
-  id: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'user';
-  createdAt: string;
-  status: 'active' | 'inactive';
-  lastLogin?: string;
-  phone?: string;
-}
+// Member는 User의 별칭으로 통합됨
+// src/entities/user/model/types.ts의 User 인터페이스를 사용하세요
+export type { User as Member } from '@/src/entities/user';
 
 export interface ActivityLog {
   id: string;
