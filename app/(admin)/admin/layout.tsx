@@ -46,11 +46,12 @@ export default function AdminLayoutWrapper({
   // 현재 경로에 따라 activeTab 결정
   const getActiveTab = () => {
     if (pathname?.startsWith('/admin/info')) {
+      if (pathname === '/admin/info/prologue') return 'prologue';
       if (pathname === '/admin/info/company') return 'company-info';
       if (pathname === '/admin/info/business') return 'business-info';
       if (pathname === '/admin/info/products') return 'products-admin';
       if (pathname === '/admin/info/contacts') return 'contact-info';
-      return 'company-info';
+      return 'prologue';
     }
     if (pathname?.startsWith('/admin/customer')) {
       if (pathname === '/admin/customer/members') return 'members';
@@ -66,11 +67,12 @@ export default function AdminLayoutWrapper({
       if (pathname === '/admin/system/resources') return 'resources';
       return 'admin-management';
     }
-    return 'company-info';
+    return 'prologue';
   };
 
   const handleTabChange = (tab: string) => {
     const routeMap: Record<string, string> = {
+      'prologue': '/admin/info/prologue',
       'company-info': '/admin/info/company',
       'business-info': '/admin/info/business',
       'products-admin': '/admin/info/products',

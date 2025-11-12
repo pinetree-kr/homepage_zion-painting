@@ -22,15 +22,15 @@ export default function ContactInfo() {
   });
 
   const handleSave = () => {
-    toast.success('연락처 정보가 저장되었습니다.');
+    toast.success('회사 정보가 저장되었습니다.');
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-gray-900 text-2xl font-semibold">연락정보 관리</h2>
-          <p className="text-gray-500 text-sm mt-1">이메일, 주소, 연락처 등을 관리합니다</p>
+          <h2 className="text-gray-900 text-2xl font-semibold">회사정보 관리</h2>
+          <p className="text-gray-500 text-sm mt-1">이메일, 주소, 연락처, 오시는길을 관리합니다</p>
         </div>
         <Button onClick={handleSave} className="gap-2">
           <Save className="h-4 w-4" />

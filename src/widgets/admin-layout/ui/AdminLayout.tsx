@@ -155,6 +155,14 @@ const UserCogIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const ImageIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+    <circle cx="9" cy="9" r="2"/>
+    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+  </svg>
+);
+
 interface AdminLayoutProps {
   user: User;
   activeTab: string;
@@ -183,10 +191,11 @@ export default function AdminLayout({ user, activeTab, onTabChange, onLogout, on
       label: '기본정보',
       icon: Building2Icon,
       items: [
-        { id: 'company-info', label: '회사 정보', icon: Building2Icon, route: '/admin/info/company' },
+        { id: 'prologue', label: '프롤로그', icon: ImageIcon, route: '/admin/info/prologue' },
+        { id: 'company-info', label: '회사소개', icon: Building2Icon, route: '/admin/info/company' },
         { id: 'business-info', label: '사업소개', icon: BriefcaseIcon, route: '/admin/info/business' },
         { id: 'products-admin', label: '제품소개', icon: PackageIcon, route: '/admin/info/products' },
-        { id: 'contact-info', label: '연락정보', icon: PhoneIcon, route: '/admin/info/contacts' },
+        { id: 'contact-info', label: '회사정보', icon: PhoneIcon, route: '/admin/info/contacts' },
       ],
     },
     {

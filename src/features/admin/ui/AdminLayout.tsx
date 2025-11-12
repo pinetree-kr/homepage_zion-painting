@@ -176,10 +176,10 @@ export default function AdminLayout({ user, activeTab, onTabChange, onLogout, on
       label: '기본정보',
       icon: Building2Icon,
       items: [
-        { id: 'company-info', label: '회사 정보', icon: Building2Icon, route: '/admin/info/company' },
+        { id: 'company-info', label: '회사소개', icon: Building2Icon, route: '/admin/info/company' },
         { id: 'business-info', label: '사업소개', icon: BriefcaseIcon, route: '/admin/info/business' },
         { id: 'products-admin', label: '제품소개', icon: PackageIcon, route: '/admin/info/products' },
-        { id: 'contact-info', label: '연락정보', icon: PhoneIcon, route: '/admin/info/contacts' },
+        { id: 'contact-info', label: '담당자', icon: PhoneIcon, route: '/admin/info/contacts' },
       ],
     },
     {

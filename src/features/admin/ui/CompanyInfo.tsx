@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, Save, ExternalLink, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Save, GripVertical } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
@@ -17,11 +17,6 @@ export default function CompanyInfo() {
   const [history, setHistory] = useState<HistoryItem[]>([
     { id: '1', year: '2024', month: '01', content: '회사 설립', order: 1 },
   ]);
-  const [location, setLocation] = useState({
-    address: '경기도 화성시 팔탄면 공장길 123',
-    kakaoMapUrl: '',
-    naverMapUrl: '',
-  });
 
   const addHistoryItem = () => {
     const newItem: HistoryItem = {
@@ -52,8 +47,8 @@ export default function CompanyInfo() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-gray-900 text-2xl font-semibold">회사 정보 관리</h2>
-          <p className="text-gray-500 text-sm mt-1">회사소개, 연혁, 조직도, 오시는길을 관리합니다</p>
+          <h2 className="text-gray-900 text-2xl font-semibold">회사소개 관리</h2>
+          <p className="text-gray-500 text-sm mt-1">회사소개, 연혁, 조직도를 관리합니다</p>
         </div>
         <Button onClick={handleSave} className="gap-2">
           <Save className="h-4 w-4" />
@@ -62,11 +57,10 @@ export default function CompanyInfo() {
       </div>
 
       <Tabs defaultValue="about" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="about">회사소개</TabsTrigger>
           <TabsTrigger value="history">연혁</TabsTrigger>
           <TabsTrigger value="organization">조직도</TabsTrigger>
-          <TabsTrigger value="location">오시는길</TabsTrigger>
         </TabsList>
 
         <TabsContent value="about" className="space-y-4 mt-6">
@@ -141,60 +135,6 @@ export default function CompanyInfo() {
               initialValue={organizationContent}
               onChange={setOrganizationContent}
             />
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="location" className="space-y-4 mt-6">
-          <Card className="p-6">
-            <h3 className="text-gray-900 mb-4 text-lg font-semibold">오시는길</h3>
-            <div className="space-y-4">
-              <div>
-                <Label>주소</Label>
-                <Input
-                  value={location.address}
-                  onChange={(e) => setLocation({ ...location, address: e.target.value })}
-                  placeholder="경기도 화성시 팔탄면 공장길 123"
-                />
-              </div>
-              <div>
-                <Label>카카오맵 링크</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={location.kakaoMapUrl}
-                    onChange={(e) => setLocation({ ...location, kakaoMapUrl: e.target.value })}
-                    placeholder="https://map.kakao.com/..."
-                  />
-                  {location.kakaoMapUrl && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => window.open(location.kakaoMapUrl, '_blank')}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-              <div>
-                <Label>네이버 지도 링크</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={location.naverMapUrl}
-                    onChange={(e) => setLocation({ ...location, naverMapUrl: e.target.value })}
-                    placeholder="https://map.naver.com/..."
-                  />
-                  {location.naverMapUrl && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => window.open(location.naverMapUrl, '_blank')}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
           </Card>
         </TabsContent>
       </Tabs>
