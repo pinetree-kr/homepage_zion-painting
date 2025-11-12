@@ -250,14 +250,29 @@ CREATE POLICY "Admins can view all profiles" ON profiles
     )
   );
 
--- 관리자 테이블 정책: 관리자만 관리자 목록을 볼 수 있음
-CREATE POLICY "Admins can view administrators" ON administrators
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid()
-    )
+-- 관리자 테이블 정책: 사용자는 자신의 레코드를 읽을 수 있음
+-- 이렇게 하면 로그인 시 자신의 관리자 여부를 확인할 수 있음
+CREATE POLICY "Users can view own administrator record" ON administrators
+  FOR SELECT USING (auth.uid() = id);
+
+-- 관리자 여부를 확인하는 SECURITY DEFINER 함수 생성
+-- 이 함수는 RLS를 우회하여 무한 재귀 없이 관리자 여부를 확인할 수 있습니다
+CREATE OR REPLACE FUNCTION is_admin(user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM administrators 
+    WHERE administrators.id = user_id
   );
+$$;
+
+-- 관리자는 모든 관리자 레코드를 볼 수 있음 (SECURITY DEFINER 함수 사용)
+CREATE POLICY "Admins can view all administrators" ON administrators
+  FOR SELECT USING (is_admin(auth.uid()));
 
 -- 공개 데이터는 모든 사용자가 읽을 수 있도록 설정
 CREATE POLICY "Public read access for prologue_settings" ON prologue_settings
