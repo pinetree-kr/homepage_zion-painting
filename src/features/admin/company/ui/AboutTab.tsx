@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Save } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
-import DynamicCustomEditor from '../../ui/DynamicCustomEditor';
+import { DynamicCustomEditor } from '@/src/features/admin/editor';
 import { supabase } from '@/src/shared/lib/supabase/client';
 import { toast } from 'sonner';
 

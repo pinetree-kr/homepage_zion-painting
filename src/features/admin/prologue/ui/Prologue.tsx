@@ -223,15 +223,6 @@ export default function Prologue() {
         .select('*')
         .order('display_order', { ascending: true })
         .overrideTypes<PrologueCarouselItem[]>();
-      // .order('display_order', { ascending: true }) as {
-      //   data: Array<{
-      //     id: string;
-      //     image_url: string;
-      //     title: string | null;
-      //     description: string | null;
-      //     display_order: number;
-      //   }> | null; error: any
-      // };
 
       if (itemsError) {
         console.error('캐러셀 아이템 로드 오류:', itemsError);

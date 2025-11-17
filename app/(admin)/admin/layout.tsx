@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { logout, User } from '@/src/features/auth';
-import { AdminLayout } from '@/src/widgets/admin-layout';
+import { AdminLayout } from '@/src/features/admin/layout';
 import { checkSupabaseSession, getSupabaseUser, supabase } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user/model/types';
 

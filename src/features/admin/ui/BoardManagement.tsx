@@ -9,7 +9,7 @@ import { Card } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/src/shared/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { Badge } from '@/src/shared/ui';
-import DynamicCustomEditor from '@/src/features/admin/ui/DynamicCustomEditor';
+import { DynamicCustomEditor } from '@/src/features/admin/editor';
 import { toast } from 'sonner';
 import { Post } from '@/src/entities';
 import { DataTable, DataTableColumn, DataTableAction } from '@/src/shared/ui';

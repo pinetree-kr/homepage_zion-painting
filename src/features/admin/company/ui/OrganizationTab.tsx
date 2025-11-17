@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Save } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
-import DynamicCustomEditor from '../../ui/DynamicCustomEditor';
+import { DynamicCustomEditor } from '@/src/features/admin/editor';
 import { saveOrganizationContent } from '../api/company-actions';
 import { toast } from 'sonner';
 
@@ -20,7 +20,7 @@ export function OrganizationTab({ initialContent }: OrganizationTabProps) {
     try {
       setSaving(true);
       const result = await saveOrganizationContent(content);
-      
+
       if (result.success) {
         toast.success('조직도가 저장되었습니다.');
       } else {

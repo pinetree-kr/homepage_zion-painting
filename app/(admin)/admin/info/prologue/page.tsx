@@ -1,6 +1,6 @@
 'use client';
 
-import Prologue from '@/src/features/admin/ui/Prologue';
+import { Prologue } from '@/src/features/admin/prologue';
 
 export default function ProloguePage() {
   return <Prologue />;

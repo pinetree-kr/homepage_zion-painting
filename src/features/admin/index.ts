@@ -1,14 +1,24 @@
-// Admin feature exports
-export { default as AdminManagement } from './ui/AdminManagement';
+// BoardManagement (보류)
 export { default as BoardManagement } from './ui/BoardManagement';
-export { default as BusinessInfo } from './ui/BusinessInfo';
-export { default as CompanyInfo } from './ui/CompanyInfo'; // Deprecated: Use pages/admin/company instead
-export { default as ContactInfo } from './ui/ContactInfo';
-export { default as LogManagement } from './ui/LogManagement';
-export { default as MemberManagement } from './ui/MemberManagement';
-export { default as ProductsAdmin } from './ui/ProductsAdmin';
-export { default as ResourceMonitor } from './ui/ResourceMonitor';
 
 // Company feature (FSD compliant)
 export * from './company';
+
+// Editor feature (FSD compliant)
+export * from './editor';
+
+// Info feature (FSD compliant)
+export * from './info';
+
+// Layout feature (FSD compliant)
+export * from './layout';
+
+// Prologue feature (FSD compliant)
+export * from './prologue';
+
+// System feature (FSD compliant)
+export * from './system';
+
+// User feature (FSD compliant)
+export * from './user';
 

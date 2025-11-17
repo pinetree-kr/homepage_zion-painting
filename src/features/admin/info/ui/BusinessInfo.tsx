@@ -8,7 +8,7 @@ import { Label } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/src/shared/ui';
-import DynamicCustomEditor from '@/src/features/admin/ui/DynamicCustomEditor';
+import { DynamicCustomEditor } from '@/src/features/admin/editor';
 import { toast } from 'sonner';
 import { BusinessArea, Achievement } from '@/src/entities';
 import { Textarea } from '@/src/shared/ui';
