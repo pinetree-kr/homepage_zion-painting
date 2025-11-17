@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name VARCHAR(255),
   email VARCHAR(255),
-  status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  status VARCHAR(10) DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  role VARCHAR(10) DEFAULT 'user' CHECK (role IN ('admin', 'user')),
   email_verified BOOLEAN DEFAULT FALSE,
   last_login TIMESTAMPTZ,
   phone VARCHAR(20),
@@ -15,11 +16,12 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
 CREATE INDEX IF NOT EXISTS idx_profiles_status ON profiles(status);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 
 -- 0-1. 관리자 테이블 (auth.users와 연동)
 CREATE TABLE IF NOT EXISTS administrators (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role VARCHAR(50) NOT NULL DEFAULT 'system' CHECK (role IN ('system', 'contents')),
+  role VARCHAR(10) NOT NULL DEFAULT 'system' CHECK (role IN ('system', 'contents')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -129,7 +131,7 @@ CREATE TABLE IF NOT EXISTS products (
   category VARCHAR(100) NOT NULL,
   specs JSONB DEFAULT '[]'::jsonb,
   image_url TEXT,
-  status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('published', 'draft')),
+  status VARCHAR(10) NOT NULL DEFAULT 'draft' CHECK (status IN ('published', 'draft')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -141,13 +143,13 @@ CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at DESC);
 -- 9. 게시글 테이블 (공지사항, Q&A, 견적, 리뷰)
 CREATE TABLE IF NOT EXISTS posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  type VARCHAR(20) NOT NULL CHECK (type IN ('notice', 'qna', 'quote', 'review')),
+  type VARCHAR(10) NOT NULL CHECK (type IN ('notice', 'qna', 'quote', 'review')),
   title VARCHAR(255) NOT NULL,
   content TEXT NOT NULL,
   author_id UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
   category VARCHAR(100),
   image_url TEXT,
-  status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('published', 'draft')),
+  status VARCHAR(10) NOT NULL DEFAULT 'draft' CHECK (status IN ('published', 'draft')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

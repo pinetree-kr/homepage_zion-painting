@@ -13,6 +13,7 @@ export interface Profile {
   id: string;
   name: string | null;
   email: string | null;
+  role: 'admin' | 'user' | null;
   status: 'active' | 'inactive' | null;
   email_verified: boolean | null;
   last_login: string | null;

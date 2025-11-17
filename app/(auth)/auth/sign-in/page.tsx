@@ -7,6 +7,7 @@ import { supabase } from '@/src/shared/lib';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
+import type { Profile } from '@/src/entities/user';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -50,15 +51,15 @@ export default function SignInPage() {
         console.error('last_login 업데이트 실패:', updateError);
       }
 
-      // administrators 테이블에서 관리자 권한 확인
-      const { data: adminData } = await supabase
-        .from('administrators')
-        .select('id, role')
+      // profiles 테이블에서 관리자 여부 확인 (role 필드 사용)
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
         .eq('id', authData.user.id)
-        .single();
+        .single<Pick<Profile, 'role'>>();
 
       // 관리자인 경우 관리자 페이지로, 아니면 홈으로
-      if (adminData) {
+      if (profileData?.role === 'admin') {
         router.push('/admin');
       } else {
         router.push('/');

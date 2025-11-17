@@ -40,31 +40,37 @@ export default function Header() {
           return;
         }
 
-        // profiles 테이블에서 사용자 프로필 정보 가져오기
+        // profiles 테이블에서 사용자 프로필 정보 가져오기 (role 포함)
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('id, name, email, status, email_verified, last_login, phone, created_at')
+          .select('id, name, email, role, status, email_verified, last_login, phone, created_at, updated_at')
           .eq('id', supabaseUser.id)
           .single<Profile>();
 
-        // administrators 테이블에서 관리자 권한 확인 (role은 여기서 결정)
-        const { data: adminData } = await supabase
-          .from('administrators')
-          .select('id, role')
-          .eq('id', supabaseUser.id)
-          .single();
+        // 개발 단계에서는 관리자 권한을 분리하지 않음
+        // 관리자인 경우 administrators 테이블에서 세부 권한 가져오기
+        // let adminDetailRole: 'system' | 'contents' | null = null;
+        // if (profileData?.role === 'admin') {
+        //   const { data: adminData } = await supabase
+        //     .from('administrators')
+        //     .select('role')
+        //     .eq('id', supabaseUser.id)
+        //     .single();
+        //   adminDetailRole = adminData?.role || null;
+        // }
 
-        // User 타입으로 변환 (Profile과 Administrator 데이터 사용)
+        // User 타입으로 변환 (Profile의 role 사용)
         const userData: User = {
           id: supabaseUser.id,
           email: profileData?.email || supabaseUser.email || '',
           name: profileData?.name || supabaseUser.user_metadata?.name || '사용자',
-          role: adminData ? 'admin' : 'user', // Administrator 테이블에서 결정
-          emailVerified: profileData?.email_verified ?? (supabaseUser.email_confirmed_at !== null),
-          createdAt: profileData?.created_at,
-          status: profileData?.status || undefined,
-          lastLogin: profileData?.last_login || undefined,
-          phone: profileData?.phone || undefined,
+          role: profileData?.role === 'admin' ? 'admin' : 'user', // profiles 테이블에서 결정
+          email_verified: profileData?.email_verified ?? (supabaseUser.email_confirmed_at !== null),
+          created_at: profileData?.created_at,
+          updated_at: profileData?.updated_at,
+          status: profileData?.status || null,
+          last_login: profileData?.last_login || null,
+          phone: profileData?.phone || null,
         };
 
         setCurrentUser(userData);

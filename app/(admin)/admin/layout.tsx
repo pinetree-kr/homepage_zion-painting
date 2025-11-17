@@ -34,37 +34,45 @@ export default function AdminLayoutWrapper({
           return;
         }
 
-        // administrators 테이블에서 관리자 권한 확인
-        const { data: adminData, error: adminError } = await supabase
-          .from('administrators')
-          .select('*')
+        // profiles 테이블에서 사용자 프로필 정보 가져오기 (role 포함)
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, name, email, role, status, email_verified, last_login, phone, created_at')
           .eq('id', supabaseUser.id)
-          .single();
+          .single<Profile>();
 
-        if (adminError || !adminData) {
+        // 관리자 여부 확인 (profiles 테이블의 role 사용)
+        if (!profileData || profileData.role !== 'admin') {
           // 관리자가 아닌 경우 로그인 페이지로 리다이렉트
           router.push('/auth/sign-in');
           return;
         }
 
-        // profiles 테이블에서 사용자 프로필 정보 가져오기
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('id, name, email, status, email_verified, last_login, phone, created_at')
-          .eq('id', supabaseUser.id)
-          .single<Profile>();
+        // 개발 단계에서는 관리자 권한을 분리하지 않음
+        // 관리자 모드 접근 시 administrators 테이블에서 세부 권한 가져오기
+        // const { data: adminData, error: adminError } = await supabase
+        //   .from('administrators')
+        //   .select('role')
+        //   .eq('id', supabaseUser.id)
+        //   .single();
 
-        // User 타입으로 변환 (Profile과 Administrator 데이터 사용)
+        // if (adminError) {
+        //   console.error('관리자 세부 권한 조회 실패:', adminError);
+        //   // 세부 권한 조회 실패해도 관리자 모드 접근은 허용 (profiles.role이 'admin'이면)
+        // }
+
+        // User 타입으로 변환 (Profile의 role 사용)
         const userData: User = {
           id: supabaseUser.id,
           email: profileData?.email || supabaseUser.email || '',
           name: profileData?.name || supabaseUser.user_metadata?.name || '사용자',
-          role: 'admin', // administrators 테이블에 있으면 관리자
-          emailVerified: profileData?.email_verified ?? (supabaseUser.email_confirmed_at !== null),
-          createdAt: profileData?.created_at,
-          status: profileData?.status || undefined,
-          lastLogin: profileData?.last_login || undefined,
-          phone: profileData?.phone || undefined,
+          role: 'admin', // profiles 테이블에서 확인됨
+          email_verified: profileData?.email_verified ?? (supabaseUser.email_confirmed_at !== null),
+          created_at: profileData?.created_at,
+          updated_at: profileData?.updated_at,
+          status: profileData?.status || null,
+          last_login: profileData?.last_login || null,
+          phone: profileData?.phone || null,
         };
 
         setUser(userData);

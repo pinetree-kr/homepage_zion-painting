@@ -1,2 +1,2 @@
-export type { User, Member } from './model/types';
+export type { Profile, User, Member } from './model/types';
 
