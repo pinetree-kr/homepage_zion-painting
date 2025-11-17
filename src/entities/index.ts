@@ -5,4 +5,4 @@ export * from './business';
 export * from './product';
 export * from './contact';
 export * from './system';
-
+export * from './prologue';

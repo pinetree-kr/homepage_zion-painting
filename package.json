@@ -14,6 +14,8 @@
 		"supabase:reset": "supabase db reset",
 		"supabase:push": "supabase db push",
 		"supabase:status": "supabase status",
+		"supabase:types": "npx supabase gen types typescript --project-id zwnivufcxgfrxldtxkeb --schema public > src/shared/lib/supabase-types.ts",
+		"supabase:dev:types": "npx supabase gen types typescript --local > src/shared/lib/supabase-types.ts",
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
 	},
 	"dependencies": {

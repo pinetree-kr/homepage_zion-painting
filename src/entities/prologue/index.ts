@@ -1,0 +1,1 @@
+export type { PrologueSettings, PrologueCarouselItem } from './model/types';

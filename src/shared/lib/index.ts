@@ -1,12 +1,15 @@
 // Re-export shared lib utilities if needed
 // Currently auth is in features/auth
 
-export { 
-  supabase, 
-  createServerClient,
+// Supabase 클라이언트 re-export
+export {
+  supabase,
   checkSupabaseSession,
   getSupabaseUser,
-  onAuthStateChange
+  onAuthStateChange,
+  createServerClient,
+  supabaseUrl,
+  supabasePublishableKey,
 } from './supabase';
 export type { Database } from './supabase';
 

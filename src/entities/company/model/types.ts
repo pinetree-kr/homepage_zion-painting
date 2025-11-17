@@ -1,22 +1,17 @@
 export interface CompanyInfo {
   id: string;
-  about: string;
-  history: HistoryItem[];
-  organization: string;
-  location: LocationInfo;
+  about_content: string | null;
+  organization_content: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
-export interface HistoryItem {
+export interface CompanyHistory {
   id: string;
   year: string;
-  month?: string;
+  month: string | null;
   content: string;
-  order: number;
+  display_order: number;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
-
-export interface LocationInfo {
-  address: string;
-  kakaoMapUrl: string;
-  naverMapUrl: string;
-}
-

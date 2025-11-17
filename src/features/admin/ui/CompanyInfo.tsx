@@ -9,14 +9,13 @@ import { Card } from '@/src/shared/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/shared/ui';
 import DynamicCustomEditor from './DynamicCustomEditor';
 import { toast } from 'sonner';
-import { HistoryItem } from '@/src/entities';
-import { supabase } from '@/src/shared/lib';
-import type { CompanyHistory, CompanyInfo } from '@/src/shared/lib/supabase-types';
+import { supabase } from '@/src/shared/lib/supabase/client';
+import type { CompanyHistory, CompanyInfo } from '@/src/entities/company/model/types';
 
 export default function CompanyInfo() {
-  const [aboutContent, setAboutContent] = useState('');
+  const [aboutContent, setAboutContent] = useState<string | null>(null);
   const [organizationContent, setOrganizationContent] = useState('');
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<CompanyHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -48,18 +47,19 @@ export default function CompanyInfo() {
       const { data: historyData, error: historyError } = await supabase
         .from('company_history')
         .select('*')
-        .order('display_order', { ascending: true });
+        .order('display_order', { ascending: true })
+        .overrideTypes<CompanyHistory[]>();
 
       if (historyError) {
         console.error('연혁 로드 오류:', historyError);
         toast.error('연혁을 불러오는 중 오류가 발생했습니다.');
       } else if (historyData) {
-        const historyItems: HistoryItem[] = historyData.map((item: CompanyHistory) => ({
+        const historyItems: CompanyHistory[] = historyData.map((item: CompanyHistory) => ({
           id: item.id,
           year: item.year,
           month: item.month || '',
           content: item.content,
-          order: item.display_order,
+          display_order: item.display_order,
         }));
         setHistory(historyItems);
       }
@@ -71,22 +71,22 @@ export default function CompanyInfo() {
     }
   };
 
-  const addHistoryItem = () => {
-    const newItem: HistoryItem = {
+  const addCompanyHistory = () => {
+    const newItem: CompanyHistory = {
       id: `temp-${Date.now()}`, // 임시 ID
       year: new Date().getFullYear().toString(),
       month: '',
       content: '',
-      order: history.length > 0 ? Math.max(...history.map(h => h.order)) + 1 : 1,
+      display_order: history.length > 0 ? Math.max(...history.map(h => h.display_order)) + 1 : 1,
     };
     setHistory([...history, newItem]);
   };
 
-  const removeHistoryItem = (id: string) => {
+  const removeCompanyHistory = (id: string) => {
     setHistory(history.filter(item => item.id !== id));
   };
 
-  const updateHistoryItem = (id: string, field: keyof HistoryItem, value: string) => {
+  const updateCompanyHistory = (id: string, field: keyof CompanyHistory, value: string) => {
     setHistory(history.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
@@ -149,7 +149,7 @@ export default function CompanyInfo() {
           year: item.year,
           month: item.month || null,
           content: item.content,
-          display_order: item.order || index + 1,
+          display_order: item.display_order || index + 1,
         }));
 
         const { error: insertHistoryError } = await (supabase as any)
@@ -202,7 +202,7 @@ export default function CompanyInfo() {
           <Card className="p-6">
             <h3 className="text-gray-900 mb-4 text-lg font-semibold">회사소개 내용</h3>
             <DynamicCustomEditor
-              text={aboutContent}
+              text={aboutContent || ''}
               onChange={setAboutContent}
             />
           </Card>
@@ -212,7 +212,7 @@ export default function CompanyInfo() {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-900 text-lg font-semibold">연혁 관리</h3>
-              <Button onClick={addHistoryItem} size="sm" className="gap-2">
+              <Button onClick={addCompanyHistory} size="sm" className="gap-2">
                 <Plus className="h-4 w-4" />
                 연혁 추가
               </Button>
@@ -227,7 +227,7 @@ export default function CompanyInfo() {
                       <Label>연도</Label>
                       <Input
                         value={item.year}
-                        onChange={(e) => updateHistoryItem(item.id, 'year', e.target.value)}
+                        onChange={(e) => updateCompanyHistory(item.id, 'year', e.target.value)}
                         placeholder="2024"
                       />
                     </div>
@@ -235,7 +235,7 @@ export default function CompanyInfo() {
                       <Label>월</Label>
                       <Input
                         value={item.month || ''}
-                        onChange={(e) => updateHistoryItem(item.id, 'month', e.target.value)}
+                        onChange={(e) => updateCompanyHistory(item.id, 'month', e.target.value)}
                         placeholder="01"
                       />
                     </div>
@@ -243,7 +243,7 @@ export default function CompanyInfo() {
                       <Label>내용</Label>
                       <Input
                         value={item.content}
-                        onChange={(e) => updateHistoryItem(item.id, 'content', e.target.value)}
+                        onChange={(e) => updateCompanyHistory(item.id, 'content', e.target.value)}
                         placeholder="회사 설립"
                       />
                     </div>
@@ -251,7 +251,7 @@ export default function CompanyInfo() {
                       <Button
                         variant="destructive"
                         size="icon"
-                        onClick={() => removeHistoryItem(item.id)}
+                        onClick={() => removeCompanyHistory(item.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

@@ -1,147 +1,586 @@
-/**
- * Supabase 데이터베이스 타입 정의
- * 
- * Supabase CLI를 사용하여 타입을 자동 생성하려면:
- * npx supabase gen types typescript --project-id [your-project-id] > src/shared/lib/supabase-types.ts
- * 
- * 또는 Supabase 대시보드에서 직접 생성된 타입을 복사하여 사용할 수 있습니다.
- */
-
-
-// profiles 테이블 타입 정의
-export interface Profile {
-  id: string;
-  name: string | null;
-  email: string | null;
-  role: 'admin' | 'user' | null;
-  status: 'active' | 'inactive' | null;
-  email_verified: boolean | null;
-  last_login: string | null;
-  phone: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-// administrators 테이블 타입 정의
-export interface Administrator {
-  id: string;
-  role: 'system' | 'contents';
-  created_at: string;
-  updated_at: string;
-}
-
-// prologue_settings 테이블 타입 정의
-export interface PrologueSettings {
-  id: string;
-  default_title: string | null;
-  default_description: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-// prologue_carousel_items 테이블 타입 정의
-export interface PrologueCarouselItem {
-  id: string;
-  image_url: string;
-  title: string | null;
-  description: string | null;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
-}
-
-// company_info 테이블 타입 정의
-export interface CompanyInfo {
-  id: string;
-  about_content: string | null;
-  organization_content: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-// company_history 테이블 타입 정의
-export interface CompanyHistory {
-  id: string;
-  year: string;
-  month: string | null;
-  content: string;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
-}
-
-// 기본 타입 정의 (실제 데이터베이스 스키마에 맞게 수정 필요)
-export interface Tables {
-  profiles: {
-    Row: Profile;
-    Insert: Omit<Profile, 'created_at' | 'updated_at'> & {
-      created_at?: string;
-      updated_at?: string;
-    };
-    Update: Partial<Omit<Profile, 'id' | 'created_at'>> & {
-      updated_at?: string;
-    };
-  };
-  administrators: {
-    Row: Administrator;
-    Insert: Omit<Administrator, 'created_at' | 'updated_at'> & {
-      created_at?: string;
-      updated_at?: string;
-    };
-    Update: Partial<Omit<Administrator, 'id' | 'created_at'>> & {
-      updated_at?: string;
-    };
-  };
-  prologue_settings: {
-    Row: PrologueSettings;
-    Insert: Omit<PrologueSettings, 'id' | 'created_at' | 'updated_at'> & {
-      id?: string;
-      created_at?: string;
-      updated_at?: string;
-    };
-    Update: Partial<Omit<PrologueSettings, 'id' | 'created_at'>> & {
-      updated_at?: string;
-    };
-  };
-  prologue_carousel_items: {
-    Row: PrologueCarouselItem;
-    Insert: Omit<PrologueCarouselItem, 'id' | 'created_at' | 'updated_at'> & {
-      id?: string;
-      created_at?: string;
-      updated_at?: string;
-    };
-    Update: Partial<Omit<PrologueCarouselItem, 'id' | 'created_at'>> & {
-      updated_at?: string;
-    };
-  };
-  company_info: {
-    Row: CompanyInfo;
-    Insert: Omit<CompanyInfo, 'id' | 'created_at' | 'updated_at'> & {
-      id?: string;
-      created_at?: string;
-      updated_at?: string;
-    };
-    Update: Partial<Omit<CompanyInfo, 'id' | 'created_at'>> & {
-      updated_at?: string;
-    };
-  };
-  company_history: {
-    Row: CompanyHistory;
-    Insert: Omit<CompanyHistory, 'id' | 'created_at' | 'updated_at'> & {
-      id?: string;
-      created_at?: string;
-      updated_at?: string;
-    };
-    Update: Partial<Omit<CompanyHistory, 'id' | 'created_at'>> & {
-      updated_at?: string;
-    };
-  };
-  // 추가 테이블 타입들을 여기에 정의
-}
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
-    Tables: Tables;
-  };
-};
+    Tables: {
+      administrators: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          role?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      business_achievements: {
+        Row: {
+          achievement_date: string
+          category: string | null
+          content: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          achievement_date: string
+          category?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          achievement_date?: string
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      business_areas: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number
+          features: Json | null
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number
+          features?: Json | null
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number
+          features?: Json | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      comments: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string | null
+          id: string
+          parent_id: string | null
+          post_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          parent_id?: string | null
+          post_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          parent_id?: string | null
+          post_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_history: {
+        Row: {
+          content: string
+          created_at: string | null
+          display_order: number
+          id: string
+          month: string | null
+          updated_at: string | null
+          year: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          month?: string | null
+          updated_at?: string | null
+          year: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          month?: string | null
+          updated_at?: string | null
+          year?: string
+        }
+        Relationships: []
+      }
+      company_info: {
+        Row: {
+          about_content: string | null
+          created_at: string | null
+          id: string
+          organization_content: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          about_content?: string | null
+          created_at?: string | null
+          id?: string
+          organization_content?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          about_content?: string | null
+          created_at?: string | null
+          id?: string
+          organization_content?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      contact_info: {
+        Row: {
+          address: string
+          business_hours: string | null
+          created_at: string | null
+          email: string
+          fax: string | null
+          id: string
+          kakao_map_url: string | null
+          naver_map_url: string | null
+          phone_main: string | null
+          phone_manager: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          business_hours?: string | null
+          created_at?: string | null
+          email: string
+          fax?: string | null
+          id?: string
+          kakao_map_url?: string | null
+          naver_map_url?: string | null
+          phone_main?: string | null
+          phone_manager?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          business_hours?: string | null
+          created_at?: string | null
+          email?: string
+          fax?: string | null
+          id?: string
+          kakao_map_url?: string | null
+          naver_map_url?: string | null
+          phone_main?: string | null
+          phone_manager?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      posts: {
+        Row: {
+          author_id: string
+          category: string | null
+          content: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id: string
+          category?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          status?: string
+          title: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          specs: Json | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          specs?: Json | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          specs?: Json | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          email_verified: boolean | null
+          id: string
+          last_login: string | null
+          name: string | null
+          phone: string | null
+          role: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          email_verified?: boolean | null
+          id: string
+          last_login?: string | null
+          name?: string | null
+          phone?: string | null
+          role?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          email_verified?: boolean | null
+          id?: string
+          last_login?: string | null
+          name?: string | null
+          phone?: string | null
+          role?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      prologue_carousel_items: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number
+          id: string
+          image_url: string
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          image_url: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      prologue_settings: {
+        Row: {
+          created_at: string | null
+          default_description: string | null
+          default_title: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_description?: string | null
+          default_title?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_description?: string | null
+          default_title?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      is_admin: { Args: { user_id: string }; Returns: boolean }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {},
+  },
+} as const
 

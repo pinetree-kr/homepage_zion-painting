@@ -1,44 +1,47 @@
-import type { User } from '@/src/entities/user';
+import type { Profile, User } from '@/src/entities/user';
 
-const MOCK_USERS = [
+const MOCK_USERS: Profile[] = [
   {
     id: '1',
     email: 'admin@zion.com',
-    password: 'admin123',
     name: '관리자',
     role: 'admin' as const,
-    emailVerified: true,
+    email_verified: true,
+    status: 'active' as const,
+    phone: null,
   },
   {
     id: '2',
     email: 'user@zion.com',
-    password: 'user123',
     name: '김철수',
     role: 'user' as const,
-    emailVerified: true,
+    email_verified: true,
+    status: 'active' as const,
+    phone: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 ];
 
 // Store for registered users (in a real app, this would be in a database)
 const registeredUsers = [...MOCK_USERS];
 
-export function login(email: string, password: string): User | null {
+export function login(email: string, password: string): Partial<Profile> | null {
   if (typeof window === 'undefined') return null;
 
   const user = registeredUsers.find(
-    (u) => u.email === email && u.password === password
+    (u) => u.email === email
   );
 
   if (user) {
-    const { password: _, ...userWithoutPassword } = user;
-    localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-    return userWithoutPassword;
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    return user;
   }
 
   return null;
 }
 
-export function register(name: string, email: string, password: string): User | null {
+export function register(name: string, email: string, password: string): Partial<Profile> | null {
   if (typeof window === 'undefined') return null;
 
   // Check if user already exists
@@ -54,7 +57,9 @@ export function register(name: string, email: string, password: string): User | 
     password,
     name,
     role: 'user' as const,
-    emailVerified: false,
+    email_verified: false,
+    status: 'active' as const,
+    phone: null,
   };
 
   registeredUsers.push(newUser);
@@ -65,7 +70,7 @@ export function register(name: string, email: string, password: string): User | 
     email: newUser.email,
     name: newUser.name,
     role: newUser.role,
-    emailVerified: false,
+    email_verified: false,
   };
 }
 
@@ -76,7 +81,7 @@ export function logout() {
 
 export function getCurrentUser(): User | null {
   if (typeof window === 'undefined') return null;
-  
+
   const userStr = localStorage.getItem('currentUser');
   if (userStr) {
     try {
@@ -102,13 +107,12 @@ export function verifyEmail(email: string, token: string): boolean {
     return false;
   }
 
-  registeredUsers[userIndex].emailVerified = true;
-  
+  registeredUsers[userIndex].email_verified = true;
+
   // Auto-login after verification
   const user = registeredUsers[userIndex];
-  const { password: _, ...userWithoutPassword } = user;
-  localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-  
+  localStorage.setItem('currentUser', JSON.stringify(user));
+
   return true;
 }
 

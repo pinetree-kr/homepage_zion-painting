@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { logout, User } from '@/src/features/auth';
 import { AdminLayout } from '@/src/widgets/admin-layout';
-import { checkSupabaseSession, getSupabaseUser, supabase } from '@/src/shared/lib';
-import type { Profile } from '@/src/shared/lib/supabase-types';
+import { checkSupabaseSession, getSupabaseUser, supabase } from '@/src/shared/lib/supabase/client';
+import type { Profile } from '@/src/entities/user/model/types';
 
 export default function AdminLayoutWrapper({
   children,
@@ -119,7 +119,7 @@ export default function AdminLayoutWrapper({
   const getActiveTab = () => {
     if (pathname?.startsWith('/admin/info')) {
       if (pathname === '/admin/info/prologue') return 'prologue';
-      if (pathname === '/admin/info/company') return 'company-info';
+      if (pathname.startsWith('/admin/info/company')) return 'company-info';
       if (pathname === '/admin/info/business') return 'business-info';
       if (pathname === '/admin/info/products') return 'products-admin';
       if (pathname === '/admin/info/contacts') return 'contact-info';
@@ -145,7 +145,7 @@ export default function AdminLayoutWrapper({
   const handleTabChange = (tab: string) => {
     const routeMap: Record<string, string> = {
       'prologue': '/admin/info/prologue',
-      'company-info': '/admin/info/company',
+      'company-info': '/admin/info/company/about',
       'business-info': '/admin/info/business',
       'products-admin': '/admin/info/products',
       'contact-info': '/admin/info/contacts',

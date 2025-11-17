@@ -1,5 +1,5 @@
-import { createServerClient } from '@/src/shared/lib';
-import type { PrologueCarouselItem } from '@/src/shared/lib/supabase-types';
+import { createServerClient } from '@/src/shared/lib/supabase/server';
+import type { PrologueCarouselItem } from '@/src/entities/prologue/model/types';
 import HeroCarousel from './HeroCarousel';
 import HeroContent from './HeroContent';
 
@@ -15,21 +15,23 @@ interface HeroCarouselItem {
 }
 
 async function getCarouselData() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   try {
     // prologue_settings 로드
     const { data: settingsData, error: settingsError } = await supabase
       .from('prologue_settings')
       .select('default_title, default_description')
-      .single() as { data: { 
-        default_title: string | null;
-        default_description: string | null;
-      } | null; error: any };
+      .single() as {
+        data: {
+          default_title: string | null;
+          default_description: string | null;
+        } | null; error: any
+      };
 
     let settingsDefaultTitle: string | null = null;
     let settingsDefaultDescription: string | null = null;
-    
+
     if (settingsError && settingsError.code !== 'PGRST116') {
       // PGRST116은 레코드가 없을 때 발생하는 에러 (무시)
       console.error('프롤로그 설정 로드 오류:', settingsError);
@@ -72,7 +74,8 @@ async function getCarouselData() {
     const { data, error } = await supabase
       .from('prologue_carousel_items')
       .select('*')
-      .order('display_order', { ascending: true });
+      .order('display_order', { ascending: true })
+      .overrideTypes<PrologueCarouselItem[]>();
 
     if (error) {
       console.error('캐러셀 데이터 로드 오류:', error);
@@ -82,13 +85,13 @@ async function getCarouselData() {
     }
 
     if (data && data.length > 0) {
-      const items: HeroCarouselItem[] = data.map((item: PrologueCarouselItem) => ({
+      const items: HeroCarouselItem[] = data.map((item) => ({
         id: item.id,
         src: item.image_url,
         alt: getTitleWithPriority(item.title),
         title: getTitleWithPriority(item.title),
         description: getDescriptionWithPriority(item.description),
-      }));
+      } as HeroCarouselItem));
 
       return {
         items,
@@ -123,8 +126,8 @@ export default async function Hero() {
     >
       {/* Carousel 배경 */}
       <div className="absolute inset-0 z-0">
-        <HeroCarousel 
-          items={items} 
+        <HeroCarousel
+          items={items}
           defaultTitle={defaultTitle || DEFAULT_TITLE}
           defaultDescription={defaultDescription || DEFAULT_DESCRIPTION}
         />
@@ -137,9 +140,9 @@ export default async function Hero() {
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#2CA7DB] rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '4s' }}></div>
       </div> */}
 
-      <HeroContent 
-        defaultTitle={defaultTitle || DEFAULT_TITLE} 
-        defaultDescription={defaultDescription || DEFAULT_DESCRIPTION} 
+      <HeroContent
+        defaultTitle={defaultTitle || DEFAULT_TITLE}
+        defaultDescription={defaultDescription || DEFAULT_DESCRIPTION}
       />
     </section>
   );

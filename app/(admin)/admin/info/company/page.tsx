@@ -1,8 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import CompanyInfo from '@/src/features/admin/ui/CompanyInfo';
-
-export default function CompanyInfoPage() {
-  return <CompanyInfo />;
+export default function CompanyPage() {
+  redirect('/admin/info/company/about');
 }
 

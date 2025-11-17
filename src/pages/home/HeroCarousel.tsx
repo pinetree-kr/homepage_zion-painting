@@ -22,9 +22,9 @@ interface HeroCarouselProps {
 
 const gradientBackground = 'linear-gradient(135deg, rgba(120, 120, 120, 1) 0%, rgba(80, 80, 80, 1) 50%, rgba(100, 100, 100, 1) 100%)';
 
-export default function HeroCarousel({ 
-  items, 
-  defaultTitle, 
+export default function HeroCarousel({
+  items,
+  defaultTitle,
   defaultDescription,
   onTitleChange,
   onDescriptionChange
@@ -40,13 +40,13 @@ export default function HeroCarousel({
     if (items[index]) {
       const newTitle = items[index].title;
       const newDescription = items[index].description;
-      
+
       setCurrentTitle(newTitle);
       setCurrentDescription(newDescription);
-      
+
       onTitleChange?.(newTitle);
       onDescriptionChange?.(newDescription);
-      
+
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('heroTitleChange', { detail: newTitle }));
         window.dispatchEvent(new CustomEvent('heroDescriptionChange', { detail: newDescription }));
@@ -54,10 +54,10 @@ export default function HeroCarousel({
     } else {
       setCurrentTitle(defaultTitle);
       setCurrentDescription(defaultDescription);
-      
+
       onTitleChange?.(defaultTitle);
       onDescriptionChange?.(defaultDescription);
-      
+
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('heroTitleChange', { detail: defaultTitle }));
         window.dispatchEvent(new CustomEvent('heroDescriptionChange', { detail: defaultDescription }));
@@ -102,7 +102,7 @@ export default function HeroCarousel({
 
   // 자동 슬라이드 전환
   useEffect(() => {
-    if (!api || items.length <= 1 || isPaused) return;
+    if (!api || items?.length <= 1 || isPaused) return;
 
     const interval = setInterval(() => {
       api.scrollNext();
@@ -111,11 +111,11 @@ export default function HeroCarousel({
     return () => {
       clearInterval(interval);
     };
-  }, [api, items.length, isPaused]);
+  }, [api, items?.length, isPaused]);
 
-  if (items.length === 0) {
+  if (items?.length === 0) {
     return (
-      <div 
+      <div
         className="w-full h-full"
         style={{ background: gradientBackground }}
       />
@@ -133,7 +133,7 @@ export default function HeroCarousel({
         setApi={setApi}
       >
         <CarouselContent className="h-screen">
-          {items.map((item, index) => (
+          {items?.map((item, index) => (
             <CarouselItem key={item.id} className="h-screen p-0">
               <div className="relative w-full h-full">
                 <Image
@@ -159,18 +159,17 @@ export default function HeroCarousel({
           ))}
         </CarouselContent>
       </Carousel>
-      
+
       {/* 인디케이터 */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 flex gap-2 pointer-events-auto">
-        {items.map((_, index) => (
+        {items?.map((_, index) => (
           <button
             key={index}
             onClick={() => scrollTo(index)}
-            className={`transition-all duration-300 rounded-full cursor-pointer ${
-              current === index
-                ? 'w-8 h-2 bg-white shadow-[0_0_8px_rgba(255,255,255,0.6)]'
-                : 'w-2 h-2 bg-gray-400 shadow-[0_0_4px_rgba(0,0,0,0.3)] hover:bg-gray-300'
-            }`}
+            className={`transition-all duration-300 rounded-full cursor-pointer ${current === index
+              ? 'w-8 h-2 bg-white shadow-[0_0_8px_rgba(255,255,255,0.6)]'
+              : 'w-2 h-2 bg-gray-400 shadow-[0_0_4px_rgba(0,0,0,0.3)] hover:bg-gray-300'
+              }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}

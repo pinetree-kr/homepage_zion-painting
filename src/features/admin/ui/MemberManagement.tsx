@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { Member } from '@/src/entities';
-import { 
-  Users, 
-  Search, 
-  UserX, 
+import {
+  Users,
+  Search,
+  UserX,
   UserCheck,
   Mail,
   Phone,
@@ -33,20 +33,24 @@ const mockMembers: Member[] = [
     email: 'user1@example.com',
     name: '김철수',
     role: 'user',
-    createdAt: '2024-01-15T10:00:00Z',
+    created_at: '2024-01-15T10:00:00Z',
     status: 'active',
-    lastLogin: '2024-11-09T15:30:00Z',
-    phone: '010-1234-5678'
+    last_login: '2024-11-09T15:30:00Z',
+    updated_at: '2024-01-15T10:00:00Z',
+    phone: '010-1234-5678',
+    email_verified: false,
   },
   {
     id: '2',
     email: 'user2@example.com',
     name: '이영희',
     role: 'user',
-    createdAt: '2024-02-20T14:20:00Z',
+    created_at: '2024-02-20T14:20:00Z',
     status: 'active',
-    lastLogin: '2024-11-08T09:15:00Z',
-    phone: '010-2345-6789'
+    last_login: '2024-11-08T09:15:00Z',
+    updated_at: '2024-02-20T14:20:00Z',
+    email_verified: false,
+    phone: '010-2345-6789',
   },
 ];
 
@@ -57,18 +61,19 @@ export default function MemberManagement() {
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
 
   const filteredMembers = members.filter(member => {
-    const matchesSearch = 
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      member.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.phone?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || member.status === statusFilter;
     const matchesRole = roleFilter === 'all' || member.role === roleFilter;
-    
+
     return matchesSearch && matchesStatus && matchesRole;
   });
 
   const handleToggleStatus = (memberId: string) => {
-    setMembers(members.map(member => 
-      member.id === memberId 
+    setMembers(members.map(member =>
+      member.id === memberId
         ? { ...member, status: member.status === 'active' ? 'inactive' : 'active' }
         : member
     ));
@@ -77,9 +82,9 @@ export default function MemberManagement() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', { 
-      year: 'numeric', 
-      month: '2-digit', 
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
@@ -100,9 +105,9 @@ export default function MemberManagement() {
       accessor: (row) => (
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] flex items-center justify-center text-white text-sm flex-shrink-0">
-            {row.name.charAt(0)}
+            {row.name?.charAt(0)}
           </div>
-          <span>{row.name}</span>
+          <span>{row.name ?? '-'}</span>
         </div>
       ),
       sortable: true,
@@ -163,7 +168,7 @@ export default function MemberManagement() {
       accessor: (row) => (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Calendar className="h-3 w-3" />
-          {formatDate(row.createdAt)}
+          {formatDate(row.created_at ?? '')}
         </div>
       ),
       sortable: true,
@@ -174,7 +179,7 @@ export default function MemberManagement() {
       header: '최근 접속',
       accessor: (row) => (
         <span className="text-sm text-gray-600">
-          {row.lastLogin ? formatDate(row.lastLogin) : '-'}
+          {row.last_login ? formatDate(row.last_login ?? '') : '-'}
         </span>
       ),
       sortable: true,
@@ -209,7 +214,7 @@ export default function MemberManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">활성 회원</CardTitle>
@@ -221,7 +226,7 @@ export default function MemberManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">비활성 회원</CardTitle>
@@ -233,7 +238,7 @@ export default function MemberManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">관리자</CardTitle>

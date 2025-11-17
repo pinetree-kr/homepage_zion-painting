@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { Member } from '@/src/entities';
-import { 
-  Shield, 
-  UserPlus, 
-  Mail, 
+import {
+  Shield,
+  UserPlus,
+  Mail,
   Trash2,
   Edit,
   Calendar
@@ -32,9 +32,12 @@ const mockAdmins: Member[] = [
     email: 'admin@zion.com',
     name: '시온관리자',
     role: 'admin',
-    createdAt: '2024-01-01T00:00:00Z',
+    created_at: '2024-01-01T00:00:00Z',
     status: 'active',
-    lastLogin: '2024-11-10T08:00:00Z',
+    last_login: '2024-11-10T08:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    email_verified: false,
+    phone: null,
   },
 ];
 
@@ -57,8 +60,12 @@ export default function AdminManagement() {
       email: inviteForm.email,
       name: inviteForm.name,
       role: 'admin',
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: null,
+      email_verified: false,
+      phone: null,
       status: 'active',
+      last_login: null,
     };
 
     setAdmins([...admins, newAdmin]);
@@ -70,7 +77,7 @@ export default function AdminManagement() {
   const handleEdit = () => {
     if (!editingAdmin) return;
 
-    setAdmins(admins.map(admin => 
+    setAdmins(admins.map(admin =>
       admin.id === editingAdmin.id ? editingAdmin : admin
     ));
     setEditingAdmin(null);
@@ -88,9 +95,9 @@ export default function AdminManagement() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', { 
-      year: 'numeric', 
-      month: '2-digit', 
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
@@ -104,10 +111,10 @@ export default function AdminManagement() {
       accessor: (row) => (
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] flex items-center justify-center text-white text-sm flex-shrink-0">
-            {row.name.charAt(0)}
+            {row.name?.charAt(0)}
           </div>
           <div className="flex items-center gap-2">
-            <span>{row.name}</span>
+            <span>{row.name ?? '-'}</span>
             <Badge variant="outline" className="text-xs">
               <Shield className="h-3 w-3 mr-1" />
               관리자
@@ -142,23 +149,23 @@ export default function AdminManagement() {
       width: '15%'
     },
     {
-      id: 'createdAt',
+      id: 'created_at',
       header: '등록일',
       accessor: (row) => (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Calendar className="h-3 w-3" />
-          {formatDate(row.createdAt)}
+          {formatDate(row.created_at ?? '')}
         </div>
       ),
       sortable: true,
       width: '17.5%'
     },
     {
-      id: 'lastLogin',
+      id: 'last_login',
       header: '최근 접속',
       accessor: (row) => (
         <span className="text-sm text-gray-600">
-          {row.lastLogin ? formatDate(row.lastLogin) : '-'}
+          {row.last_login ? formatDate(row.last_login ?? '') : '-'}
         </span>
       ),
       sortable: true,
@@ -190,7 +197,7 @@ export default function AdminManagement() {
           <h1 className="text-gray-900 text-2xl font-semibold mb-2">관리자 관리</h1>
           <p className="text-gray-500 text-sm">시스템 관리자를 추가, 수정, 삭제합니다</p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowInviteDialog(true)}
           className="bg-gradient-to-r from-[#1A2C6D] to-[#2CA7DB] hover:opacity-90"
         >
@@ -211,7 +218,7 @@ export default function AdminManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">활성 관리자</CardTitle>
@@ -223,7 +230,7 @@ export default function AdminManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">비활성 관리자</CardTitle>
@@ -309,7 +316,7 @@ export default function AdminManagement() {
                 <Label htmlFor="edit-name">이름</Label>
                 <Input
                   id="edit-name"
-                  value={editingAdmin.name}
+                  value={editingAdmin.name ?? ''}
                   onChange={(e) => setEditingAdmin({ ...editingAdmin, name: e.target.value })}
                 />
               </div>
@@ -318,7 +325,7 @@ export default function AdminManagement() {
                 <Input
                   id="edit-email"
                   type="email"
-                  value={editingAdmin.email}
+                  value={editingAdmin.email ?? ''}
                   onChange={(e) => setEditingAdmin({ ...editingAdmin, email: e.target.value })}
                 />
               </div>

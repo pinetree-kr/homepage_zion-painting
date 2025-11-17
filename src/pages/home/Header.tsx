@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { isAdmin, type User } from '@/src/features/auth';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/src/shared/ui';
-import { checkSupabaseSession, getSupabaseUser, supabase, onAuthStateChange } from '@/src/shared/lib';
-import type { Profile } from '@/src/shared/lib/supabase-types';
+import { checkSupabaseSession, getSupabaseUser, supabase, onAuthStateChange } from '@/src/shared/lib/supabase/client';
+import type { Profile } from '@/src/entities/user';
 import { LogOut, Settings } from 'lucide-react';
 
 export default function Header() {
@@ -234,9 +234,9 @@ export default function Header() {
                         }`}
                     >
                       <div className="w-8 h-8 rounded-full bg-[#1A2C6D] flex items-center justify-center text-white text-sm font-medium">
-                        {currentUser.name.charAt(0)}
+                        {currentUser.name?.charAt(0)}
                       </div>
-                      <span className="hidden lg:inline">{currentUser.name}</span>
+                      <span className="hidden lg:inline">{currentUser.name ?? '-'}</span>
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">

@@ -1,15 +1,14 @@
-import { LocationInfo } from '@/src/entities/company/model/types';
-
 export interface ContactInfo {
   id: string;
   email: string;
   address: string;
-  businessHours: string;
-  phone: {
-    main: string;
-    manager: string;
-  };
+  business_hours: string;
+  phone_main: string;
+  phone_manager: string;
   fax: string;
-  location: LocationInfo;
+  kakao_map_url: string;
+  naver_map_url: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 

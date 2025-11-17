@@ -9,14 +9,14 @@ import { Label } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import { supabase } from '@/src/shared/lib/supabase';
+import { supabase } from '@/src/shared/lib/supabase/client';
+import { PrologueCarouselItem, PrologueSettings } from '@/src/entities';
 
 interface CarouselItem {
   id: string;
   dbId?: string; // 데이터베이스 ID (저장된 항목만)
   imageUrl: string;
   imagePath?: string; // Storage 경로 (삭제용)
-  text: string; // 하위 호환성을 위해 유지
   title: string;
   description: string;
   order: number;
@@ -45,10 +45,8 @@ export default function Prologue() {
       const { data: settingsData, error: settingsError } = await supabase
         .from('prologue_settings')
         .select('default_title, default_description')
-        .single() as { data: { 
-          default_title: string | null;
-          default_description: string | null;
-        } | null; error: any };
+        .single()
+        .overrideTypes<PrologueSettings>();
 
       if (settingsError && settingsError.code !== 'PGRST116') {
         // PGRST116은 레코드가 없을 때 발생하는 에러 (무시)
@@ -62,13 +60,17 @@ export default function Prologue() {
       const { data: itemsData, error: itemsError } = await supabase
         .from('prologue_carousel_items')
         .select('*')
-        .order('display_order', { ascending: true }) as { data: Array<{
-          id: string;
-          image_url: string;
-          title: string | null;
-          description: string | null;
-          display_order: number;
-        }> | null; error: any };
+        .order('display_order', { ascending: true })
+        .overrideTypes<PrologueCarouselItem[]>();
+      // .order('display_order', { ascending: true }) as {
+      //   data: Array<{
+      //     id: string;
+      //     image_url: string;
+      //     title: string | null;
+      //     description: string | null;
+      //     display_order: number;
+      //   }> | null; error: any
+      // };
 
       if (itemsError) {
         console.error('캐러셀 아이템 로드 오류:', itemsError);
@@ -82,7 +84,7 @@ export default function Prologue() {
           title: item.title || '',
           description: item.description || '',
           order: item.display_order,
-        }));
+        } as CarouselItem));
         setCarouselItems(items);
       }
     } catch (error) {
@@ -142,10 +144,10 @@ export default function Prologue() {
 
   const processFiles = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
-    
+
     for (let index = 0; index < fileArray.length; index++) {
       const file = fileArray[index];
-      
+
       if (!file.type.startsWith('image/')) {
         toast.error(`${file.name}: 이미지 파일만 업로드 가능합니다.`);
         continue;
@@ -169,7 +171,7 @@ export default function Prologue() {
           order: carouselItems.length + index + 1,
           isUploading: true,
         };
-        
+
         setCarouselItems((prev) => [...prev, tempItem]);
 
         // Supabase Storage에 업로드
@@ -179,11 +181,11 @@ export default function Prologue() {
               prev.map((item) =>
                 item.id === tempId
                   ? {
-                      ...item,
-                      imageUrl: publicUrl,
-                      imagePath: publicUrl.replace(/^.*\/storage\/v1\/object\/public\/prologue-carousel\//, ''),
-                      isUploading: false,
-                    }
+                    ...item,
+                    imageUrl: publicUrl,
+                    imagePath: publicUrl.replace(/^.*\/storage\/v1\/object\/public\/prologue-carousel\//, ''),
+                    isUploading: false,
+                  }
                   : item
               )
             );
@@ -234,7 +236,7 @@ export default function Prologue() {
 
   const removeCarouselItem = async (id: string) => {
     const item = carouselItems.find((item) => item.id === id);
-    
+
     // Storage에서 이미지 삭제
     if (item?.imagePath) {
       await deleteImageFromStorage(item.imagePath);
@@ -280,7 +282,7 @@ export default function Prologue() {
         // 기존 레코드 업데이트
         const { error: updateError } = await (supabase as any)
           .from('prologue_settings')
-          .update({ 
+          .update({
             default_title: defaultTitle,
             default_description: defaultDescription
           })
@@ -295,7 +297,7 @@ export default function Prologue() {
         // 새 레코드 삽입
         const { error: insertError } = await (supabase as any)
           .from('prologue_settings')
-          .insert({ 
+          .insert({
             default_title: defaultTitle,
             default_description: defaultDescription
           });
@@ -440,11 +442,10 @@ export default function Prologue() {
 
             {carouselItems.length === 0 ? (
               <div
-                className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer ${
-                  isDragging
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-                }`}
+                className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer ${isDragging
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                  }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
