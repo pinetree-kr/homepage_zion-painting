@@ -31,7 +31,8 @@ CREATE INDEX IF NOT EXISTS idx_administrators_role ON administrators(role);
 -- 1. 프롤로그 설정 테이블
 CREATE TABLE IF NOT EXISTS prologue_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  default_text TEXT,
+  default_title TEXT,
+  default_description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -43,7 +44,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS prologue_settings_single_row ON prologue_setti
 CREATE TABLE IF NOT EXISTS prologue_carousel_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   image_url TEXT NOT NULL,
-  text TEXT,
+  title TEXT,
+  description TEXT,
   display_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -236,27 +238,6 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 
--- 프로필 정책: 사용자는 자신의 프로필을 읽고 수정할 수 있음
-CREATE POLICY "Users can view own profile" ON profiles
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile" ON profiles
-  FOR UPDATE USING (auth.uid() = id);
-
--- 관리자 정책: 관리자는 모든 프로필을 볼 수 있음
-CREATE POLICY "Admins can view all profiles" ON profiles
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid()
-    )
-  );
-
--- 관리자 테이블 정책: 사용자는 자신의 레코드를 읽을 수 있음
--- 이렇게 하면 로그인 시 자신의 관리자 여부를 확인할 수 있음
-CREATE POLICY "Users can view own administrator record" ON administrators
-  FOR SELECT USING (auth.uid() = id);
-
 -- 관리자 여부를 확인하는 SECURITY DEFINER 함수 생성
 -- 이 함수는 RLS를 우회하여 무한 재귀 없이 관리자 여부를 확인할 수 있습니다
 CREATE OR REPLACE FUNCTION is_admin(user_id UUID)
@@ -267,10 +248,61 @@ SET search_path = public
 STABLE
 AS $$
   SELECT EXISTS (
-    SELECT 1 FROM administrators 
-    WHERE administrators.id = user_id
+    -- SELECT 1 FROM administrators 
+    -- WHERE administrators.id = user_id
+    SELECT 1 FROM profiles
+    WHERE profiles.id = user_id AND profiles.role = 'admin'
   );
 $$;
+
+
+-- -- NOT USING THIS FUNCTIONS NOW
+
+-- CREATE OR REPLACE FUNCTION is_system_admin(user_id UUID)
+-- RETURNS BOOLEAN
+-- LANGUAGE sql
+-- SECURITY DEFINER
+-- SET search_path = public
+-- STABLE
+-- AS $$
+--   SELECT EXISTS (
+--     SELECT 1 FROM administrators 
+--     WHERE administrators.id = user_id
+--     AND administrators.role = 'system'
+--   );
+-- $$;
+
+-- CREATE OR REPLACE FUNCTION is_contents_admin(user_id UUID)
+-- RETURNS BOOLEAN
+-- LANGUAGE sql
+-- SECURITY DEFINER
+-- SET search_path = public
+-- STABLE
+-- AS $$
+--   SELECT EXISTS (
+--     SELECT 1 FROM administrators 
+--     WHERE administrators.id = user_id
+--     AND administrators.role = 'contents'
+--   );
+-- $$;
+
+
+-- 프로필 정책: 사용자는 자신의 프로필을 읽고 수정할 수 있음
+CREATE POLICY "Users can view own profile" ON profiles
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" ON profiles
+  FOR UPDATE USING (auth.uid() = id);
+
+-- 관리자 정책: 관리자는 모든 프로필을 볼 수 있음
+CREATE POLICY "Admins can view all profiles" ON profiles
+  FOR SELECT USING (is_admin(auth.uid()));
+
+-- 관리자 테이블 정책: 사용자는 자신의 레코드를 읽을 수 있음
+-- 이렇게 하면 로그인 시 자신의 관리자 여부를 확인할 수 있음
+CREATE POLICY "Users can view own administrator record" ON administrators
+  FOR SELECT USING (auth.uid() = id);
+
 
 -- 관리자는 모든 관리자 레코드를 볼 수 있음 (SECURITY DEFINER 함수 사용)
 CREATE POLICY "Admins can view all administrators" ON administrators
@@ -330,109 +362,107 @@ CREATE POLICY "Authors can view comments on own posts" ON comments
 
 -- 관리자는 모든 댓글을 볼 수 있음
 CREATE POLICY "Admins can view all comments" ON comments
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid()
-    )
-  );
+  FOR SELECT USING (is_admin(auth.uid()));
 
--- 관리자만 수정/삭제 가능하도록 설정 (시스템 관리자만)
-CREATE POLICY "System admin write access for prologue_settings" ON prologue_settings
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
-  );
+-- 관리자만 쓰기/수정/삭제 가능하도록 설정 (is_admin 함수 활용)
+-- 기존 정책 삭제 (있다면)
+DROP POLICY IF EXISTS "System admin write access for prologue_settings" ON prologue_settings;
+DROP POLICY IF EXISTS "System admin write access for prologue_carousel_items" ON prologue_carousel_items;
+DROP POLICY IF EXISTS "System admin write access for company_info" ON company_info;
+DROP POLICY IF EXISTS "System admin write access for company_history" ON company_history;
+DROP POLICY IF EXISTS "System admin write access for business_areas" ON business_areas;
+DROP POLICY IF EXISTS "System admin write access for business_achievements" ON business_achievements;
+DROP POLICY IF EXISTS "System admin write access for contact_info" ON contact_info;
+DROP POLICY IF EXISTS "System admin write access for products" ON products;
 
-CREATE POLICY "System admin write access for prologue_carousel_items" ON prologue_carousel_items
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
-  );
+-- 새 정책 생성 (is_admin 함수 활용)
+CREATE POLICY "Admin write access for prologue_settings" ON prologue_settings
+  FOR INSERT WITH CHECK (is_admin(auth.uid()));
 
-CREATE POLICY "System admin write access for company_info" ON company_info
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
-  );
+CREATE POLICY "Admin update access for prologue_settings" ON prologue_settings
+  FOR UPDATE USING (is_admin(auth.uid()));
 
-CREATE POLICY "System admin write access for company_history" ON company_history
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
-  );
+CREATE POLICY "Admin delete access for prologue_settings" ON prologue_settings
+  FOR DELETE USING (is_admin(auth.uid()));
 
-CREATE POLICY "System admin write access for business_areas" ON business_areas
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
-  );
+CREATE POLICY "Admin write access for prologue_carousel_items" ON prologue_carousel_items
+  FOR INSERT WITH CHECK (is_admin(auth.uid()));
 
-CREATE POLICY "System admin write access for business_achievements" ON business_achievements
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
-  );
+CREATE POLICY "Admin update access for prologue_carousel_items" ON prologue_carousel_items
+  FOR UPDATE USING (is_admin(auth.uid()));
 
-CREATE POLICY "System admin write access for contact_info" ON contact_info
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
-  );
+CREATE POLICY "Admin delete access for prologue_carousel_items" ON prologue_carousel_items
+  FOR DELETE USING (is_admin(auth.uid()));
 
-CREATE POLICY "System admin write access for products" ON products
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
-  );
+CREATE POLICY "Admin write access for company_info" ON company_info
+  FOR INSERT WITH CHECK (is_admin(auth.uid()));
+
+CREATE POLICY "Admin update access for company_info" ON company_info
+  FOR UPDATE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin delete access for company_info" ON company_info
+  FOR DELETE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin write access for company_history" ON company_history
+  FOR INSERT WITH CHECK (is_admin(auth.uid()));
+
+CREATE POLICY "Admin update access for company_history" ON company_history
+  FOR UPDATE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin delete access for company_history" ON company_history
+  FOR DELETE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin write access for business_areas" ON business_areas
+  FOR INSERT WITH CHECK (is_admin(auth.uid()));
+
+CREATE POLICY "Admin update access for business_areas" ON business_areas
+  FOR UPDATE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin delete access for business_areas" ON business_areas
+  FOR DELETE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin write access for business_achievements" ON business_achievements
+  FOR INSERT WITH CHECK (is_admin(auth.uid()));
+
+CREATE POLICY "Admin update access for business_achievements" ON business_achievements
+  FOR UPDATE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin delete access for business_achievements" ON business_achievements
+  FOR DELETE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin write access for contact_info" ON contact_info
+  FOR INSERT WITH CHECK (is_admin(auth.uid()));
+
+CREATE POLICY "Admin update access for contact_info" ON contact_info
+  FOR UPDATE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin delete access for contact_info" ON contact_info
+  FOR DELETE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin write access for products" ON products
+  FOR INSERT WITH CHECK (is_admin(auth.uid()));
+
+CREATE POLICY "Admin update access for products" ON products
+  FOR UPDATE USING (is_admin(auth.uid()));
+
+CREATE POLICY "Admin delete access for products" ON products
+  FOR DELETE USING (is_admin(auth.uid()));
 
 -- 게시글 작성: 로그인한 사용자는 작성 가능
 CREATE POLICY "Authenticated users can create posts" ON posts
   FOR INSERT WITH CHECK (auth.uid() = author_id);
 
--- 게시글 수정/삭제: 작성자 본인 또는 시스템 관리자만 가능
+-- 게시글 수정/삭제: 작성자 본인 또는 관리자만 가능
 CREATE POLICY "Authors and admins can update posts" ON posts
   FOR UPDATE USING (
     auth.uid() = author_id OR
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
+    is_admin(auth.uid())
   );
 
 CREATE POLICY "Authors and admins can delete posts" ON posts
   FOR DELETE USING (
     auth.uid() = author_id OR
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
+    is_admin(auth.uid())
   );
 
 -- 댓글 작성: 로그인한 사용자는 공개된 게시글에 댓글 작성 가능
@@ -454,11 +484,7 @@ CREATE POLICY "Authors can update own comments" ON comments
 CREATE POLICY "Authors and admins can delete comments" ON comments
   FOR DELETE USING (
     auth.uid() = author_id OR
-    EXISTS (
-      SELECT 1 FROM administrators 
-      WHERE administrators.id = auth.uid() 
-      AND administrators.role = 'system'
-    )
+    is_admin(auth.uid())
   );
 
 -- 사용자 가입 시 프로필 자동 생성 트리거
@@ -478,4 +504,54 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+
+
+
+-- 프롤로그 캐러셀 이미지를 위한 Storage 버킷 생성 및 정책 설정
+
+-- Storage 버킷 생성 (이미 존재하면 무시)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'prologue-carousel',
+  'prologue-carousel',
+  true, -- 공개 버킷 (이미지 URL 직접 접근 가능)
+  5242880, -- 5MB 제한
+  ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage 정책: 모든 사용자가 읽기 가능 (공개 버킷)
+CREATE POLICY "Public read access for prologue carousel images"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'prologue-carousel');
+
+-- 기존 정책 삭제 (있다면)
+DROP POLICY IF EXISTS "System admin upload access for prologue carousel images" ON storage.objects;
+DROP POLICY IF EXISTS "System admin update access for prologue carousel images" ON storage.objects;
+DROP POLICY IF EXISTS "System admin delete access for prologue carousel images" ON storage.objects;
+
+-- Storage 정책: 관리자만 업로드 가능 (is_admin 함수 활용)
+CREATE POLICY "Admin upload access for prologue carousel images"
+ON storage.objects FOR INSERT
+WITH CHECK (
+  bucket_id = 'prologue-carousel' AND
+  is_admin(auth.uid())
+);
+
+-- Storage 정책: 관리자만 업데이트 가능 (is_admin 함수 활용)
+CREATE POLICY "Admin update access for prologue carousel images"
+ON storage.objects FOR UPDATE
+USING (
+  bucket_id = 'prologue-carousel' AND
+  is_admin(auth.uid())
+);
+
+-- Storage 정책: 관리자만 삭제 가능 (is_admin 함수 활용)
+CREATE POLICY "Admin delete access for prologue carousel images"
+ON storage.objects FOR DELETE
+USING (
+  bucket_id = 'prologue-carousel' AND
+  is_admin(auth.uid())
+);
 

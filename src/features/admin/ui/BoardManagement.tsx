@@ -9,7 +9,7 @@ import { Card } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/src/shared/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { Badge } from '@/src/shared/ui';
-import { EditorComponent } from './EditorComponent';
+import DynamicCustomEditor from '@/src/features/admin/ui/DynamicCustomEditor';
 import { toast } from 'sonner';
 import { Post } from '@/src/entities';
 import { DataTable, DataTableColumn, DataTableAction } from '@/src/shared/ui';
@@ -272,10 +272,9 @@ export default function BoardManagement({ type, title, description }: BoardManag
 
               <div>
                 <Label>내용</Label>
-                <EditorComponent
-                  initialValue={selectedPost.content}
+                <DynamicCustomEditor
+                  text={selectedPost.content}
                   onChange={(content) => setSelectedPost({ ...selectedPost, content })}
-                  height="400px"
                 />
               </div>
 

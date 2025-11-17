@@ -1,0 +1,9 @@
+:root {
+	--ck-z-default: 100;
+	--ck-z-panel: calc(var(--ck-z-default) + 999);
+	--ck-border-radius: var(--radius-sm);
+}
+
+.ck.ck-editor__editable {
+	min-height: 300px;
+}

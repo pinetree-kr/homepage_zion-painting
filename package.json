@@ -13,9 +13,11 @@
 		"supabase:stop": "supabase stop",
 		"supabase:reset": "supabase db reset",
 		"supabase:push": "supabase db push",
+		"supabase:status": "supabase status",
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
 	},
 	"dependencies": {
+		"@ckeditor/ckeditor5-react": "^11.0.0",
 		"@opennextjs/cloudflare": "^1.3.0",
 		"@radix-ui/react-alert-dialog": "^1.1.15",
 		"@radix-ui/react-dialog": "^1.1.15",
@@ -24,6 +26,8 @@
 		"@radix-ui/react-slot": "^1.2.4",
 		"@radix-ui/react-tabs": "^1.1.13",
 		"@supabase/supabase-js": "^2.81.1",
+		"@toast-ui/editor": "^3.2.2",
+		"ckeditor5": "^47.2.0",
 		"class-variance-authority": "^0.7.1",
 		"embla-carousel-react": "^8.6.0",
 		"lucide-react": "^0.553.0",

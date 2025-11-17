@@ -9,7 +9,7 @@ import { Card } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/src/shared/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { Badge } from '@/src/shared/ui';
-import { EditorComponent } from './EditorComponent';
+import DynamicCustomEditor from '@/src/features/admin/ui/DynamicCustomEditor';
 import { toast } from 'sonner';
 import { Product } from '@/src/entities';
 import { DataTable, DataTableColumn, DataTableAction } from '@/src/shared/ui';
@@ -303,10 +303,9 @@ export default function ProductsAdmin() {
 
               <div>
                 <Label>제품 설명</Label>
-                <EditorComponent
-                  initialValue={selectedProduct.content}
+                <DynamicCustomEditor
+                  text={selectedProduct.content}
                   onChange={(content) => setSelectedProduct({ ...selectedProduct, content })}
-                  height="400px"
                 />
               </div>
 

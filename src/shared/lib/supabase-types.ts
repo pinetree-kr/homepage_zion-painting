@@ -30,6 +30,46 @@ export interface Administrator {
   updated_at: string;
 }
 
+// prologue_settings 테이블 타입 정의
+export interface PrologueSettings {
+  id: string;
+  default_title: string | null;
+  default_description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// prologue_carousel_items 테이블 타입 정의
+export interface PrologueCarouselItem {
+  id: string;
+  image_url: string;
+  title: string | null;
+  description: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// company_info 테이블 타입 정의
+export interface CompanyInfo {
+  id: string;
+  about_content: string | null;
+  organization_content: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// company_history 테이블 타입 정의
+export interface CompanyHistory {
+  id: string;
+  year: string;
+  month: string | null;
+  content: string;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // 기본 타입 정의 (실제 데이터베이스 스키마에 맞게 수정 필요)
 export interface Tables {
   profiles: {
@@ -49,6 +89,50 @@ export interface Tables {
       updated_at?: string;
     };
     Update: Partial<Omit<Administrator, 'id' | 'created_at'>> & {
+      updated_at?: string;
+    };
+  };
+  prologue_settings: {
+    Row: PrologueSettings;
+    Insert: Omit<PrologueSettings, 'id' | 'created_at' | 'updated_at'> & {
+      id?: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+    Update: Partial<Omit<PrologueSettings, 'id' | 'created_at'>> & {
+      updated_at?: string;
+    };
+  };
+  prologue_carousel_items: {
+    Row: PrologueCarouselItem;
+    Insert: Omit<PrologueCarouselItem, 'id' | 'created_at' | 'updated_at'> & {
+      id?: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+    Update: Partial<Omit<PrologueCarouselItem, 'id' | 'created_at'>> & {
+      updated_at?: string;
+    };
+  };
+  company_info: {
+    Row: CompanyInfo;
+    Insert: Omit<CompanyInfo, 'id' | 'created_at' | 'updated_at'> & {
+      id?: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+    Update: Partial<Omit<CompanyInfo, 'id' | 'created_at'>> & {
+      updated_at?: string;
+    };
+  };
+  company_history: {
+    Row: CompanyHistory;
+    Insert: Omit<CompanyHistory, 'id' | 'created_at' | 'updated_at'> & {
+      id?: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+    Update: Partial<Omit<CompanyHistory, 'id' | 'created_at'>> & {
       updated_at?: string;
     };
   };

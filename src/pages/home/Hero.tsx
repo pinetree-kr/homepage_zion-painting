@@ -1,140 +1,146 @@
-'use client';
+import { createServerClient } from '@/src/shared/lib';
+import type { PrologueCarouselItem } from '@/src/shared/lib/supabase-types';
+import HeroCarousel from './HeroCarousel';
+import HeroContent from './HeroContent';
 
-import { Container, Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/src/shared/ui';
-import Image from 'next/image';
+const DEFAULT_TITLE = '시온에 오신것을 환영합니다';
+const DEFAULT_DESCRIPTION = '';
 
-// TODO: 관리자 모드에서 관리할 이미지 데이터
-// 나중에 API나 데이터베이스에서 가져올 수 있도록 구조화
-const heroImages = [
-  {
-    id: 1,
-    src: '/images/hero/hero-1.jpg',
-    alt: '도장설비 이미지 1',
-  },
-  {
-    id: 2,
-    src: '/images/hero/hero-2.jpg',
-    alt: '도장설비 이미지 2',
-  },
-  {
-    id: 3,
-    src: '/images/hero/hero-3.jpg',
-    alt: '도장설비 이미지 3',
-  },
-];
+interface HeroCarouselItem {
+  id: string;
+  src: string;
+  alt: string;
+  title: string;
+  description: string;
+}
 
-export default function Hero() {
+async function getCarouselData() {
+  const supabase = createServerClient();
+
+  try {
+    // prologue_settings 로드
+    const { data: settingsData, error: settingsError } = await supabase
+      .from('prologue_settings')
+      .select('default_title, default_description')
+      .single() as { data: { 
+        default_title: string | null;
+        default_description: string | null;
+      } | null; error: any };
+
+    let settingsDefaultTitle: string | null = null;
+    let settingsDefaultDescription: string | null = null;
+    
+    if (settingsError && settingsError.code !== 'PGRST116') {
+      // PGRST116은 레코드가 없을 때 발생하는 에러 (무시)
+      console.error('프롤로그 설정 로드 오류:', settingsError);
+    } else if (settingsData) {
+      settingsDefaultTitle = settingsData.default_title;
+      settingsDefaultDescription = settingsData.default_description;
+    }
+
+    // 타이틀 우선순위 결정 함수
+    const getTitleWithPriority = (carouselItemTitle: string | null | undefined): string => {
+      // 1. 캐러셀 아이템의 타이틀
+      if (carouselItemTitle) {
+        return carouselItemTitle;
+      }
+      // 2. prologue_settings의 디폴트 타이틀
+      if (settingsDefaultTitle) {
+        return settingsDefaultTitle;
+      }
+      // 3. 하위 호환성: 기존 text 필드 사용
+      // 4. 인라인 디폴트 타이틀
+      return DEFAULT_TITLE;
+    };
+
+    // 설명 우선순위 결정 함수
+    const getDescriptionWithPriority = (carouselItemDescription: string | null | undefined): string => {
+      // 1. 캐러셀 아이템의 설명
+      if (carouselItemDescription) {
+        return carouselItemDescription;
+      }
+      // 2. prologue_settings의 디폴트 설명
+      if (settingsDefaultDescription) {
+        return settingsDefaultDescription;
+      }
+      // 3. 인라인 디폴트 설명
+      return DEFAULT_DESCRIPTION;
+    };
+
+    // 하위 호환성을 위한 텍스트 우선순위 결정 함수
+    // 캐러셀 아이템 로드
+    const { data, error } = await supabase
+      .from('prologue_carousel_items')
+      .select('*')
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('캐러셀 데이터 로드 오류:', error);
+      return {
+        items: [] as HeroCarouselItem[],
+      };
+    }
+
+    if (data && data.length > 0) {
+      const items: HeroCarouselItem[] = data.map((item: PrologueCarouselItem) => ({
+        id: item.id,
+        src: item.image_url,
+        alt: getTitleWithPriority(item.title),
+        title: getTitleWithPriority(item.title),
+        description: getDescriptionWithPriority(item.description),
+      }));
+
+      return {
+        items,
+        defaultTitle: items[0]?.title || getTitleWithPriority(null),
+        defaultDescription: items[0]?.description || getDescriptionWithPriority(null),
+      };
+    } else {
+      return {
+        items: [] as HeroCarouselItem[],
+        defaultTitle: getTitleWithPriority(null),
+        defaultDescription: getDescriptionWithPriority(null),
+      };
+    }
+  } catch (error) {
+    console.error('데이터 로드 중 오류:', error);
+    return {
+      items: [] as HeroCarouselItem[],
+      defaultTitle: DEFAULT_TITLE,
+      defaultDescription: DEFAULT_DESCRIPTION,
+      defaultText: DEFAULT_TITLE, // 하위 호환성
+    };
+  }
+}
+
+export default async function Hero() {
+  const { items, defaultTitle, defaultDescription, defaultText } = await getCarouselData();
+
   return (
-    <section 
+    <section
       id="home"
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
     >
       {/* Carousel 배경 */}
       <div className="absolute inset-0 z-0">
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          className="w-full h-full"
-        >
-          <CarouselContent className="h-screen">
-            {heroImages.map((image) => (
-              <CarouselItem key={image.id} className="h-screen p-0">
-                <div className="relative w-full h-full">
-                  <Image
-                    src={image.src}
-                    alt={image.alt}
-                    fill
-                    className="object-cover"
-                    priority={image.id === 1}
-                    sizes="100vw"
-                    onError={(e) => {
-                      // 이미지 로드 실패 시 그라데이션 배경 표시
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      if (target.parentElement) {
-                        target.parentElement.style.background = 
-                          'linear-gradient(180deg, rgba(26, 44, 109, 1) 0%, rgba(44, 167, 219, 1) 50%, rgba(26, 44, 109, 1) 100%)';
-                      }
-                    }}
-                  />
-                  {/* 이미지 위 어두운 오버레이 */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-4 md:left-8 text-white border-white/30 hover:bg-white/20 hover:border-white/50" />
-          <CarouselNext className="right-4 md:right-8 text-white border-white/30 hover:bg-white/20 hover:border-white/50" />
-        </Carousel>
+        <HeroCarousel 
+          items={items} 
+          defaultTitle={defaultTitle || DEFAULT_TITLE}
+          defaultDescription={defaultDescription || DEFAULT_DESCRIPTION}
+        />
       </div>
 
       {/* 배경 원형 요소들 */}
-      <div className="absolute inset-0 opacity-20 z-[1]">
+      {/* <div className="absolute inset-0 opacity-20 z-[1]">
         <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
         <div className="absolute top-40 right-10 md:right-40 w-72 h-72 bg-[#A5C93E] rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#2CA7DB] rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '4s' }}></div>
-      </div>
+      </div> */}
 
-      <Container className="relative z-10 py-24 pt-32">
-        <div className="flex flex-col items-center text-center gap-6">
-          {/* 제목 */}
-          <div className="flex flex-col gap-6">
-            <h1 className="text-4xl md:text-5xl font-normal text-white leading-tight drop-shadow-lg">
-              최첨단 도장설비로
-              <br />
-              완벽한 품질을 실현합니다
-            </h1>
-            <p className="text-xl md:text-2xl font-normal text-white/90 max-w-3xl mx-auto leading-[1.33] drop-shadow-md">
-              40년 이상의 경험과 기술력으로 산업 도장설비 분야를 선도합니다
-            </p>
-          </div>
-
-          {/* 버튼 그룹 */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-8">
-            <button className="group px-8 py-4 bg-white text-[#1A2C6D] rounded-full hover:bg-[#A5C93E] hover:text-white transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105">
-              제품 카탈로그
-              <svg 
-                width="20" 
-                height="20" 
-                viewBox="0 0 20 20" 
-                fill="none" 
-                xmlns="http://www.w3.org/2000/svg"
-                className="group-hover:translate-x-1 transition-transform"
-              >
-                <path 
-                  d="M7.5 15L12.5 10L7.5 5" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            <button className="group px-8 py-4 bg-white/10 text-white rounded-full hover:bg-white/20 transition-all duration-300 flex items-center gap-2 backdrop-blur-sm border border-white/20">
-              <svg 
-                width="20" 
-                height="20" 
-                viewBox="0 0 20 20" 
-                fill="none" 
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5"/>
-                <circle cx="10" cy="10" r="3" fill="currentColor"/>
-              </svg>
-              시설 둘러보기
-            </button>
-          </div>
-
-          {/* 스크롤 인디케이터 */}
-          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 mt-16">
-            <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-              <div className="w-1.5 h-3 bg-white rounded-full mt-2 animate-bounce"></div>
-            </div>
-          </div>
-        </div>
-      </Container>
+      <HeroContent 
+        defaultTitle={defaultTitle || DEFAULT_TITLE} 
+        defaultDescription={defaultDescription || DEFAULT_DESCRIPTION} 
+      />
     </section>
   );
 }

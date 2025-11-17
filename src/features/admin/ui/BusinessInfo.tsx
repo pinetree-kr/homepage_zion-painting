@@ -8,7 +8,7 @@ import { Label } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/src/shared/ui';
-import { EditorComponent } from './EditorComponent';
+import DynamicCustomEditor from '@/src/features/admin/ui/DynamicCustomEditor';
 import { toast } from 'sonner';
 import { BusinessArea, Achievement } from '@/src/entities';
 import { Textarea } from '@/src/shared/ui';
@@ -339,10 +339,9 @@ export default function BusinessInfo() {
               </div>
               <div>
                 <Label>내용</Label>
-                <EditorComponent
-                  initialValue={selectedAchievement.content}
+                <DynamicCustomEditor
+                  text={selectedAchievement.content}
                   onChange={(content) => setSelectedAchievement({ ...selectedAchievement, content })}
-                  height="400px"
                 />
               </div>
               <div className="flex justify-end gap-2">
