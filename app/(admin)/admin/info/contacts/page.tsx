@@ -1,8 +1,4 @@
-'use client';
+import ManagementCompanyContactsPage from '@/src/pages/management-company-contacts';
 
-import { ContactInfo } from '@/src/features/admin/info';
-
-export default function ContactInfoPage() {
-  return <ContactInfo />;
-}
+export default ManagementCompanyContactsPage;
 

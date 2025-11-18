@@ -2,19 +2,16 @@
 export { default as BoardManagement } from './ui/BoardManagement';
 
 // Company feature (FSD compliant)
-export * from './company';
+export * from '../management-company';
 
 // Editor feature (FSD compliant)
-export * from './editor';
+export * from '../editor';
 
 // Info feature (FSD compliant)
-export * from './info';
+export * from '../management-company';
 
 // Layout feature (FSD compliant)
-export * from './layout';
-
-// Prologue feature (FSD compliant)
-export * from './prologue';
+export * from '../layout';
 
 // System feature (FSD compliant)
 export * from './system';

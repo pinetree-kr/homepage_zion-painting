@@ -1,8 +1,4 @@
-'use client';
+import ManagementProloguePage from '@/src/pages/management-prologue';
 
-import { Prologue } from '@/src/features/admin/prologue';
-
-export default function ProloguePage() {
-  return <Prologue />;
-}
+export default ManagementProloguePage;
 

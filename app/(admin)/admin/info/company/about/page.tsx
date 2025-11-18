@@ -1,4 +1,4 @@
-import CompanyAboutPage from '@/src/pages/admin/company/about/page';
+import ManangementAboutCompanyPage from '@/src/pages/management-about-company';
 
-export default CompanyAboutPage;
+export default ManangementAboutCompanyPage;
 

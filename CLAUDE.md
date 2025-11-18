@@ -126,7 +126,7 @@ import { User, Member } from '@/src/entities/user';
 import { User, Post, Product } from '@/src/entities';
 
 // Features 레이어
-import { login, register, logout } from '@/src/features/auth';
+import { login, register, logout } from '@/src/entities/user';
 
 // Widgets 레이어
 import { Header } from '@/src/widgets/header';

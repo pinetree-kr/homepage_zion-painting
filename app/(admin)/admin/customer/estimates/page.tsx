@@ -1,8 +1,4 @@
-'use client';
+import ManagementCustomerEstimatesPage from '@/src/pages/management-customer-estimates';
 
-import BoardManagement from '@/src/features/admin/ui/BoardManagement';
-
-export default function EstimatesPage() {
-  return <BoardManagement type="quote" title="견적문의 관리" description="견적문의를 관리합니다" />;
-}
+export default ManagementCustomerEstimatesPage;
 

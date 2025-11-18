@@ -1,8 +1,4 @@
-'use client';
+import ManagementCompanyBusinessPage from '@/src/pages/management-company-business';
 
-import { BusinessInfo } from '@/src/features/admin/info';
-
-export default function BusinessInfoPage() {
-  return <BusinessInfo />;
-}
+export default ManagementCompanyBusinessPage;
 

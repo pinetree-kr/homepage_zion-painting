@@ -1,8 +1,4 @@
-'use client';
+import ManagementSystemAdministratorsPage from '@/src/pages/management-system-administrators';
 
-import { AdminManagement } from '@/src/features/admin/user';
-
-export default function AdministratorsPage() {
-  return <AdminManagement />;
-}
+export default ManagementSystemAdministratorsPage;
 

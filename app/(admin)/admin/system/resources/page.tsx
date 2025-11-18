@@ -1,8 +1,4 @@
-'use client';
+import ManagementSystemResourcesPage from '@/src/pages/management-system-resources';
 
-import { ResourceMonitor } from '@/src/features/admin/system';
-
-export default function ResourcesPage() {
-  return <ResourceMonitor />;
-}
+export default ManagementSystemResourcesPage;
 

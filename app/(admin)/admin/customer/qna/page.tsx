@@ -1,8 +1,4 @@
-'use client';
+import ManagementCustomerQnAPage from '@/src/pages/management-customer-qna';
 
-import BoardManagement from '@/src/features/admin/ui/BoardManagement';
-
-export default function QnAPage() {
-  return <BoardManagement type="qna" title="Q&A 관리" description="Q&A를 관리합니다" />;
-}
+export default ManagementCustomerQnAPage;
 

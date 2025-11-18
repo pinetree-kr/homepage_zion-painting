@@ -1,8 +1,4 @@
-'use client';
+import ManagementCompanyProductsPage from '@/src/pages/management-company-products';
 
-import { ProductsAdmin } from '@/src/features/admin/info';
-
-export default function ProductsAdminPage() {
-  return <ProductsAdmin />;
-}
+export default ManagementCompanyProductsPage;
 

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { logout, User } from '@/src/features/auth';
-import { AdminLayout } from '@/src/features/admin/layout';
+import { logout, type User } from '@/src/entities/user';
+import { AdminLayout } from '@/src/features/layout';
 import { checkSupabaseSession, getSupabaseUser, supabase } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user/model/types';
 
@@ -158,7 +158,7 @@ export default function AdminLayoutWrapper({
       'logs': '/admin/system/logs',
       'resources': '/admin/system/resources',
     };
-    
+
     const route = routeMap[tab];
     if (route) {
       router.push(route);

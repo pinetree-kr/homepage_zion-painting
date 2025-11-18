@@ -1,8 +1,4 @@
-'use client';
+import ManagementCustomerMembersPage from '@/src/pages/management-customer-members';
 
-import { MemberManagement } from '@/src/features/admin/user';
-
-export default function MemberManagementPage() {
-  return <MemberManagement />;
-}
+export default ManagementCustomerMembersPage;
 

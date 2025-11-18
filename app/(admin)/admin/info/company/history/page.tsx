@@ -1,4 +1,4 @@
-import CompanyHistoryPage from '@/src/pages/admin/company/history/page';
+import ManagementCompanyHistoryPage from '@/src/pages/management-company-history';
 
-export default CompanyHistoryPage;
+export default ManagementCompanyHistoryPage;
 

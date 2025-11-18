@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { isAdmin, type User } from '@/src/features/auth';
+import { isAdmin, type User } from '@/src/entities/user';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/src/shared/ui';
 import { checkSupabaseSession, getSupabaseUser, supabase, onAuthStateChange } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user';
@@ -139,11 +139,11 @@ export default function Header() {
       const isScrollLocked = document.body.hasAttribute('data-scroll-locked');
       const bodyStyle = window.getComputedStyle(document.body);
       const bodyMarginRight = parseInt(bodyStyle.marginRight) || 0;
-      
+
       // padding-right 변경 시 트랜지션 비활성화 (즉시 적용)
       const originalTransition = headerElement.style.transition;
       headerElement.style.transition = 'none';
-      
+
       if (isScrollLocked && bodyMarginRight > 0) {
         // body에 margin-right가 적용되어 있으면 header에도 동일한 padding-right 적용
         headerElement.style.paddingRight = `${bodyMarginRight}px`;
@@ -151,7 +151,7 @@ export default function Header() {
         // 스크롤 잠금이 해제되면 padding-right 제거
         headerElement.style.paddingRight = '';
       }
-      
+
       // 다음 프레임에서 트랜지션 복원 (다른 속성 변화는 여전히 트랜지션 적용)
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
