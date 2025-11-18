@@ -9,11 +9,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { checkSupabaseSession, getSupabaseUser, supabase, onAuthStateChange } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user';
 import { LogOut, Settings } from 'lucide-react';
+import { getScrollbarWidth } from '@/src/shared/lib/utils';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -21,6 +23,11 @@ export default function Header() {
       setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll);
+
+    // 스크롤바 너비를 CSS 변수로 설정 (스크롤바 쉬프팅 방지용)
+    const scrollbarWidth = getScrollbarWidth();
+    document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -123,6 +130,58 @@ export default function Header() {
     };
   }, [isMenuOpen]);
 
+  // DropdownMenu 열림/닫힘 상태에 따른 스크롤바 쉬프팅 방지
+  useEffect(() => {
+    const headerElement = document.querySelector('header') as HTMLElement | null;
+    if (!headerElement) return;
+
+    const updateHeaderPadding = () => {
+      const isScrollLocked = document.body.hasAttribute('data-scroll-locked');
+      const bodyStyle = window.getComputedStyle(document.body);
+      const bodyMarginRight = parseInt(bodyStyle.marginRight) || 0;
+      
+      // padding-right 변경 시 트랜지션 비활성화 (즉시 적용)
+      const originalTransition = headerElement.style.transition;
+      headerElement.style.transition = 'none';
+      
+      if (isScrollLocked && bodyMarginRight > 0) {
+        // body에 margin-right가 적용되어 있으면 header에도 동일한 padding-right 적용
+        headerElement.style.paddingRight = `${bodyMarginRight}px`;
+      } else {
+        // 스크롤 잠금이 해제되면 padding-right 제거
+        headerElement.style.paddingRight = '';
+      }
+      
+      // 다음 프레임에서 트랜지션 복원 (다른 속성 변화는 여전히 트랜지션 적용)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          headerElement.style.transition = originalTransition;
+        });
+      });
+    };
+
+    // 초기 상태 확인
+    updateHeaderPadding();
+
+    // body의 data-scroll-locked 속성 변화 감지
+    const observer = new MutationObserver(() => {
+      updateHeaderPadding();
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-scroll-locked', 'style'],
+    });
+
+    return () => {
+      observer.disconnect();
+      // 정리 시 padding 제거
+      if (headerElement) {
+        headerElement.style.paddingRight = '';
+      }
+    };
+  }, [isDropdownOpen]);
+
   const navItems = [
     { label: '회사소개', href: '#about' },
     { label: '사업소개', href: '#business' },
@@ -141,15 +200,16 @@ export default function Header() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-colors transition-shadow duration-300 ${
           // 모바일/태블릿: 항상 앱처럼 보이게 (배경색과 그림자)
           // 데스크톱: 스크롤 시에만 배경색
+          // transition-all 대신 transition-colors, transition-shadow만 사용하여 padding-right는 트랜지션 제외
           isScrolled || isMenuOpen
             ? 'bg-white shadow-lg'
             : 'bg-white shadow-md md:bg-transparent md:shadow-none'
           }`}
       >
-        <div className="max-w-[1497px] mx-auto px-4 sm:px-6 md:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
           <nav className="flex items-center justify-between h-16 md:h-20">
             {/* 모바일: 햄버거 버튼 (좌측) */}
             <button
@@ -225,10 +285,10 @@ export default function Header() {
 
               {/* 로그인/사용자 메뉴 */}
               {currentUser ? (
-                <DropdownMenu>
+                <DropdownMenu onOpenChange={setIsDropdownOpen}>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-base font-normal transition-colors ${isScrolled
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-base font-normal outline-none transition-colors ${isScrolled
                         ? 'text-gray-700 hover:bg-gray-100'
                         : 'text-white hover:bg-white/10'
                         }`}
@@ -236,7 +296,7 @@ export default function Header() {
                       <div className="w-8 h-8 rounded-full bg-[#1A2C6D] flex items-center justify-center text-white text-sm font-medium">
                         {currentUser.name?.charAt(0)}
                       </div>
-                      <span className="hidden lg:inline">{currentUser.name ?? '-'}</span>
+                      {/* <span className="hidden lg:inline">{currentUser.name ?? '-'}</span> */}
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">

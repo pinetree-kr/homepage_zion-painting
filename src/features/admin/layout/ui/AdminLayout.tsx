@@ -5,6 +5,8 @@ import { User } from '@/src/features/auth';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/src/shared/ui';
+import { LogOut, Settings } from 'lucide-react';
 
 // Icon Components
 const Building2Icon = ({ className }: { className?: string }) => (
@@ -257,34 +259,29 @@ export default function AdminLayout({ user, activeTab, onTabChange, onLogout, on
             </div>
 
             {/* 사용자 드롭다운 메뉴 */}
-            <div className="relative group">
-              <button className="relative h-10 w-10 rounded-full bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] text-white flex items-center justify-center hover:opacity-80 transition-opacity">
-                <span className="text-sm font-medium">{user.name?.charAt(0)}</span>
-              </button>
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                <div className="p-2">
-                  <div className="px-2 py-1.5 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
-                  </div>
-                  <button
-                    onClick={onSettingsClick}
-                    className="w-full text-left px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded flex items-center gap-2"
-                  >
-                    <UserCogIcon className="h-4 w-4" />
-                    사용자 정보 수정
-                  </button>
-                  <div className="my-1 border-t border-gray-200" />
-                  <button
-                    onClick={onLogout}
-                    className="w-full text-left px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
-                  >
-                    <LogOutIcon className="h-4 w-4" />
-                    로그아웃
-                  </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="relative h-10 w-10 rounded-full bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] text-white flex items-center justify-center hover:opacity-80 transition-opacity outline-none">
+                  <span className="text-sm font-medium">{user.name?.charAt(0)}</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                  <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
-              </div>
-            </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onSettingsClick} className="cursor-pointer">
+                  <Settings className="h-4 w-4 mr-2" />
+                  <span>사용자 정보 수정</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onLogout} className="cursor-pointer text-red-600 focus:text-red-600">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>로그아웃</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

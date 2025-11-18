@@ -3,7 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  
+
   /* 시온 페인팅 색상 팔레트 */
   --color-primary: #1A2C6D;
   --color-primary-light: #2CA7DB;
@@ -31,4 +31,14 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+/* 스크롤바 쉬프팅 방지: body가 scroll-locked일 때 fixed header에 padding-right 추가 */
+body[data-scroll-locked] header {
+  padding-right: var(--scrollbar-width, 15px);
+}
+
+/* 스크롤바 너비를 CSS 변수로 설정 (JavaScript에서 동적으로 설정됨) */
+:root {
+  --scrollbar-width: 0px;
 }
