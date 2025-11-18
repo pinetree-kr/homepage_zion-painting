@@ -1,10 +1,4 @@
-import Hero from './Hero';
-import About from './About';
-import Business from './Business';
-import Products from './Products';
-import Contact from './Contact';
-import Footer from './Footer';
-import Header from './Header';
+import { Header, Hero, About, Business, Products, Contact, Footer } from '@/src/features/home';
 
 export default function HomePage() {
     return (
