@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { type User } from '@/src/entities/user';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -263,7 +262,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { id: 'resources', label: '리소스', icon: ServerIcon, route: '/admin/system/resources' },
       ],
     },
-  ], [pathname]);
+  ], []);
 
   return (
     <div className="min-h-screen bg-gray-50">

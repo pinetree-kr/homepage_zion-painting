@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Container, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
-import { ProfileForm, PasswordForm } from '@/src/features/mypage/profile';
+import ProfileForm from '@/src/features/mypage/profile/ui/ProfileForm';
+import PasswordForm from '@/src/features/mypage/profile/ui/PasswordForm';
 import type { Profile } from '@/src/entities/user';
-import { updateProfile, updatePassword } from '@/src/entities/user';
+import { updateProfile } from '@/src/entities/user/model/updateProfile';
+import { updatePassword } from '@/src/entities/user/model/updatePassword';
 import { Save } from 'lucide-react';
 import { getSupabaseUser, supabaseClient } from '@/src/shared/lib/supabase/client';
 

@@ -28,6 +28,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import { resizeImage } from '@/src/shared/lib/image-resize';
+import Image from 'next/image';
 
 interface CompanyOrganizationProps {
   items: OrganizationMember[];
@@ -138,7 +139,7 @@ function SortableMemberItem({
               }`}
           >
             {member.image_url && !imageError ? (
-              <img
+              <Image
                 src={member.image_url}
                 alt={member.name || '프로필 이미지'}
                 className="w-full h-full object-cover"

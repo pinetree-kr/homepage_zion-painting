@@ -17,6 +17,7 @@ interface HeroCarouselItem {
 }
 
 async function getCarouselData() {
+  "use server"
   const supabase = await createServerClient();
 
   try {

@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-// import { supabase } from '@/src/shared/lib/supabase/client';
+
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 
 function CallbackContent() {

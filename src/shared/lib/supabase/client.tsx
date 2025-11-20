@@ -5,7 +5,6 @@ import { createBrowserClient as createClient } from '@supabase/ssr';
 import type { Session, SupabaseClient, User } from '@supabase/supabase-js';
 import type { Database } from '../supabase-types';
 import { supabaseUrl, supabasePublishableKey } from './config';
-import { createContext, useContext } from 'react';
 
 /**
  * 클라이언트 사이드용 Supabase 클라이언트

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MyPageLayout } from '@/src/features/layout';
+import MyPageLayout from '@/src/features/layout/MyPageLayout';
 import type { Profile } from '@/src/entities/user/model/types';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 

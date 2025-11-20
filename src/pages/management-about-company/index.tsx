@@ -1,4 +1,5 @@
-import { AboutCompany, getCompanyAboutInfo } from '@/src/features/management-company';
+import AboutCompany from '@/src/features/management-company/ui/AboutCompany';
+import { getCompanyAboutInfo } from '@/src/features/management-company/api/company-actions';
 
 export default async function ManangementAboutCompanyPage() {
   const aboutInfo = await getCompanyAboutInfo();

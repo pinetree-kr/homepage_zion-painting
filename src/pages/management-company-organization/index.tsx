@@ -1,4 +1,5 @@
-import { CompanyOrganization, getCompanyOrganizationMembers } from '@/src/features/management-company';
+import CompanyOrganization from '@/src/features/management-company/ui/CompanyOrganization';
+import { getCompanyOrganizationMembers } from '@/src/features/management-company/api/company-actions';
 
 export default async function ManagementCompanyOrganizationPage() {
   const members = await getCompanyOrganizationMembers();
