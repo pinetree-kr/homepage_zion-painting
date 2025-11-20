@@ -1,6 +1,7 @@
 'use server';
 
 import { createServerClient } from '@/src/shared/lib/supabase/server';
+import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous';
 // import type { CompanyInfo, CompanyHistory } from '@/src/shared/lib/supabase-types';
 import type { CompanyInfo, CompanyHistory, CompanyHistoryType, OrganizationMember, CompanyAbout, CompanyStrength, CompanyValue } from '@/src/entities/company/model/types';
 
@@ -30,10 +31,11 @@ import type { CompanyInfo, CompanyHistory, CompanyHistoryType, OrganizationMembe
 
 /**
  * 회사소개 정보 로드 (개별 필드)
+ * 공개 데이터이므로 익명 클라이언트 사용
  */
 export async function getCompanyAboutInfo(): Promise<CompanyAbout | null> {
   try {
-    const supabase = await createServerClient();
+    const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
       .from('company_info')
       .select('introduction, vision, greetings, mission, strengths, values')
@@ -195,10 +197,11 @@ export async function saveCompanyAboutField(
 
 /**
  * 연혁 목록 로드
+ * 공개 데이터이므로 익명 클라이언트 사용
  */
 export async function getCompanyHistories(): Promise<CompanyHistory[]> {
   try {
-    const supabase = await createServerClient();
+    const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
       .from('company_info')
       .select('histories')
@@ -291,10 +294,11 @@ export async function saveCompanyHistory(history: CompanyHistory[]): Promise<{ s
 
 /**
  * 조직도 구성원 목록 로드
+ * 공개 데이터이므로 익명 클라이언트 사용
  */
 export async function getCompanyOrganizationMembers(): Promise<OrganizationMember[]> {
   try {
-    const supabase = await createServerClient();
+    const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
       .from('company_info')
       .select('organization_members')

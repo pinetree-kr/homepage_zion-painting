@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerClient } from '@/src/shared/lib/supabase/server';
+import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous';
 import type { PrologueCarouselItem } from '@/src/entities/prologue/model/types';
 import HeroCarousel from './HeroCarousel';
 import HeroContent from './HeroContent';
@@ -18,7 +18,7 @@ interface HeroCarouselItem {
 
 async function getCarouselData() {
   "use server"
-  const supabase = await createServerClient();
+  const supabase = createAnonymousServerClient();
 
   try {
     // prologue_settings 로드
