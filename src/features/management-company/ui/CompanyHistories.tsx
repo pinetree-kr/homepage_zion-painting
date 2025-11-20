@@ -1,22 +1,167 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, Save, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Save, GripVertical, Briefcase, Award } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/src/shared/ui';
 import { saveCompanyHistory } from '../api/company-actions';
 import { toast } from 'sonner';
-import type { CompanyHistory } from '@/src/entities';
+import type { CompanyHistory, CompanyHistoryType } from '@/src/entities';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface CompanyHistoriesProps {
   items: CompanyHistory[];
 }
 
+// SortableItem 컴포넌트
+function SortableHistoryItem({
+  item,
+  onUpdate,
+  onRemove,
+  getTypeIcon,
+}: {
+  item: CompanyHistory;
+  onUpdate: (id: string, field: keyof CompanyHistory, value: string | CompanyHistoryType) => void;
+  onRemove: (id: string) => void;
+  getTypeIcon: (type: CompanyHistoryType) => React.ReactElement;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex gap-4 items-start p-4 border rounded-lg bg-white ${
+        isDragging ? 'border-blue-500 shadow-lg' : 'border-gray-200'
+      }`}
+    >
+      <div className="flex flex-col items-center gap-2 mt-2">
+        <div
+          {...attributes}
+          {...listeners}
+          className="h-5 w-5 text-gray-400 cursor-grab active:cursor-grabbing hover:text-gray-600 transition-colors"
+        >
+          <GripVertical className="h-5 w-5" />
+        </div>
+        {getTypeIcon(item.type)}
+      </div>
+      <div className="flex-1 grid grid-cols-12 gap-4">
+        <div className="col-span-2">
+          <Label>타입</Label>
+          <Select
+            value={item.type}
+            onValueChange={(value) => onUpdate(item.id, 'type', value as CompanyHistoryType)}
+          >
+            <SelectTrigger>
+              <SelectValue>
+                <div className="flex items-center gap-2">
+                  {getTypeIcon(item.type)}
+                  <span>{item.type === 'biz' ? '사업' : '인증/허가'}</span>
+                </div>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="biz">
+                <div className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  <span>사업</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="cert">
+                <div className="flex items-center gap-2">
+                  <Award className="h-4 w-4" />
+                  <span>인증/허가</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="col-span-2">
+          <Label>연도</Label>
+          <Input
+            value={item.year}
+            onChange={(e) => onUpdate(item.id, 'year', e.target.value)}
+            placeholder="2024"
+          />
+        </div>
+        <div className="col-span-2">
+          <Label>월</Label>
+          <Input
+            value={item.month || ''}
+            onChange={(e) => onUpdate(item.id, 'month', e.target.value)}
+            placeholder="01"
+          />
+        </div>
+        <div className="col-span-5">
+          <Label>내용</Label>
+          <Input
+            value={item.content}
+            onChange={(e) => onUpdate(item.id, 'content', e.target.value)}
+            placeholder="회사 설립"
+          />
+        </div>
+        <div className="col-span-1 flex items-end">
+          <Button
+            variant="destructive"
+            size="icon"
+            onClick={() => onRemove(item.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CompanyHistories({ items }: CompanyHistoriesProps) {
   const [histories, setHistories] = useState<CompanyHistory[]>(items);
   const [saving, setSaving] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const addHistoryItem = () => {
     const newItem: CompanyHistory = {
@@ -24,27 +169,55 @@ export default function CompanyHistories({ items }: CompanyHistoriesProps) {
       year: new Date().getFullYear().toString(),
       month: '',
       content: '',
-      display_order: items.length > 0 ? Math.max(...items.map(h => h.display_order)) + 1 : 1,
+      type: 'biz',
+      display_order: histories.length > 0 ? Math.max(...histories.map(h => h.display_order)) + 1 : 1,
       created_at: null,
       updated_at: null,
     };
-    setHistories([...items, newItem]);
+    setHistories([...histories, newItem]);
   };
 
   const removeHistoryItem = (id: string) => {
-    setHistories(items.filter(item => item.id !== id));
+    setHistories(histories.filter(item => item.id !== id));
   };
 
-  const updateHistoryItem = (id: string, field: keyof CompanyHistory, value: string) => {
-    setHistories(items.map(item =>
+  const updateHistoryItem = (id: string, field: keyof CompanyHistory, value: string | CompanyHistoryType) => {
+    setHistories(histories.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
+  };
+
+  const getTypeIcon = (type: CompanyHistoryType) => {
+    return type === 'biz' ? (
+      <Briefcase className="h-4 w-4 text-blue-600" />
+    ) : (
+      <Award className="h-4 w-4 text-amber-600" />
+    );
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setHistories((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        
+        // display_order 업데이트
+        return newItems.map((item, index) => ({
+          ...item,
+          display_order: index + 1,
+        }));
+      });
+    }
   };
 
   const handleSave = async () => {
     try {
       setSaving(true);
-      const result = await saveCompanyHistory(items);
+      const result = await saveCompanyHistory(histories);
 
       if (result.success) {
         toast.success('연혁이 저장되었습니다.');
@@ -63,59 +236,47 @@ export default function CompanyHistories({ items }: CompanyHistoriesProps) {
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-gray-900 text-lg font-semibold">연혁 목록</h3>
-        <div className="flex gap-2">
-          <Button onClick={addHistoryItem} size="sm" className="gap-2">
-            <Plus className="h-4 w-4" />
-            연혁 추가
-          </Button>
-          <Button onClick={handleSave} className="gap-2" disabled={saving}>
-            <Save className="h-4 w-4" />
-            {saving ? '저장 중...' : '저장'}
-          </Button>
-        </div>
+        <Button onClick={handleSave} className="gap-2" disabled={saving}>
+          <Save className="h-4 w-4" />
+          {saving ? '저장 중...' : '저장'}
+        </Button>
       </div>
 
-      <div className="space-y-4">
-        {items.map((item) => (
-          <div key={item.id} className="flex gap-4 items-start p-4 border border-gray-200 rounded-lg bg-white">
-            <GripVertical className="h-5 w-5 text-gray-400 cursor-move mt-2" />
-            <div className="flex-1 grid grid-cols-12 gap-4">
-              <div className="col-span-2">
-                <Label>연도</Label>
-                <Input
-                  value={item.year}
-                  onChange={(e) => updateHistoryItem(item.id, 'year', e.target.value)}
-                  placeholder="2024"
-                />
-              </div>
-              <div className="col-span-2">
-                <Label>월</Label>
-                <Input
-                  value={item.month || ''}
-                  onChange={(e) => updateHistoryItem(item.id, 'month', e.target.value)}
-                  placeholder="01"
-                />
-              </div>
-              <div className="col-span-7">
-                <Label>내용</Label>
-                <Input
-                  value={item.content}
-                  onChange={(e) => updateHistoryItem(item.id, 'content', e.target.value)}
-                  placeholder="회사 설립"
-                />
-              </div>
-              <div className="col-span-1 flex items-end">
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => removeHistoryItem(item.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={histories.map((item) => item.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-4">
+            {histories.map((item) => (
+              <SortableHistoryItem
+                key={item.id}
+                item={item}
+                onUpdate={updateHistoryItem}
+                onRemove={removeHistoryItem}
+                getTypeIcon={getTypeIcon}
+              />
+            ))}
           </div>
-        ))}
+        </SortableContext>
+      </DndContext>
+
+      {/* 연혁 추가 영역 - 하단에 큰 영역으로 표시 */}
+      <div
+        className="border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer mt-4 border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+        onClick={addHistoryItem}
+      >
+        <Plus className="h-10 w-10 mx-auto mb-2 text-gray-400" />
+        <p className="text-sm font-medium text-gray-500">
+          새 연혁 추가
+        </p>
+        <p className="text-xs mt-1 text-gray-400">
+          클릭하여 새로운 연혁을 추가하세요
+        </p>
       </div>
     </Card>
   );

@@ -347,11 +347,11 @@ export default function ManagementProloguePage() {
                 prev.map((item) =>
                   item.id === tempId
                     ? {
-                        ...item,
-                        imageUrl: publicUrl,
-                        imagePath: publicUrl.replace(/^.*\/storage\/v1\/object\/public\/prologue-carousel\//, ''),
-                        isUploading: false,
-                      }
+                      ...item,
+                      imageUrl: publicUrl,
+                      imagePath: publicUrl.replace(/^.*\/storage\/v1\/object\/public\/prologue-carousel\//, ''),
+                      isUploading: false,
+                    }
                     : item
                 )
               );
@@ -519,7 +519,7 @@ export default function ManagementProloguePage() {
   // 캐러셀 아이템 저장 버튼 클릭 핸들러
   const handleSaveCarouselItemsClick = () => {
     const itemsToDelete = getItemsToDelete();
-    
+
     // 삭제될 항목이 있으면 경고 모달 표시
     if (itemsToDelete.length > 0) {
       setShowDeleteWarning(true);

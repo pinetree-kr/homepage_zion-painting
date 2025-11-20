@@ -1,6 +1,5 @@
 'use client';
 
-// import { createClient } from '@supabase/supabase-js';
 import { createBrowserClient as createClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../supabase-types';
@@ -19,17 +18,28 @@ import { supabaseUrl, supabasePublishableKey } from './config';
  * const { data, error } = await supabase.from('users').select('*');
  * ```
  */
-export const supabase: SupabaseClient<Database> = createClient<Database>(
-  supabaseUrl,
-  supabasePublishableKey,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  }
-);
+
+// 브라우저 환경 체크 헬퍼
+const isBrowser = typeof window !== 'undefined';
+
+export function createSupabaseClient() {
+  const client = createClient<Database>(
+    supabaseUrl,
+    supabasePublishableKey,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    }
+  );
+
+  return client;
+}
+
+// 브라우저 환경에서만 초기화
+export const supabase: SupabaseClient<Database> = createSupabaseClient()
 
 /**
  * 현재 Supabase 세션 확인

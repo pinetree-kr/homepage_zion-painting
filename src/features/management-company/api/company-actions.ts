@@ -2,7 +2,7 @@
 
 import { createServerClient } from '@/src/shared/lib/supabase/server';
 // import type { CompanyInfo, CompanyHistory } from '@/src/shared/lib/supabase-types';
-import type { CompanyInfo, CompanyHistory } from '@/src/entities/company/model/types';
+import type { CompanyInfo, CompanyHistory, CompanyHistoryType } from '@/src/entities/company/model/types';
 
 /**
  * 회사 정보 로드
@@ -121,24 +121,34 @@ export async function getCompanyHistories(): Promise<CompanyHistory[]> {
   try {
     const supabase = await createServerClient();
     const { data, error } = await supabase
-      .from('company_history')
-      .select('*')
-      .order('display_order', { ascending: true });
+      .from('company_info')
+      .select('histories')
+      .limit(1)
+      .maybeSingle() as { data: { histories: CompanyHistory[] | null } | null; error: any };
 
     if (error) {
       console.error('연혁 로드 오류:', error);
       return [];
     }
 
-    return (data || []).map((item: CompanyHistory) => ({
-      id: item.id,
-      year: item.year,
-      month: item.month || null,
-      content: item.content,
-      display_order: item.display_order,
-      created_at: item.created_at || null,
-      updated_at: item.updated_at || null,
-    }));
+    // histories가 null이거나 배열이 아니면 빈 배열 반환
+    if (!data?.histories || !Array.isArray(data.histories)) {
+      return [];
+    }
+
+    // display_order 기준으로 정렬하여 반환
+    return data.histories
+      .map((item: any) => ({
+        id: item.id || `temp-${Date.now()}-${Math.random()}`,
+        year: item.year || '',
+        month: item.month || null,
+        content: item.content || '',
+        type: item.type || 'biz',
+        display_order: item.display_order || 0,
+        created_at: item.created_at || null,
+        updated_at: item.updated_at || null,
+      }))
+      .sort((a, b) => a.display_order - b.display_order);
   } catch (error) {
     console.error('연혁 로드 중 예외 발생:', error);
     return [];
@@ -152,41 +162,45 @@ export async function saveCompanyHistory(history: CompanyHistory[]): Promise<{ s
   try {
     const supabase = await createServerClient();
 
-    // 기존 연혁 ID 목록 가져오기
-    const { data: existingHistory } = await supabase
-      .from('company_history')
-      .select('id');
+    // 기존 company_info 확인
+    const { data: existingInfo } = await supabase
+      .from('company_info')
+      .select('id')
+      .limit(1)
+      .maybeSingle() as { data: { id: string } | null; error: any };
 
-    // 기존 연혁 삭제
-    if (existingHistory && existingHistory.length > 0) {
-      const existingIds = existingHistory.map((h: any) => h.id);
-      const { error: deleteError } = await supabase
-        .from('company_history')
-        .delete()
-        .in('id', existingIds);
-
-      if (deleteError) {
-        return { success: false, error: deleteError.message };
-      }
-    }
-
-    // 새 연혁 추가
-    if (history.length > 0) {
-      const historyToInsert = history.map((item, index) => ({
+    // histories JSON 배열로 변환 (display_order 기준 정렬)
+    const historiesJson = history
+      .map((item, index) => ({
+        id: item.id || `temp-${Date.now()}-${index}`,
         year: item.year,
         month: item.month || null,
         content: item.content,
+        type: item.type || 'biz',
         display_order: item.display_order || index + 1,
         created_at: item.created_at || null,
-        updated_at: item.updated_at || null,
-      } as CompanyHistory));
+        updated_at: item.updated_at || new Date().toISOString(),
+      }))
+      .sort((a, b) => a.display_order - b.display_order);
 
-      const { error: insertError } = await supabase
-        .from('company_history')
-        .insert(historyToInsert);
+    if (existingInfo) {
+      // 기존 레코드 업데이트
+      const { error } = await supabase
+        .from('company_info')
+        .update({ histories: historiesJson })
+        .eq('id', existingInfo.id);
 
-      if (insertError) {
-        return { success: false, error: insertError.message };
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } else {
+      // 새 레코드 생성
+      const { error } = await supabase
+        .from('company_info')
+        .insert({ histories: historiesJson });
+
+      if (error) {
+        return { success: false, error: error.message };
       }
     }
 

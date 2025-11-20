@@ -177,6 +177,7 @@ export type Database = {
           display_order: number
           id: string
           month: string | null
+          type: string
           updated_at: string | null
           year: string
         }
@@ -186,6 +187,7 @@ export type Database = {
           display_order?: number
           id?: string
           month?: string | null
+          type?: string
           updated_at?: string | null
           year: string
         }
@@ -195,6 +197,7 @@ export type Database = {
           display_order?: number
           id?: string
           month?: string | null
+          type?: string
           updated_at?: string | null
           year?: string
         }

@@ -1,2 +1,2 @@
-export type { CompanyInfo, CompanyHistory } from './model/types';
+export type { CompanyInfo, CompanyHistory, CompanyHistoryType } from './model/types';
 

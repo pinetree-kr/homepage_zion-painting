@@ -13,6 +13,7 @@
 		"supabase:stop": "supabase stop",
 		"supabase:reset": "supabase db reset",
 		"supabase:push": "supabase db push",
+		"supabase:dev:push": "supabase db push --local",
 		"supabase:status": "supabase status",
 		"supabase:types": "npx supabase gen types typescript --project-id zwnivufcxgfrxldtxkeb --schema public > src/shared/lib/supabase-types.ts",
 		"supabase:dev:types": "npx supabase gen types typescript --local > src/shared/lib/supabase-types.ts",
