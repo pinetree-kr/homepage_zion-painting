@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Lock as LockIcon } from 'lucide-react';
@@ -21,8 +21,17 @@ export default function PasswordForm({ onUpdate }: PasswordFormProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handlePasswordChange = useCallback(() => {
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const validateAndUpdate = () => {
     setError(null);
     // 유효성 검사
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -46,11 +55,17 @@ export default function PasswordForm({ onUpdate }: PasswordFormProps) {
         confirmPassword,
       });
     }
-  }, [currentPassword, newPassword, confirmPassword, onUpdate]);
+  };
 
-  useEffect(() => {
-    handlePasswordChange();
-  }, [handlePasswordChange]);
+  const handleConfirmPasswordBlur = () => {
+    // debounce를 사용하여 연속된 호출 방지
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      validateAndUpdate();
+    }, 300);
+  };
 
   return (
     <Card className="border border-[#E2E8F0] rounded-2xl">
@@ -187,6 +202,7 @@ export default function PasswordForm({ onUpdate }: PasswordFormProps) {
                   setConfirmPassword(e.target.value);
                   setError(null);
                 }}
+                onBlur={handleConfirmPasswordBlur}
                 className="h-9 px-3 py-1 pl-10 border border-[#E2E8F0] rounded-[10px] text-sm text-[#4D4D4D]"
                 placeholder="새 비밀번호 확인"
               />
