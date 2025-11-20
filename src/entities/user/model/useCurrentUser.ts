@@ -1,71 +1,77 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase, onAuthStateChange } from "@/src/shared/lib/supabase/client";
+// import { useSupabase } from "@/src/shared/lib/supabase/client";
 import { Profile } from "./types";
+import { createBrowserClient } from "@/src/shared/lib/supabase/client";
 
 export function useCurrentUser() {
     const [user, setUser] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
+    // const supabase = useSupabase();
 
     useEffect(() => {
-        const getProfile = async () => {
-            try {
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        let mounted = true;
+        const supabase = createBrowserClient();
+        supabase.auth.getSession().then(res => {
+            console.log('res', res);
+        })
 
-                if (sessionError) {
-                    throw new Error('세션 확인 오류');
-                }
+        // const loadProfile = async (userId: string) => {
+        //     try {
+        //         console.log('loadProfile', userId);
+        //         const { data, error: profileError } = await supabase.from('profiles')
+        //             .select('*')
+        //             .eq('id', userId)
+        //             .single<Profile>()
 
-                if (!session?.user?.id) {
-                    setUser(null);
-                    setLoading(false);
-                    return;
-                }
+        //         if (!mounted) return;
 
-                const { data, error: profileError } = await supabase.from('profiles')
-                    .select('*')
-                    .eq('id', session?.user?.id)
-                    .single<Profile>()
+        //         if (profileError) {
+        //             throw new Error('프로필 가져오기 오류');
+        //         }
+        //         setUser(data);
+        //     } catch (error) {
+        //         console.error(error);
+        //         if (mounted) {
+        //             setUser(null);
+        //         }
+        //     } finally {
+        //         if (mounted) {
+        //             setLoading(false);
+        //         }
+        //     }
+        // };
 
-                if (profileError) {
-                    throw new Error('프로필 가져오기 오류');
-                }
-                setUser(data);
-            } catch (error) {
-                console.error(error);
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        };
+        // supabase.auth.getUser().then(({ data: { user } }) => {
+        //     if (user) {
+        //         loadProfile(user.id);
+        //     }
+        // });
 
-        getProfile();
 
-        // Supabase 인증 상태 변경 리스너 설정
-        const { data: { subscription } } = onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                if (session?.user?.id) {
-                    try {
-                        const { data, error: profileError } = await supabase.from('profiles')
-                            .select('*')
-                            .eq('id', session.user.id)
-                            .single<Profile>();
+        // // onAuthStateChange를 사용하여 초기 세션을 가져옴 (쿠키 직접 읽기 방지)
+        // const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        //     console.log('event', event);
+        //     console.log('session', session);
+        //     if (!mounted) return;
 
-                        if (!profileError && data) {
-                            setUser(data);
-                        }
-                    } catch (error) {
-                        console.error('프로필 가져오기 오류:', error);
-                    }
-                }
-            } else if (event === 'SIGNED_OUT') {
-                setUser(null);
-            }
-        });
+        //     if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        //         if (session?.user?.id) {
+        //             await loadProfile(session.user.id);
+        //         } else {
+        //             setUser(null);
+        //             setLoading(false);
+        //         }
+        //     } else if (event === 'SIGNED_OUT') {
+        //         setUser(null);
+        //         setLoading(false);
+        //     }
+        // });
 
         return () => {
-            subscription.unsubscribe();
+            mounted = false;
+            // subscription.unsubscribe();
         };
     }, []);
 

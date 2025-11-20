@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Container, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { ProfileForm, PasswordForm } from '@/src/features/mypage/profile';
-import { checkSupabaseSession, getSupabaseUser, supabase } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user';
 import { updateProfile, updatePassword } from '@/src/entities/user';
 import { Save } from 'lucide-react';
+import { getSupabaseUser, supabaseClient } from '@/src/shared/lib/supabase/client';
 
 export default function ProfilePage() {
   const router = useRouter();
+  // const supabase = useSupabase();
   const [user, setUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -27,22 +28,15 @@ export default function ProfilePage() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const hasSession = await checkSupabaseSession();
-        if (!hasSession) {
+        const user = await getSupabaseUser();
+        if (!user) {
           router.push('/auth/sign-in');
           return;
         }
-
-        const supabaseUser = await getSupabaseUser();
-        if (!supabaseUser) {
-          router.push('/auth/sign-in');
-          return;
-        }
-
-        const { data: profileData } = await supabase
+        const { data: profileData } = await supabaseClient
           .from('profiles')
           .select('id, name, email, role, status, email_verified, last_login, phone, created_at, updated_at')
-          .eq('id', supabaseUser.id)
+          .eq('id', user?.id)
           .single<Profile>();
 
         if (!profileData) {
@@ -50,20 +44,7 @@ export default function ProfilePage() {
           return;
         }
 
-        const userData: Profile = {
-          id: supabaseUser.id,
-          email: profileData?.email || supabaseUser.email || '',
-          name: profileData?.name || supabaseUser.user_metadata?.name || '사용자',
-          role: profileData?.role === 'admin' ? 'admin' : 'user',
-          email_verified: profileData?.email_verified ?? (supabaseUser.email_confirmed_at !== null),
-          created_at: profileData?.created_at,
-          updated_at: profileData?.updated_at,
-          status: profileData?.status || null,
-          last_login: profileData?.last_login || null,
-          phone: profileData?.phone || null,
-        };
-
-        setUser(userData);
+        setUser(profileData);
         setLoading(false);
       } catch (error) {
         console.error('사용자 정보 로드 실패:', error);
@@ -136,8 +117,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="py-[105px] px-[227.5px]">
-      <Container className="max-w-[862px] mx-auto">
+    <div className="">
+      <Container className="lg:max-w-4xl mx-auto">
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-6">
           <div className="space-y-2">
@@ -169,7 +150,7 @@ export default function ProfilePage() {
             <Button
               type="button"
               onClick={handleSave}
-              disabled={isSaving || (!profileFormData && !passwordFormData)}
+              disabled={isSaving}
               className="h-9 px-4 py-2 bg-gradient-to-b from-[#1A2C6D] to-[#2CA7DB] rounded-[10px] text-sm text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Save className="w-4 h-4" />

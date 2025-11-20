@@ -6,11 +6,10 @@ import type { User } from '@/src/entities/user';
 import UserMenu from '@/src/widgets/user/ui/UserMenu';
 
 interface MyPageLayoutProps {
-  user: User;
   children: React.ReactNode;
 }
 
-export default function MyPageLayout({ user, children }: MyPageLayoutProps) {
+export default function MyPageLayout({ children }: MyPageLayoutProps) {
   const router = useRouter();
 
   return (
@@ -46,16 +45,6 @@ export default function MyPageLayout({ user, children }: MyPageLayoutProps) {
               </div>
             </div>
           </div>
-          {/* <Link href="/" className="flex items-center">
-            <Image
-              src="/logo-192.png"
-              alt="시온 페인팅"
-              width={32}
-              height={32}
-              className="h-8 w-auto"
-              priority
-            />
-          </Link> */}
           <span className="text-gray-900 text-lg font-semibold">마이페이지</span>
           <div className="flex items-center gap-4">
             {/* 사용자 드롭다운 메뉴 */}

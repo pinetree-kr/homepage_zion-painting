@@ -170,60 +170,45 @@ export type Database = {
           },
         ]
       }
-      company_history: {
-        Row: {
-          content: string
-          created_at: string | null
-          display_order: number
-          id: string
-          month: string | null
-          type: string
-          updated_at: string | null
-          year: string
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          display_order?: number
-          id?: string
-          month?: string | null
-          type?: string
-          updated_at?: string | null
-          year: string
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          display_order?: number
-          id?: string
-          month?: string | null
-          type?: string
-          updated_at?: string | null
-          year?: string
-        }
-        Relationships: []
-      }
       company_info: {
         Row: {
-          about_content: string | null
           created_at: string | null
+          greetings: string | null
+          histories: Json | null
           id: string
-          organization_content: string | null
+          introduction: string | null
+          mission: string | null
+          organization_members: Json | null
+          strengths: Json | null
           updated_at: string | null
+          values: Json | null
+          vision: string | null
         }
         Insert: {
-          about_content?: string | null
           created_at?: string | null
+          greetings?: string | null
+          histories?: Json | null
           id?: string
-          organization_content?: string | null
+          introduction?: string | null
+          mission?: string | null
+          organization_members?: Json | null
+          strengths?: Json | null
           updated_at?: string | null
+          values?: Json | null
+          vision?: string | null
         }
         Update: {
-          about_content?: string | null
           created_at?: string | null
+          greetings?: string | null
+          histories?: Json | null
           id?: string
-          organization_content?: string | null
+          introduction?: string | null
+          mission?: string | null
+          organization_members?: Json | null
+          strengths?: Json | null
           updated_at?: string | null
+          values?: Json | null
+          vision?: string | null
         }
         Relationships: []
       }

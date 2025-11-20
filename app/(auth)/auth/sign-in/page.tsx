@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/src/shared/lib/supabase/client';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
 import type { Profile } from '@/src/entities/user';
+import { supabaseClient } from '@/src/shared/lib/supabase/client';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -24,13 +24,18 @@ export default function SignInPage() {
 
     try {
       // Supabase 로그인
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
         email,
         password,
       });
 
       if (authError) {
-        setError(authError.message || '이메일 또는 비밀번호가 올바르지 않습니다');
+        if (authError.code === 'invalid_credentials') {
+          setError('이메일 또는 비밀번호가 올바르지 않습니다');
+        }
+        else {
+          setError(authError.message);
+        }
         setLoading(false);
         return;
       }
@@ -42,7 +47,7 @@ export default function SignInPage() {
       }
 
       // 로그인 성공 시 last_login 업데이트
-      const { error: updateError } = await (supabase
+      const { error: updateError } = await (supabaseClient
         .from('profiles') as any)
         .update({ last_login: new Date().toISOString() })
         .eq('id', authData.user.id);
@@ -52,7 +57,7 @@ export default function SignInPage() {
       }
 
       // profiles 테이블에서 관리자 여부 확인 (role 필드 사용)
-      const { data: profileData } = await supabase
+      const { data: profileData } = await supabaseClient
         .from('profiles')
         .select('role')
         .eq('id', authData.user.id)
@@ -60,7 +65,8 @@ export default function SignInPage() {
 
       // 관리자인 경우 관리자 페이지로, 아니면 홈으로
       if (profileData?.role === 'admin') {
-        router.push('/admin');
+        // router.push('/admin');
+        router.push('/');
       } else {
         router.push('/');
       }

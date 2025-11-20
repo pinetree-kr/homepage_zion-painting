@@ -7,19 +7,19 @@
  */
 
 // 클라이언트 사이드 export
-export {
-  supabase,
-  checkSupabaseSession,
-  getSupabaseUser,
-  onAuthStateChange,
-} from './client';
+// export {
+//   supabase,
+//   checkSupabaseSession,
+//   getSupabaseUser,
+//   onAuthStateChange,
+// } from './client';
 
-// // 서버 사이드 export
-// export { createServerClient } from './server';
+// // // 서버 사이드 export
+// // export { createServerClient } from './server';
 
-// 공통 설정 export
-export { supabaseUrl, supabasePublishableKey } from './config';
+// // 공통 설정 export
+// export { supabaseUrl, supabasePublishableKey } from './config';
 
-// 타입 export
-export type { Database } from '../supabase-types';
+// // 타입 export
+// export type { Database } from '../supabase-types';
 

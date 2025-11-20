@@ -1,4 +1,5 @@
-import { supabase } from '@/src/shared/lib/supabase/client';
+// import { supabase } from '@/src/shared/lib/supabase/client';
+import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 
 /**
  * 비밀번호 변경
@@ -12,6 +13,7 @@ export async function updatePassword(
   newPassword: string
 ): Promise<void> {
   // 현재 비밀번호 확인
+  const supabase = createBrowserClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email,
     password: currentPassword,

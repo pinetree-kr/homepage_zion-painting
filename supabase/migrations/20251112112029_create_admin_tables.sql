@@ -56,28 +56,20 @@ CREATE INDEX IF NOT EXISTS idx_prologue_carousel_order ON prologue_carousel_item
 -- 3. 회사 정보 테이블
 CREATE TABLE IF NOT EXISTS company_info (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  about_content TEXT,
-  organization_content TEXT,
+  introduction TEXT,
+  vision TEXT,
+  greetings TEXT,
+  mission TEXT,
+  strengths JSONB DEFAULT '[]'::jsonb,
+  values JSONB DEFAULT '[]'::jsonb,
+  histories JSONB DEFAULT '[]'::jsonb,
+  organization_members JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 회사 정보는 단일 레코드만 유지
 CREATE UNIQUE INDEX IF NOT EXISTS company_info_single_row ON company_info ((1));
-
--- 4. 회사 연혁 테이블
-CREATE TABLE IF NOT EXISTS company_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  year VARCHAR(10) NOT NULL,
-  month VARCHAR(10),
-  content TEXT NOT NULL,
-  display_order INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_company_history_order ON company_history(display_order);
-CREATE INDEX IF NOT EXISTS idx_company_history_year ON company_history(year);
 
 -- 5. 사업 분야 테이블
 CREATE TABLE IF NOT EXISTS business_areas (
@@ -203,8 +195,6 @@ CREATE TRIGGER update_prologue_carousel_items_updated_at BEFORE UPDATE ON prolog
 CREATE TRIGGER update_company_info_updated_at BEFORE UPDATE ON company_info
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_company_history_updated_at BEFORE UPDATE ON company_history
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_business_areas_updated_at BEFORE UPDATE ON business_areas
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -230,7 +220,7 @@ ALTER TABLE administrators ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prologue_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prologue_carousel_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE company_info ENABLE ROW LEVEL SECURITY;
-ALTER TABLE company_history ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE business_areas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE business_achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_info ENABLE ROW LEVEL SECURITY;
@@ -318,8 +308,6 @@ CREATE POLICY "Public read access for prologue_carousel_items" ON prologue_carou
 CREATE POLICY "Public read access for company_info" ON company_info
   FOR SELECT USING (true);
 
-CREATE POLICY "Public read access for company_history" ON company_history
-  FOR SELECT USING (true);
 
 CREATE POLICY "Public read access for business_areas" ON business_areas
   FOR SELECT USING (true);
@@ -369,7 +357,7 @@ CREATE POLICY "Admins can view all comments" ON comments
 DROP POLICY IF EXISTS "System admin write access for prologue_settings" ON prologue_settings;
 DROP POLICY IF EXISTS "System admin write access for prologue_carousel_items" ON prologue_carousel_items;
 DROP POLICY IF EXISTS "System admin write access for company_info" ON company_info;
-DROP POLICY IF EXISTS "System admin write access for company_history" ON company_history;
+
 DROP POLICY IF EXISTS "System admin write access for business_areas" ON business_areas;
 DROP POLICY IF EXISTS "System admin write access for business_achievements" ON business_achievements;
 DROP POLICY IF EXISTS "System admin write access for contact_info" ON contact_info;
@@ -401,15 +389,6 @@ CREATE POLICY "Admin update access for company_info" ON company_info
   FOR UPDATE USING (is_admin(auth.uid()));
 
 CREATE POLICY "Admin delete access for company_info" ON company_info
-  FOR DELETE USING (is_admin(auth.uid()));
-
-CREATE POLICY "Admin write access for company_history" ON company_history
-  FOR INSERT WITH CHECK (is_admin(auth.uid()));
-
-CREATE POLICY "Admin update access for company_history" ON company_history
-  FOR UPDATE USING (is_admin(auth.uid()));
-
-CREATE POLICY "Admin delete access for company_history" ON company_history
   FOR DELETE USING (is_admin(auth.uid()));
 
 CREATE POLICY "Admin write access for business_areas" ON business_areas

@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/src/shared/lib/supabase/client';
+// import { supabase } from '@/src/shared/lib/supabase/client';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
+import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -48,6 +49,7 @@ export default function SignUpPage() {
 
     try {
       // Supabase 회원가입
+      const supabase = createBrowserClient();
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,

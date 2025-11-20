@@ -4,108 +4,100 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { isAdmin, type User } from '@/src/entities/user';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/src/shared/ui';
-import { checkSupabaseSession, getSupabaseUser, supabase, onAuthStateChange } from '@/src/shared/lib/supabase/client';
-import type { Profile } from '@/src/entities/user';
+import { type User } from '@/src/entities/user';
+// import { useSupabase }     from '@/src/shared/lib/supabase/client';
 import { LogOut, Settings } from 'lucide-react';
 import { getScrollbarWidth } from '@/src/shared/lib/utils';
 import UserMenu from '@/src/widgets/user/ui/UserMenu';
+import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const router = useRouter();
+  // const supabase = useSupabase();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
+  // useEffect(() => {
+  //   const handleScroll = () => {
+  //     setIsScrolled(window.scrollY > 50);
+  //   };
+  //   window.addEventListener('scroll', handleScroll);
 
-    // 스크롤바 너비를 CSS 변수로 설정 (스크롤바 쉬프팅 방지용)
-    const scrollbarWidth = getScrollbarWidth();
-    document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
+  //   // 스크롤바 너비를 CSS 변수로 설정 (스크롤바 쉬프팅 방지용)
+  //   const scrollbarWidth = getScrollbarWidth();
+  //   document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
 
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  //   return () => window.removeEventListener('scroll', handleScroll);
+  // }, []);
 
   // Supabase 로그인 상태 확인
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const hasSession = await checkSupabaseSession();
-        if (!hasSession) {
-          setCurrentUser(null);
-          return;
-        }
+  // useEffect(() => {
+  //   let mounted = true;
 
-        const supabaseUser = await getSupabaseUser();
-        if (!supabaseUser) {
-          setCurrentUser(null);
-          return;
-        }
+  //   const loadUserProfile = async (userId: string) => {
+  //     try {
+  //       // profiles 테이블에서 사용자 프로필 정보 가져오기 (role 포함)
+  //       const { data: profileData } = await supabase
+  //         .from('profiles')
+  //         .select('id, name, email, role, status, email_verified, last_login, phone, created_at, updated_at')
+  //         .eq('id', userId)
+  //         .single<Profile>();
 
-        // profiles 테이블에서 사용자 프로필 정보 가져오기 (role 포함)
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('id, name, email, role, status, email_verified, last_login, phone, created_at, updated_at')
-          .eq('id', supabaseUser.id)
-          .single<Profile>();
+  //       if (!mounted) return;
 
-        // 개발 단계에서는 관리자 권한을 분리하지 않음
-        // 관리자인 경우 administrators 테이블에서 세부 권한 가져오기
-        // let adminDetailRole: 'system' | 'contents' | null = null;
-        // if (profileData?.role === 'admin') {
-        //   const { data: adminData } = await supabase
-        //     .from('administrators')
-        //     .select('role')
-        //     .eq('id', supabaseUser.id)
-        //     .single();
-        //   adminDetailRole = adminData?.role || null;
-        // }
+  //       if (!profileData) {
+  //         setCurrentUser(null);
+  //         return;
+  //       }
 
-        // User 타입으로 변환 (Profile의 role 사용)
-        const userData: User = {
-          id: supabaseUser.id,
-          email: profileData?.email || supabaseUser.email || '',
-          name: profileData?.name || supabaseUser.user_metadata?.name || '사용자',
-          role: profileData?.role === 'admin' ? 'admin' : 'user', // profiles 테이블에서 결정
-          email_verified: profileData?.email_verified ?? (supabaseUser.email_confirmed_at !== null),
-          created_at: profileData?.created_at,
-          updated_at: profileData?.updated_at,
-          status: profileData?.status || null,
-          last_login: profileData?.last_login || null,
-          phone: profileData?.phone || null,
-        };
+  //       // User 타입으로 변환 (Profile의 role 사용)
+  //       const userData: User = {
+  //         id: profileData.id,
+  //         email: profileData.email || '',
+  //         name: profileData.name || '사용자',
+  //         role: profileData.role === 'admin' ? 'admin' : 'user',
+  //         email_verified: profileData.email_verified ?? false,
+  //         created_at: profileData.created_at,
+  //         updated_at: profileData.updated_at,
+  //         status: profileData.status || null,
+  //         last_login: profileData.last_login || null,
+  //         phone: profileData.phone || null,
+  //       };
 
-        setCurrentUser(userData);
-      } catch (error) {
-        console.error('인증 상태 확인 중 오류 발생:', error);
-        setCurrentUser(null);
-      }
-    };
+  //       setCurrentUser(userData);
+  //     } catch (error) {
+  //       console.error('프로필 로드 중 오류 발생:', error);
+  //       if (mounted) {
+  //         setCurrentUser(null);
+  //       }
+  //     }
+  //   };
 
-    checkAuth();
+  //   // onAuthStateChange를 사용하여 초기 세션을 가져옴 (쿠키 직접 읽기 방지)
+  //   const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+  //     if (!mounted) return;
 
-    // Supabase 인증 상태 변경 리스너 설정
-    const { data: { subscription } } = onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        await checkAuth();
-      } else if (event === 'SIGNED_OUT') {
-        setCurrentUser(null);
-      }
-    });
+  //     if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+  //       if (session?.user?.id) {
+  //         await loadUserProfile(session.user.id);
+  //       } else {
+  //         setCurrentUser(null);
+  //       }
+  //     } else if (event === 'SIGNED_OUT') {
+  //       setCurrentUser(null);
+  //     }
+  //   });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  //   return () => {
+  //     mounted = false;
+  //     subscription.unsubscribe();
+  //   };
+  // }, [supabase]);
 
   const handleLogout = async () => {
     try {
+      const supabase = createBrowserClient();
       // Supabase 로그아웃
       await supabase.auth.signOut();
       setCurrentUser(null);
@@ -131,57 +123,6 @@ export default function Header() {
     };
   }, [isMenuOpen]);
 
-  // DropdownMenu 열림/닫힘 상태에 따른 스크롤바 쉬프팅 방지
-  useEffect(() => {
-    const headerElement = document.querySelector('header') as HTMLElement | null;
-    if (!headerElement) return;
-
-    const updateHeaderPadding = () => {
-      const isScrollLocked = document.body.hasAttribute('data-scroll-locked');
-      const bodyStyle = window.getComputedStyle(document.body);
-      const bodyMarginRight = parseInt(bodyStyle.marginRight) || 0;
-
-      // padding-right 변경 시 트랜지션 비활성화 (즉시 적용)
-      const originalTransition = headerElement.style.transition;
-      headerElement.style.transition = 'none';
-
-      if (isScrollLocked && bodyMarginRight > 0) {
-        // body에 margin-right가 적용되어 있으면 header에도 동일한 padding-right 적용
-        headerElement.style.paddingRight = `${bodyMarginRight}px`;
-      } else {
-        // 스크롤 잠금이 해제되면 padding-right 제거
-        headerElement.style.paddingRight = '';
-      }
-
-      // 다음 프레임에서 트랜지션 복원 (다른 속성 변화는 여전히 트랜지션 적용)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          headerElement.style.transition = originalTransition;
-        });
-      });
-    };
-
-    // 초기 상태 확인
-    updateHeaderPadding();
-
-    // body의 data-scroll-locked 속성 변화 감지
-    const observer = new MutationObserver(() => {
-      updateHeaderPadding();
-    });
-
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['data-scroll-locked', 'style'],
-    });
-
-    return () => {
-      observer.disconnect();
-      // 정리 시 padding 제거
-      if (headerElement) {
-        headerElement.style.paddingRight = '';
-      }
-    };
-  }, [isDropdownOpen]);
 
   const navItems = [
     { label: '회사소개', href: '#about' },
@@ -377,7 +318,7 @@ export default function Header() {
                   <p className="text-sm font-medium text-gray-900">{currentUser.name}</p>
                   <p className="text-xs text-gray-500">{currentUser.email}</p>
                 </div>
-                {isAdmin(currentUser) && (
+                {currentUser.role === 'admin' && (
                   <Link
                     href="/admin"
                     onClick={() => setIsMenuOpen(false)}

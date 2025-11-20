@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Trash2, Save, GripVertical, Upload, Loader2, X } from 'lucide-react';
+import { Save, GripVertical, Upload, Loader2, X } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Textarea } from '@/src/shared/ui';
@@ -10,7 +10,7 @@ import { Card } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import { supabase } from '@/src/shared/lib/supabase/client';
+// import { supabase } from '@/src/shared/lib/supabase/client';
 import { resizeImage } from '@/src/shared/lib';
 import { PrologueCarouselItem, PrologueSettings } from '@/src/entities';
 import {
@@ -30,6 +30,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { supabaseClient } from '@/src/shared/lib/supabase/client';
 
 interface CarouselItem {
   id: string;
@@ -204,7 +205,7 @@ export default function ManagementProloguePage() {
       setIsLoading(true);
 
       // 프롤로그 설정 로드
-      const { data: settingsData, error: settingsError } = await supabase
+      const { data: settingsData, error: settingsError } = await supabaseClient
         .from('prologue_settings')
         .select('default_title, default_description')
         .single()
@@ -219,7 +220,7 @@ export default function ManagementProloguePage() {
       }
 
       // 캐러셀 아이템 로드
-      const { data: itemsData, error: itemsError } = await supabase
+      const { data: itemsData, error: itemsError } = await supabaseClient
         .from('prologue_carousel_items')
         .select('*')
         .order('display_order', { ascending: true })
@@ -253,11 +254,12 @@ export default function ManagementProloguePage() {
 
   const uploadImageToStorage = async (file: File): Promise<string | null> => {
     try {
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = `carousel/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabaseClient.storage
         .from('prologue-carousel')
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -271,7 +273,7 @@ export default function ManagementProloguePage() {
       }
 
       // 공개 URL 가져오기
-      const { data } = supabase.storage
+      const { data } = supabaseClient.storage
         .from('prologue-carousel')
         .getPublicUrl(filePath);
 
@@ -285,7 +287,7 @@ export default function ManagementProloguePage() {
 
   const deleteImageFromStorage = async (imagePath: string) => {
     try {
-      const { error } = await supabase.storage
+      const { error } = await supabaseClient.storage
         .from('prologue-carousel')
         .remove([imagePath]);
 
@@ -464,7 +466,7 @@ export default function ManagementProloguePage() {
       setIsSavingSettings(true);
 
       // 프롤로그 설정 저장 또는 업데이트 (단일 레코드만 유지)
-      const { data: existingSettings } = await supabase
+      const { data: existingSettings } = await supabaseClient
         .from('prologue_settings')
         .select('id')
         .limit(1)
@@ -472,7 +474,7 @@ export default function ManagementProloguePage() {
 
       if (existingSettings?.id) {
         // 기존 레코드 업데이트
-        const { error: updateError } = await (supabase as any)
+        const { error: updateError } = await supabaseClient
           .from('prologue_settings')
           .update({
             default_title: defaultTitle,
@@ -487,7 +489,7 @@ export default function ManagementProloguePage() {
         }
       } else {
         // 새 레코드 삽입
-        const { error: insertError } = await (supabase as any)
+        const { error: insertError } = await supabaseClient
           .from('prologue_settings')
           .insert({
             default_title: defaultTitle,
@@ -548,7 +550,7 @@ export default function ManagementProloguePage() {
       // 삭제될 항목들을 DB에서 삭제
       if (itemsToDelete.length > 0) {
         const deleteIds = itemsToDelete.map(item => item.dbId!);
-        const { error: deleteError } = await supabase
+        const { error: deleteError } = await supabaseClient
           .from('prologue_carousel_items')
           .delete()
           .in('id', deleteIds);
@@ -566,7 +568,7 @@ export default function ManagementProloguePage() {
         .map((item) => item.dbId!);
 
       if (existingDbIds.length > 0) {
-        const { error: deleteError } = await supabase
+        const { error: deleteError } = await supabaseClient
           .from('prologue_carousel_items')
           .delete()
           .in('id', existingDbIds);
@@ -587,7 +589,7 @@ export default function ManagementProloguePage() {
       }));
 
       if (itemsToSave.length > 0) {
-        const { error: insertError } = await (supabase as any)
+        const { error: insertError } = await supabaseClient
           .from('prologue_carousel_items')
           .insert(itemsToSave);
 

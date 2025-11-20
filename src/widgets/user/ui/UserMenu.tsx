@@ -1,27 +1,119 @@
 "use client";
 
-import { useCurrentUser } from "@/src/entities/user/model/useCurrentUser";
+import type { Profile } from "@/src/entities/user/model/types";
 import { useSignOut } from "@/src/entities/user/model/useSignOut";
-import { isAdmin } from "@/src/shared/lib/auth";
+// import { createBrowserClient } from "@/src/shared/lib/supabase/client";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/src/shared/ui/DropdownMenu";
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback } from "react";
-
+import { useCallback, useEffect, useState } from "react";
+import { supabaseClient } from "@/src/shared/lib/supabase/client";
 
 {/* 사용자 드롭다운 메뉴 */ }
 export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
-    const { user, loading } = useCurrentUser();
+    // const { user, loading } = useCurrentUser();
+    const [user, setUser] = useState<Profile | undefined>(undefined);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        const loadUser = async () => {
+            // const supabase = createBrowserClient();
+
+            const { data: { user } } = await supabaseClient.auth.getUser();
+
+            if (!user) {
+                setUser(undefined);
+                setLoading(false);
+                return;
+            }
+
+            const { data: profileData } = await supabaseClient
+                .from('profiles')
+                .select('id, name, email, role, status')
+                .eq('id', user.id)
+                .single<Profile>();
+
+            if (!profileData) {
+                setUser(undefined);
+                setLoading(false);
+                return;
+            }
+
+            setUser(profileData);
+            setLoading(false);
+        };
+        loadUser();
+    }, []);
+
     const { signOut } = useSignOut();
     const router = useRouter();
     const pathname = usePathname();
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+
+    // DropdownMenu 열림/닫힘 상태에 따른 스크롤바 쉬프팅 방지
+    useEffect(() => {
+        const headerElement = document.querySelector('header') as HTMLElement | null;
+        if (!headerElement) return;
+
+        const updateHeaderPadding = () => {
+            const isScrollLocked = document.body.hasAttribute('data-scroll-locked');
+            const bodyStyle = window.getComputedStyle(document.body);
+            const bodyMarginRight = parseInt(bodyStyle.marginRight) || 0;
+
+            // padding-right 변경 시 트랜지션 비활성화 (즉시 적용)
+            const originalTransition = headerElement.style.transition;
+            headerElement.style.transition = 'none';
+
+            if (isScrollLocked && bodyMarginRight > 0) {
+                // body에 margin-right가 적용되어 있으면 header에도 동일한 padding-right 적용
+                headerElement.style.paddingRight = `${bodyMarginRight}px`;
+            } else {
+                // 스크롤 잠금이 해제되면 padding-right 제거
+                headerElement.style.paddingRight = '';
+            }
+
+            // 다음 프레임에서 트랜지션 복원 (다른 속성 변화는 여전히 트랜지션 적용)
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    headerElement.style.transition = originalTransition;
+                });
+            });
+        };
+
+        // 초기 상태 확인
+        updateHeaderPadding();
+
+        // body의 data-scroll-locked 속성 변화 감지
+        const observer = new MutationObserver(() => {
+            updateHeaderPadding();
+        });
+
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['data-scroll-locked', 'style'],
+        });
+
+        return () => {
+            observer.disconnect();
+            // 정리 시 padding 제거
+            if (headerElement) {
+                headerElement.style.paddingRight = '';
+            }
+        };
+    }, [isDropdownOpen]);
 
     const handleSignOut = useCallback(async () => {
         await signOut();
-        router.push('/');
-        router.refresh();
-    }, [signOut, router])
+
+        // 현재 경로가 '/'인 경우 강제 새로고침, 아니면 일반 라우팅
+        if (pathname === '/') {
+            window.location.href = '/';
+        } else {
+            router.push('/');
+            router.refresh();
+        }
+    }, [signOut, router, pathname])
 
     const handleMoveAdminPage = useCallback(() => {
         router.push('/admin');
@@ -66,7 +158,7 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                 <button className="relative h-10 w-10 rounded-full bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] text-white flex items-center justify-center hover:opacity-80 transition-opacity outline-none">
                     <span className="text-sm font-medium">{user.name?.charAt(0)}</span>
                 </button>
@@ -79,11 +171,11 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem onClick={handleMoveMyPage} className="cursor-pointer">
-                    <User className="h-4 w-4 mr-2" />
+                    <UserIcon className="h-4 w-4 mr-2" />
                     <span>마이페이지</span>
                 </DropdownMenuItem>
                 {
-                    isAdmin(user) && !pathname?.startsWith('/admin') && (
+                    user.role === 'admin' && !pathname?.startsWith('/admin') && (
                         <>
                             <DropdownMenuItem onClick={handleMoveAdminPage} className="cursor-pointer">
                                 <Settings className="h-4 w-4 mr-2" />

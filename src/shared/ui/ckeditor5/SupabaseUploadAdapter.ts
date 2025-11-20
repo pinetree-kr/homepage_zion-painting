@@ -1,4 +1,7 @@
-import { supabase } from '@/src/shared/lib/supabase/client';
+// import { useSupabase } from '@/src/shared/lib/supabase/client';
+import { resizeImage } from '@/src/shared/lib/image-resize';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '../../lib/supabase/client';
 
 /**
  * CKEditor5용 Supabase Storage 업로드 어댑터
@@ -10,11 +13,12 @@ export class SupabaseUploadAdapter {
   loader: any;
   bucket: string;
   folder: string;
-
-  constructor(loader: any, bucket: string = 'editor-images', folder: string = 'uploads') {
+  supabase: SupabaseClient;
+  constructor(loader: any, bucket: string = 'editor-images', folder: string = 'uploads', supabase: SupabaseClient = createBrowserClient()) {
     this.loader = loader;
     this.bucket = bucket;
     this.folder = folder;
+    this.supabase = supabase;
   }
 
   /**
@@ -24,17 +28,36 @@ export class SupabaseUploadAdapter {
     const file = await this.loader.file;
 
     try {
-      // 파일 확장자 추출
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      
+      let fileToUpload = file;
+
+      // 이미지 파일인 경우 리사이징 적용
+      if (file.type.startsWith('image/')) {
+        try {
+          fileToUpload = await resizeImage(file, {
+            maxWidth: 1920,
+            maxHeight: 1080,
+            maxSizeMB: 1,
+            quality: 0.8,
+            fileType: 'image/jpeg',
+          });
+        } catch (resizeError) {
+          console.warn('이미지 리사이징 실패, 원본 파일로 업로드:', resizeError);
+          // 리사이징 실패 시 원본 파일 사용
+          fileToUpload = file;
+        }
+      }
+
+      // 파일 확장자 추출 (리사이징된 파일의 확장자 사용)
+      const fileExt = fileToUpload.name.split('.').pop()?.toLowerCase() || 'jpg';
+
       // 고유한 파일명 생성
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = `${this.folder}/${fileName}`;
 
       // Supabase Storage에 업로드
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await this.supabase.storage
         .from(this.bucket)
-        .upload(filePath, file, {
+        .upload(filePath, fileToUpload, {
           cacheControl: '3600',
           upsert: false,
         });
@@ -45,7 +68,7 @@ export class SupabaseUploadAdapter {
       }
 
       // 공개 URL 가져오기
-      const { data } = supabase.storage
+      const { data } = this.supabase.storage
         .from(this.bucket)
         .getPublicUrl(filePath);
 
@@ -80,7 +103,7 @@ export function SupabaseUploadAdapterPlugin(
   folder: string = 'uploads'
 ) {
   editor.plugins.get('FileRepository').createUploadAdapter = (loader: any) => {
-    return new SupabaseUploadAdapter(loader, bucket, folder);
+    return new SupabaseUploadAdapter(loader, bucket, folder, createBrowserClient());
   };
 }
 

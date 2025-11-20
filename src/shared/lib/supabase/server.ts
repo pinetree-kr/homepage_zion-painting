@@ -29,19 +29,3 @@ export async function createServerClient(): Promise<SupabaseClient<Database>> {
     },
   });
 }
-
-// export async function createServerClient(): Promise<SupabaseClient<Database>> {
-//   const cookieStore = await cookies();
-//   return createClient<Database>(supabaseUrl, supabasePublishableKey, {
-//     cookies: {
-//       getAll() {
-//         return cookieStore.getAll();
-//       },
-//       setAll(entries) {
-//         for (const { name, value, options } of entries) {
-//           cookieStore.set(name, value, options);
-//         }
-//       },
-//     },
-//   });
-// }

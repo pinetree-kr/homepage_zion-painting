@@ -3,17 +3,17 @@
 import { createServerClient } from "@/src/shared/lib/supabase/server";
 import { Profile } from "./types";
 
-export async function getUserSession() {
-    const supabase = await createServerClient();
+// export async function getUserSession() {
+//     const supabase = await createServerClient();
 
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+//     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    if (sessionError) {
-        throw new Error('세션 가져오기 오류');
-    }
+//     if (sessionError) {
+//         throw new Error('세션 가져오기 오류');
+//     }
 
-    return session;
-}
+//     return session;
+// }
 
 export async function getCurrentUserProfile(): Promise<Profile | null> {
     try {
@@ -21,9 +21,8 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
 
         const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-
         if (userError) {
-            console.log(userError);
+            // console.log(userError);
             throw new Error('사용자 정보 가져오기 오류');
         }
         if (!user?.id) {

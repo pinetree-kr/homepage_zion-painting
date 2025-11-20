@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MyPageLayout } from '@/src/features/layout';
-import { checkSupabaseSession, getSupabaseUser, supabase } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user/model/types';
-import type { User } from '@/src/entities/user';
+import { supabaseClient } from '@/src/shared/lib/supabase/client';
 
 export default function MyPageLayoutWrapper({
   children,
@@ -13,31 +12,25 @@ export default function MyPageLayoutWrapper({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Profile | undefined>(undefined);
   const [loading, setLoading] = useState(true);
-
+  // const supabase = useSupabase(); 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Supabase 세션 확인
-        const hasSession = await checkSupabaseSession();
-        if (!hasSession) {
-          router.push('/auth/sign-in');
-          return;
-        }
+        const { data: { user } } = await supabaseClient.auth.getUser();
 
-        // Supabase 사용자 정보 가져오기
-        const supabaseUser = await getSupabaseUser();
-        if (!supabaseUser) {
+        if (!user) {
           router.push('/auth/sign-in');
           return;
         }
 
         // profiles 테이블에서 사용자 프로필 정보 가져오기
-        const { data: profileData } = await supabase
+        const { data: profileData } = await supabaseClient
           .from('profiles')
-          .select('id, name, email, role, status, email_verified, last_login, phone, created_at, updated_at')
-          .eq('id', supabaseUser.id)
+          .select('id, status')
+          .eq('id', user.id)
+          .eq('status', 'active')
           .single<Profile>();
 
         if (!profileData) {
@@ -45,21 +38,7 @@ export default function MyPageLayoutWrapper({
           return;
         }
 
-        // User 타입으로 변환
-        const userData: User = {
-          id: supabaseUser.id,
-          email: profileData?.email || supabaseUser.email || '',
-          name: profileData?.name || supabaseUser.user_metadata?.name || '사용자',
-          role: profileData?.role === 'admin' ? 'admin' : 'user',
-          email_verified: profileData?.email_verified ?? (supabaseUser.email_confirmed_at !== null),
-          created_at: profileData?.created_at,
-          updated_at: profileData?.updated_at,
-          status: profileData?.status || null,
-          last_login: profileData?.last_login || null,
-          phone: profileData?.phone || null,
-        };
-
-        setUser(userData);
+        setUser(profileData);
         setLoading(false);
       } catch (error) {
         console.error('인증 확인 중 오류 발생:', error);
@@ -83,7 +62,7 @@ export default function MyPageLayoutWrapper({
   }
 
   return (
-    <MyPageLayout user={user}>
+    <MyPageLayout>
       {children}
     </MyPageLayout>
   );

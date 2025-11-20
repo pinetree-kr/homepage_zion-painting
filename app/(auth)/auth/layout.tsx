@@ -1,4 +1,4 @@
-import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
+import { getCurrentUserProfile } from '@/src/entities';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 
@@ -7,10 +7,9 @@ export default async function AuthLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const profile = await getCurrentUserProfile();
-
-    if (profile) {
-        if (profile.role === 'admin') {
+    const user = await getCurrentUserProfile();
+    if (user) {
+        if (user.role === 'admin') {
             redirect('/admin');
         } else {
             redirect('/');

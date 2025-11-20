@@ -1,8 +1,15 @@
-import { AboutCompany, getCompanyInfo } from '@/src/features/management-company';
+import { AboutCompany, getCompanyAboutInfo } from '@/src/features/management-company';
 
 export default async function ManangementAboutCompanyPage() {
-  const companyInfo = await getCompanyInfo();
+  const aboutInfo = await getCompanyAboutInfo();
 
-  return <AboutCompany item={companyInfo?.aboutContent || ''} />;
+  return <AboutCompany initialData={aboutInfo || {
+    introduction: '',
+    strengths: [],
+    vision: '',
+    values: [],
+    greetings: '',
+    mission: '',
+  }} />;
 }
 

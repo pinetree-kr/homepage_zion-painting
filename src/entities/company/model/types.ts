@@ -1,8 +1,13 @@
 export interface CompanyInfo {
   id: string;
-  about_content: string | null;
-  organization_content: string | null;
+  introduction?: string | null;
+  vision?: string | null;
+  greetings?: string | null;
+  mission?: string | null;
+  strengths?: CompanyStrength[] | null;
+  values?: CompanyValue[] | null;
   histories?: CompanyHistory[] | null;
+  organization_members?: OrganizationMember[] | null;
   created_at?: string | null;
   updated_at?: string | null;
 }
@@ -18,4 +23,36 @@ export interface CompanyHistory {
   display_order: number;
   created_at?: string | null;
   updated_at?: string | null;
+}
+
+export interface OrganizationMember {
+  id: string;
+  name: string;
+  title: string;
+  image_url: string | null;
+  display_order: number;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface CompanyStrength {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+}
+
+export interface CompanyValue {
+  id: string;
+  title: string;
+  description: string;
+}
+
+export interface CompanyAbout {
+  introduction: string;
+  strengths: CompanyStrength[];
+  vision: string;
+  values: CompanyValue[];
+  greetings: string;
+  mission: string;
 }

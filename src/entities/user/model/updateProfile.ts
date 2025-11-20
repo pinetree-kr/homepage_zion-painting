@@ -1,5 +1,6 @@
-import { supabase } from '@/src/shared/lib/supabase/client';
+// import { supabase } from '@/src/shared/lib/supabase/client';
 import type { Profile } from './types';
+import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 
 /**
  * 프로필 정보 업데이트
@@ -11,6 +12,7 @@ export async function updateProfile(
   userId: string,
   data: { name: string }
 ): Promise<Profile> {
+  const supabase = createBrowserClient();
   const { data: updatedProfile, error } = await supabase
     .from('profiles')
     .update({

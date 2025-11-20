@@ -1,47 +1,48 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { verifyEmail } from '@/src/entities/user';
+// import { supabase } from '@/src/shared/lib/supabase/client';
+import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 
 function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams?.get('email') ?? '';
-  const token = searchParams?.get('token') ?? '';
-  const verified = searchParams?.get('verified') ?? '';
+  const code = searchParams?.get('code') ?? '';
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'pending'>('loading');
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    // 회원가입 후 이메일 인증 대기 상태
-    if (verified === 'false') {
-      setStatus('pending');
-      setMessage('이메일 인증 링크를 확인해주세요. 이메일을 발송했습니다.');
-      return;
-    }
+  const verifyCode = useCallback(async (code: string): Promise<boolean> => {
+    const supabase = createBrowserClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    return !error;
+  }, []);
 
-    // 이메일 인증 콜백 처리
-    if (email && token) {
-      const success = verifyEmail(email, token);
-      if (success) {
-        setStatus('success');
-        setMessage('이메일 인증이 완료되었습니다. 잠시 후 메인 페이지로 이동합니다.');
-        setTimeout(() => {
-          router.push('/');
-          router.refresh();
-        }, 3000);
-      } else {
-        setStatus('error');
-        setMessage('이메일 인증에 실패했습니다. 링크가 만료되었거나 유효하지 않습니다.');
+
+  useEffect(() => {
+    verifyCode(code).then((success) => {
+      // 회원가입 후 이메일 인증 대기 상태
+      if (!success) {
+        setStatus('pending');
+        setMessage('이메일 인증 링크를 확인해주세요. 이메일을 발송했습니다.');
+        return;
       }
-    } else {
+
+      // 이메일 인증 콜백 처리
+      setStatus('success');
+      setMessage('인증이 완료되었습니다. 잠시 후 메인 페이지로 이동합니다.');
+      setTimeout(() => {
+        router.push('/');
+        router.refresh();
+      }, 3000);
+    }).catch((error) => {
       setStatus('error');
-      setMessage('잘못된 접근입니다.');
-    }
-  }, [email, token, verified, router]);
+      setMessage('인증에 실패했습니다. 링크가 만료되었거나 유효하지 않습니다.');
+    });
+
+  }, [code, verifyCode, router]);
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
@@ -53,7 +54,7 @@ function CallbackContent() {
                 <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">처리 중...</h2>
-              <p className="text-gray-600">이메일 인증을 확인하고 있습니다.</p>
+              <p className="text-gray-600">사용자 인증을 확인하고 있습니다.</p>
             </div>
           )}
 
