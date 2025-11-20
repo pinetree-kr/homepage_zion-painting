@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
+import './translation';
 
 import {
   ClassicEditor, Essentials, Paragraph, Bold, Italic, FontColor, FontSize,
@@ -13,7 +14,8 @@ import {
   LinkImage,
   ImageUpload,
   ImageInsert,
-  ImageInsertViaUrl
+  ImageInsertViaUrl,
+  FontBackgroundColor
 } from 'ckeditor5';
 // import "@ckeditor/ckeditor5-image";
 import 'ckeditor5/ckeditor5.css';
@@ -35,8 +37,8 @@ interface CustomEditorProps {
   uploadFolder?: string;
 }
 
-export function CustomEditor({ 
-  text = '', 
+export function CustomEditor({
+  text = '',
   onChange,
   uploadBucket = 'editor-images',
   uploadFolder = 'uploads'
@@ -65,8 +67,9 @@ export function CustomEditor({
           Paragraph,
           Bold,
           Italic,
-          FontColor,
           FontSize,
+          FontColor,
+          FontBackgroundColor,
           Image,
           ImageUpload,
           ImageInsert,
@@ -77,15 +80,16 @@ export function CustomEditor({
           ImageResize,
           LinkImage
         ],
-        toolbar: ['undo', 'redo', '|', 'bold', 'italic', 'fontColor', 'fontSize', '|', 'insertImage'],
+        toolbar: ['undo', 'redo', '|', 'bold', 'italic', 'fontSize', 'fontColor', 'fontBackgroundColor', '|', 'insertImage'],
         image: {
           toolbar: ['toggleImageCaption', 'imageTextAlternative', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side', '|', 'resizeImage'],
           insert: {
             integrations: ['upload', 'url'],
           },
         },
+        placeholder: '여기에 글을 작성합니다.',
       }}
-      data={text ?? '<p>여기에 글을 작성합니다.</p>'}
+      data={text}
       onChange={handleChange}
       onReady={handleReady}
     />
