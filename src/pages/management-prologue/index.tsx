@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { supabase } from '@/src/shared/lib/supabase/client';
+import { resizeImage } from '@/src/shared/lib';
 import { PrologueCarouselItem, PrologueSettings } from '@/src/entities';
 import {
   DndContext,
@@ -253,7 +254,7 @@ export default function ManagementProloguePage() {
   const uploadImageToStorage = async (file: File): Promise<string | null> => {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = `carousel/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -308,49 +309,64 @@ export default function ManagementProloguePage() {
         continue;
       }
 
-      // 파일 크기 확인 (5MB 제한)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name}: 파일 크기는 5MB 이하여야 합니다.`);
+      try {
+        // 이미지 리사이징 (최대 크기: 1920x1080, 최대 용량: 1MB)
+        const resizedFile = await resizeImage(file, {
+          maxWidth: 1920,
+          maxHeight: 1080,
+          maxSizeMB: 1,
+          quality: 0.8,
+          fileType: 'image/jpeg',
+        });
+
+        // 리사이징 후 파일 크기 확인 (5MB 제한 - 안전장치)
+        if (resizedFile.size > 1 * 1024 * 1024) {
+          toast.error(`${file.name}: 파일 크기가 너무 큽니다.`);
+          continue;
+        }
+
+        // 임시 미리보기용 base64 생성
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const tempId = Date.now().toString() + index + Math.random().toString(36).substring(2, 9);
+          const tempItem: CarouselItem = {
+            id: tempId,
+            imageUrl: reader.result as string,
+            title: '',
+            description: '',
+            order: carouselItems.length + index + 1,
+            isUploading: true,
+          };
+
+          setCarouselItems((prev) => [...prev, tempItem]);
+
+          // Supabase Storage에 업로드 (리사이징된 파일 사용)
+          uploadImageToStorage(resizedFile).then((publicUrl) => {
+            if (publicUrl) {
+              setCarouselItems((prev) =>
+                prev.map((item) =>
+                  item.id === tempId
+                    ? {
+                        ...item,
+                        imageUrl: publicUrl,
+                        imagePath: publicUrl.replace(/^.*\/storage\/v1\/object\/public\/prologue-carousel\//, ''),
+                        isUploading: false,
+                      }
+                    : item
+                )
+              );
+            } else {
+              // 업로드 실패 시 임시 항목 제거
+              setCarouselItems((prev) => prev.filter((item) => item.id !== tempId));
+            }
+          });
+        };
+        reader.readAsDataURL(resizedFile);
+      } catch (error) {
+        console.error('이미지 처리 오류:', error);
+        toast.error(`${file.name}: 이미지 처리 중 오류가 발생했습니다.`);
         continue;
       }
-
-      // 임시 미리보기용 base64 생성
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const tempId = Date.now().toString() + index + Math.random().toString(36).substr(2, 9);
-        const tempItem: CarouselItem = {
-          id: tempId,
-          imageUrl: reader.result as string,
-          title: '',
-          description: '',
-          order: carouselItems.length + index + 1,
-          isUploading: true,
-        };
-
-        setCarouselItems((prev) => [...prev, tempItem]);
-
-        // Supabase Storage에 업로드
-        uploadImageToStorage(file).then((publicUrl) => {
-          if (publicUrl) {
-            setCarouselItems((prev) =>
-              prev.map((item) =>
-                item.id === tempId
-                  ? {
-                    ...item,
-                    imageUrl: publicUrl,
-                    imagePath: publicUrl.replace(/^.*\/storage\/v1\/object\/public\/prologue-carousel\//, ''),
-                    isUploading: false,
-                  }
-                  : item
-              )
-            );
-          } else {
-            // 업로드 실패 시 임시 항목 제거
-            setCarouselItems((prev) => prev.filter((item) => item.id !== tempId));
-          }
-        });
-      };
-      reader.readAsDataURL(file);
     }
   };
 

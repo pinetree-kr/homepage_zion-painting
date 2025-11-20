@@ -28,7 +28,7 @@ export class SupabaseUploadAdapter {
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       
       // 고유한 파일명 생성
-      const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = `${this.folder}/${fileName}`;
 
       // Supabase Storage에 업로드

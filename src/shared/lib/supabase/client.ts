@@ -1,6 +1,7 @@
 'use client';
 
-import { createClient } from '@supabase/supabase-js';
+// import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient as createClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../supabase-types';
 import { supabaseUrl, supabasePublishableKey } from './config';

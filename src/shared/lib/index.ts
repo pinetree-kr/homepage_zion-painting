@@ -7,9 +7,14 @@ export {
   checkSupabaseSession,
   getSupabaseUser,
   onAuthStateChange,
-  createServerClient,
+  // createServerClient,
   supabaseUrl,
   supabasePublishableKey,
 } from './supabase';
+
 export type { Database } from './supabase';
+
+// 이미지 리사이징 유틸리티
+export { resizeImage, getImageInfo } from './image-resize';
+export type { ImageResizeOptions } from './image-resize';
 

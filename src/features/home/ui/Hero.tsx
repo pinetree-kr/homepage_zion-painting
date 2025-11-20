@@ -1,3 +1,5 @@
+"use server"
+
 import { createServerClient } from '@/src/shared/lib/supabase/server';
 import type { PrologueCarouselItem } from '@/src/entities/prologue/model/types';
 import HeroCarousel from './HeroCarousel';

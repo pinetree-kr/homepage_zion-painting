@@ -1,10 +1,22 @@
+import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
 import Image from 'next/image';
+import { redirect } from 'next/navigation';
 
-export default function AuthLayout({
+export default async function AuthLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const profile = await getCurrentUserProfile();
+
+    if (profile) {
+        if (profile.role === 'admin') {
+            redirect('/admin');
+        } else {
+            redirect('/');
+        }
+    }
+
     return (
         <div className="min-h-screen bg-white flex">
             {/* Left Side - Image/Gradient */}

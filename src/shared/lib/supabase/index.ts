@@ -14,8 +14,8 @@ export {
   onAuthStateChange,
 } from './client';
 
-// 서버 사이드 export
-export { createServerClient } from './server';
+// // 서버 사이드 export
+// export { createServerClient } from './server';
 
 // 공통 설정 export
 export { supabaseUrl, supabasePublishableKey } from './config';

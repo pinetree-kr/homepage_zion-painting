@@ -1,5 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient as createClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { cookies } from "next/headers";
+
 import type { Database } from '../supabase-types';
 import { supabaseUrl, supabasePublishableKey } from './config';
 
@@ -18,10 +20,28 @@ import { supabaseUrl, supabasePublishableKey } from './config';
  * ```
  */
 export async function createServerClient(): Promise<SupabaseClient<Database>> {
+  const cookieStore = await cookies();
   return createClient<Database>(supabaseUrl, supabasePublishableKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
     },
   });
 }
+
+// export async function createServerClient(): Promise<SupabaseClient<Database>> {
+//   const cookieStore = await cookies();
+//   return createClient<Database>(supabaseUrl, supabasePublishableKey, {
+//     cookies: {
+//       getAll() {
+//         return cookieStore.getAll();
+//       },
+//       setAll(entries) {
+//         for (const { name, value, options } of entries) {
+//           cookieStore.set(name, value, options);
+//         }
+//       },
+//     },
+//   });
+// }
