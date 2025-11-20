@@ -1,9 +1,9 @@
-export interface User {
+type User = {
   id: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'user';
-  emailVerified?: boolean;
+  email: string | null;
+  name: string | null;
+  role: 'admin' | 'user' | null;
+  email_verified?: boolean | null;
 }
 
 const MOCK_USERS = [
@@ -13,7 +13,7 @@ const MOCK_USERS = [
     password: 'admin123',
     name: '관리자',
     role: 'admin' as const,
-    emailVerified: true,
+    email_verified: true,
   },
   {
     id: '2',
@@ -21,7 +21,7 @@ const MOCK_USERS = [
     password: 'user123',
     name: '김철수',
     role: 'user' as const,
-    emailVerified: true,
+    email_verified: false,
   },
 ];
 
@@ -60,7 +60,7 @@ export function register(name: string, email: string, password: string): User | 
     password,
     name,
     role: 'user' as const,
-    emailVerified: false,
+    email_verified: false,
   };
 
   registeredUsers.push(newUser);
@@ -71,7 +71,6 @@ export function register(name: string, email: string, password: string): User | 
     email: newUser.email,
     name: newUser.name,
     role: newUser.role,
-    emailVerified: false,
   };
 }
 
@@ -82,7 +81,7 @@ export function logout() {
 
 export function getCurrentUser(): User | null {
   if (typeof window === 'undefined') return null;
-  
+
   const userStr = localStorage.getItem('currentUser');
   if (userStr) {
     try {
@@ -108,13 +107,13 @@ export function verifyEmail(email: string, token: string): boolean {
     return false;
   }
 
-  registeredUsers[userIndex].emailVerified = true;
-  
+  registeredUsers[userIndex].email_verified = true;
+
   // Auto-login after verification
   const user = registeredUsers[userIndex];
   const { password: _, ...userWithoutPassword } = user;
   localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-  
+
   return true;
 }
 

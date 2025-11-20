@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { type User } from '@/src/entities/user';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/src/shared/ui';
-import { LogOut, Settings } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import UserMenu from '@/src/widgets/user/ui/UserMenu';
 
 // Icon Components
 const Building2Icon = ({ className }: { className?: string }) => (
@@ -165,29 +164,71 @@ const ImageIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-interface AdminLayoutProps {
-  user: Pick<User, 'name' | 'email'>;
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-  onLogout: () => void;
-  onSettingsClick: () => void;
-  children: React.ReactNode;
-}
-
-export default function AdminLayout({ user, activeTab, onTabChange, onLogout, onSettingsClick, children }: AdminLayoutProps) {
-  const router = useRouter();
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(['basic-info', 'customer-management', 'system-management']);
+  const pathname = usePathname();
+  const router = useRouter();
 
-  const toggleMenu = (menuId: string) => {
+  // 현재 경로에 따라 activeTab 결정
+  const getActiveTab = useCallback(() => {
+    if (pathname?.startsWith('/admin/info')) {
+      if (pathname === '/admin/info/prologue') return 'prologue';
+      if (pathname.startsWith('/admin/info/company')) return 'company-info';
+      if (pathname === '/admin/info/business') return 'business-info';
+      if (pathname === '/admin/info/products') return 'products-admin';
+      if (pathname === '/admin/info/contacts') return 'contact-info';
+      return 'prologue';
+    }
+    if (pathname?.startsWith('/admin/customer')) {
+      if (pathname === '/admin/customer/members') return 'members';
+      if (pathname === '/admin/customer/notices') return 'notice';
+      if (pathname === '/admin/customer/qna') return 'qna';
+      if (pathname === '/admin/customer/estimates') return 'quote';
+      if (pathname === '/admin/customer/reviews') return 'review';
+      return 'members';
+    }
+    if (pathname?.startsWith('/admin/system')) {
+      if (pathname === '/admin/system/administrators') return 'admin-management';
+      if (pathname === '/admin/system/logs') return 'logs';
+      if (pathname === '/admin/system/resources') return 'resources';
+      return 'admin-management';
+    }
+    return 'prologue';
+  }, [pathname]);
+
+  const handleTabChange = useCallback((tab: string) => {
+    const routeMap: Record<string, string> = {
+      'prologue': '/admin/info/prologue',
+      'company-info': '/admin/info/company/about',
+      'business-info': '/admin/info/business',
+      'products-admin': '/admin/info/products',
+      'contact-info': '/admin/info/contacts',
+      'members': '/admin/customer/members',
+      'notice': '/admin/customer/notices',
+      'qna': '/admin/customer/qna',
+      'quote': '/admin/customer/estimates',
+      'review': '/admin/customer/reviews',
+      'admin-management': '/admin/system/administrators',
+      'logs': '/admin/system/logs',
+      'resources': '/admin/system/resources',
+    };
+
+    const route = routeMap[tab];
+    if (route) {
+      router.push(route);
+    }
+  }, [router]);
+
+  const toggleMenu = useCallback((menuId: string) => {
     setOpenMenus(prev =>
       prev.includes(menuId)
         ? prev.filter(id => id !== menuId)
         : [...prev, menuId]
     );
-  };
+  }, [setOpenMenus]);
 
-  const menuStructure = [
+  const menuStructure = useMemo(() => [
     {
       id: 'basic-info',
       label: '기본정보',
@@ -222,12 +263,12 @@ export default function AdminLayout({ user, activeTab, onTabChange, onLogout, on
         { id: 'resources', label: '리소스', icon: ServerIcon, route: '/admin/system/resources' },
       ],
     },
-  ];
+  ], [pathname]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 h-[73px]">
+      <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 h-[73px]">
         <div className="flex items-center justify-between px-6 py-4 h-full">
           <div className="flex items-center gap-4">
             <button
@@ -253,38 +294,11 @@ export default function AdminLayout({ user, activeTab, onTabChange, onLogout, on
             </div>
           </div>
           <div className="flex items-center gap-4">
-            {/* <div className="hidden md:block text-right">
-              <p className="text-gray-900 text-sm font-medium">{user.name}</p>
-              <p className="text-gray-500 text-xs">{user.email}</p>
-            </div> */}
-
             {/* 사용자 드롭다운 메뉴 */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="relative h-10 w-10 rounded-full bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] text-white flex items-center justify-center hover:opacity-80 transition-opacity outline-none">
-                  <span className="text-sm font-medium">{user.name?.charAt(0)}</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onSettingsClick} className="cursor-pointer">
-                  <Settings className="h-4 w-4 mr-2" />
-                  <span>마이페이지</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onLogout} className="cursor-pointer text-red-600 focus:text-red-600">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  <span>로그아웃</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <UserMenu isScrolled={false} />
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="flex pt-[73px] h-[calc(100vh)]">
         {/* Sidebar */}
@@ -326,13 +340,13 @@ export default function AdminLayout({ user, activeTab, onTabChange, onLogout, on
                       <div className="space-y-1 mt-1 ml-4">
                         {menu.items.map((item) => {
                           const IconComponent = item.icon;
-                          const isActive = activeTab === item.id;
+                          const isActive = getActiveTab() === item.id;
                           return (
                             <Link
                               key={item.id}
                               href={item.route}
                               onClick={() => {
-                                onTabChange(item.id);
+                                handleTabChange(item.id);
                                 setIsSidebarOpen(false);
                               }}
                               className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${isActive
