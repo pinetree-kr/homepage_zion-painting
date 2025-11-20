@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Container } from '@/src/shared/ui';
-import { Button } from '@/src/shared/ui';
+import { Container, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { ProfileForm, PasswordForm } from '@/src/features/mypage/profile';
 import { checkSupabaseSession, getSupabaseUser, supabase } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user';
+import { updateProfile, updatePassword } from '@/src/entities/user';
 import { Save } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -20,6 +20,9 @@ export default function ProfilePage() {
     newPassword: string;
     confirmPassword: string;
   } | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     const loadUser = async () => {
@@ -90,49 +93,27 @@ export default function ProfilePage() {
     try {
       // 프로필 정보 업데이트
       if (profileFormData) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            name: profileFormData.name,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', user.id);
-
-        if (profileError) {
-          throw new Error('프로필 업데이트 실패: ' + profileError.message);
-        }
+        await updateProfile(user.id, profileFormData);
       }
 
       // 비밀번호 변경
       if (passwordFormData) {
-        // 현재 비밀번호 확인
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: user.email || '',
-          password: passwordFormData.currentPassword,
-        });
-
-        if (signInError) {
-          throw new Error('현재 비밀번호가 올바르지 않습니다.');
-        }
-
-        // 새 비밀번호로 변경
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: passwordFormData.newPassword,
-        });
-
-        if (updateError) {
-          throw new Error('비밀번호 변경 실패: ' + updateError.message);
-        }
+        await updatePassword(
+          user.email || '',
+          passwordFormData.currentPassword,
+          passwordFormData.newPassword
+        );
       }
 
       // 성공 메시지 및 페이지 새로고침
-      alert('저장되었습니다.');
+      setShowSuccessModal(true);
       router.refresh();
       setProfileFormData(null);
       setPasswordFormData(null);
     } catch (error) {
       console.error('저장 실패:', error);
-      alert(error instanceof Error ? error.message : '저장에 실패했습니다.');
+      setErrorMessage(error instanceof Error ? error.message : '저장에 실패했습니다.');
+      setShowErrorModal(true);
     } finally {
       setIsSaving(false);
     }
@@ -197,6 +178,40 @@ export default function ProfilePage() {
           </div>
         </div>
       </Container>
+
+      {/* 성공 모달 */}
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>저장 완료</DialogTitle>
+            <DialogDescription>
+              저장되었습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowSuccessModal(false)}>
+              확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 에러 모달 */}
+      <Dialog open={showErrorModal} onOpenChange={setShowErrorModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>저장 실패</DialogTitle>
+            <DialogDescription>
+              {errorMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowErrorModal(false)}>
+              확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

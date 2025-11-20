@@ -28,3 +28,6 @@ export function isAdmin(user: Profile | null): boolean {
 export function verifyEmail(email: string, token: string): boolean {
     return true;
 }
+
+export { updateProfile } from './model/updateProfile';
+export { updatePassword } from './model/updatePassword';
