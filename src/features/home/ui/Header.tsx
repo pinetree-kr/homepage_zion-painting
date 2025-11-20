@@ -18,18 +18,18 @@ export default function Header() {
   const router = useRouter();
   // const supabase = useSupabase();
 
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     setIsScrolled(window.scrollY > 50);
-  //   };
-  //   window.addEventListener('scroll', handleScroll);
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
 
-  //   // 스크롤바 너비를 CSS 변수로 설정 (스크롤바 쉬프팅 방지용)
-  //   const scrollbarWidth = getScrollbarWidth();
-  //   document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
+    // 스크롤바 너비를 CSS 변수로 설정 (스크롤바 쉬프팅 방지용)
+    const scrollbarWidth = getScrollbarWidth();
+    document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
 
-  //   return () => window.removeEventListener('scroll', handleScroll);
-  // }, []);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Supabase 로그인 상태 확인
   // useEffect(() => {
