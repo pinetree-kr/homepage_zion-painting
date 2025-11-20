@@ -1,7 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Plus, Trash2, GripVertical } from 'lucide-react';
+
+// 클라이언트 사이드에서만 실행되는 UUID 생성 함수
+function generateId(): string {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  // Fallback for older browsers - 클라이언트에서만 실행됨
+  if (typeof window !== 'undefined') {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+  // SSR 시에는 빈 문자열 반환 (useEffect에서 처리)
+  return '';
+}
 import { Button } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
@@ -32,7 +45,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 interface AboutCompanyProps {
-  initialData: CompanyAbout;
+  data: CompanyAbout;
 }
 
 // SortableStrengthItem 컴포넌트
@@ -183,9 +196,38 @@ function SortableValueItem({
   );
 }
 
-export default function AboutCompany({ initialData }: AboutCompanyProps) {
-  const [aboutInfo, setAboutInfo] = useState<CompanyAbout>(initialData);
+export default function AboutCompany({ data }: AboutCompanyProps) {
+  const [aboutInfo, setAboutInfo] = useState<CompanyAbout>(data);
   const [savingFields, setSavingFields] = useState<Record<string, boolean>>({});
+  const [isMounted, setIsMounted] = useState(false);
+
+  // 클라이언트에서만 실행되어 ID가 없는 항목들에 ID를 부여
+  useEffect(() => {
+    setIsMounted(true);
+    
+    // ID가 없는 항목들에 ID 부여
+    const normalizedData: CompanyAbout = {
+      ...aboutInfo,
+      strengths: aboutInfo.strengths?.map((strength) => ({
+        ...strength,
+        id: strength.id || generateId(),
+      })) || [],
+      values: aboutInfo.values?.map((value) => ({
+        ...value,
+        id: value.id || generateId(),
+      })) || [],
+    };
+
+    // ID가 없는 항목이 있으면 업데이트
+    const hasMissingIds = 
+      normalizedData.strengths.some((s) => !s.id) ||
+      normalizedData.values.some((v) => !v.id);
+
+    if (hasMissingIds) {
+      setAboutInfo(normalizedData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 초기 마운트 시에만 실행
 
   const handleSaveField = async (field: 'introduction' | 'vision' | 'greetings' | 'mission' | 'strengths' | 'values', fieldName: string) => {
     try {
@@ -211,7 +253,7 @@ export default function AboutCompany({ initialData }: AboutCompanyProps) {
       ...aboutInfo,
       strengths: [
         ...aboutInfo.strengths,
-        { id: '', icon: '', title: '', description: '' },
+        { id: generateId(), icon: '', title: '', description: '' },
       ],
     });
   };
@@ -260,7 +302,7 @@ export default function AboutCompany({ initialData }: AboutCompanyProps) {
       ...aboutInfo,
       values: [
         ...aboutInfo.values,
-        { id: '', title: '', description: '' },
+        { id: generateId(), title: '', description: '' },
       ],
     });
   };
@@ -331,37 +373,90 @@ export default function AboutCompany({ initialData }: AboutCompanyProps) {
             {savingFields.strengths ? '저장 중...' : '저장'}
           </Button>
         </div>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleStrengthDragEnd}
-        >
-          <SortableContext
-            items={aboutInfo.strengths.map((s) => s.id)}
-            strategy={horizontalListSortingStrategy}
+        {isMounted ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleStrengthDragEnd}
           >
-            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 310px))' }}>
-              {aboutInfo.strengths.map((strength) => (
-                <SortableStrengthItem
-                  key={strength.id}
-                  strength={strength}
-                  onUpdate={updateStrength}
-                  onRemove={removeStrength}
-                />
-              ))}
-              {/* 강점 추가 카드 */}
-              <button
-                onClick={addStrength}
-                className="flex flex-col items-center justify-center gap-4 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-white hover:border-blue-400 hover:bg-gray-50 transition-colors cursor-pointer min-h-[400px]"
-              >
-                <div className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Plus className="h-12 w-12 text-gray-400" />
+            <SortableContext
+              items={aboutInfo.strengths.map((s) => s.id)}
+              strategy={horizontalListSortingStrategy}
+            >
+              <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 310px))' }}>
+                {aboutInfo.strengths.map((strength) => (
+                  <SortableStrengthItem
+                    key={strength.id}
+                    strength={strength}
+                    onUpdate={updateStrength}
+                    onRemove={removeStrength}
+                  />
+                ))}
+                {/* 강점 추가 카드 */}
+                <button
+                  onClick={addStrength}
+                  className="flex flex-col items-center justify-center gap-4 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-white hover:border-blue-400 hover:bg-gray-50 transition-colors cursor-pointer min-h-[400px]"
+                >
+                  <div className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Plus className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <span className="text-gray-600 font-medium">강점 추가</span>
+                </button>
+              </div>
+            </SortableContext>
+          </DndContext>
+        ) : (
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 310px))' }}>
+            {aboutInfo.strengths.map((strength) => (
+              <Card key={strength.id || `temp-${strength.title}`} className="p-4">
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-sm text-gray-500">강점</span>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => removeStrength(strength.id)}
+                    className="h-8 w-8"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                <span className="text-gray-600 font-medium">강점 추가</span>
-              </button>
-            </div>
-          </SortableContext>
-        </DndContext>
+                <div className="space-y-4">
+                  <IconSelector
+                    value={strength.icon}
+                    onChange={(iconName) => updateStrength(strength.id, 'icon', iconName)}
+                  />
+                  <div>
+                    <Label>제목</Label>
+                    <Input
+                      value={strength.title}
+                      onChange={(e) => updateStrength(strength.id, 'title', e.target.value)}
+                      placeholder="강점 제목"
+                    />
+                  </div>
+                  <div>
+                    <Label>설명</Label>
+                    <Textarea
+                      value={strength.description}
+                      onChange={(e) => updateStrength(strength.id, 'description', e.target.value)}
+                      placeholder="강점 설명"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </Card>
+            ))}
+            {/* 강점 추가 카드 */}
+            <button
+              onClick={addStrength}
+              className="flex flex-col items-center justify-center gap-4 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-white hover:border-blue-400 hover:bg-gray-50 transition-colors cursor-pointer min-h-[400px]"
+            >
+              <div className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center">
+                <Plus className="h-12 w-12 text-gray-400" />
+              </div>
+              <span className="text-gray-600 font-medium">강점 추가</span>
+            </button>
+          </div>
+        )}
       </Card>
 
       {/* 비전 카드 */}
@@ -397,27 +492,72 @@ export default function AboutCompany({ initialData }: AboutCompanyProps) {
           </Button>
         </div>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleValueDragEnd}
-        >
-          <SortableContext
-            items={aboutInfo.values.map((v) => v.id)}
-            strategy={verticalListSortingStrategy}
+        {isMounted ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleValueDragEnd}
           >
-            <div className="space-y-4">
-              {aboutInfo.values.map((value) => (
-                <SortableValueItem
-                  key={value.id}
-                  value={value}
-                  onUpdate={updateValue}
-                  onRemove={removeValue}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+            <SortableContext
+              items={aboutInfo.values.map((v) => v.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-4">
+                {aboutInfo.values.map((value) => (
+                  <SortableValueItem
+                    key={value.id}
+                    value={value}
+                    onUpdate={updateValue}
+                    onRemove={removeValue}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        ) : (
+          <div className="space-y-4">
+            {aboutInfo.values.map((value) => (
+              <div
+                key={value.id || `temp-${value.title}`}
+                className="flex gap-4 items-start p-4 border rounded-lg bg-white border-gray-200"
+              >
+                <div className="flex flex-col items-center gap-2 mt-2">
+                  <div className="h-5 w-5 text-gray-400">
+                    <GripVertical className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col gap-4">
+                  <div>
+                    <Label>제목</Label>
+                    <Input
+                      value={value.title}
+                      onChange={(e) => updateValue(value.id, 'title', e.target.value)}
+                      placeholder="핵심가치 제목"
+                    />
+                  </div>
+                  <div>
+                    <Label>설명</Label>
+                    <Textarea
+                      value={value.description}
+                      onChange={(e) => updateValue(value.id, 'description', e.target.value)}
+                      placeholder="핵심가치 설명"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-start pt-2">
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => removeValue(value.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* 핵심가치 추가 영역 - 하단에 큰 영역으로 표시 */}
         <div

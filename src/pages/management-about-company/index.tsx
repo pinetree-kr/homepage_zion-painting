@@ -3,7 +3,7 @@ import { AboutCompany, getCompanyAboutInfo } from '@/src/features/management-com
 export default async function ManangementAboutCompanyPage() {
   const aboutInfo = await getCompanyAboutInfo();
 
-  return <AboutCompany initialData={aboutInfo || {
+  return <AboutCompany data={aboutInfo || {
     introduction: '',
     strengths: [],
     vision: '',
