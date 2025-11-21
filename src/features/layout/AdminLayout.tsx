@@ -96,6 +96,15 @@ const ActivityIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const LayoutDashboardIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <rect width="7" height="9" x="3" y="3" rx="1" />
+    <rect width="7" height="5" x="14" y="3" rx="1" />
+    <rect width="7" height="9" x="14" y="12" rx="1" />
+    <rect width="7" height="5" x="3" y="16" rx="1" />
+  </svg>
+);
+
 const ServerIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
     <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
@@ -171,6 +180,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // 현재 경로에 따라 activeTab 결정
   const getActiveTab = useCallback(() => {
+    if (pathname === '/admin/dashboard') return 'dashboard';
     if (pathname?.startsWith('/admin/info')) {
       if (pathname === '/admin/info/prologue') return 'prologue';
       if (pathname.startsWith('/admin/info/company')) return 'company-info';
@@ -193,11 +203,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (pathname === '/admin/system/resources') return 'resources';
       return 'admin-management';
     }
-    return 'prologue';
+    return 'dashboard';
   }, [pathname]);
 
   const handleTabChange = useCallback((tab: string) => {
     const routeMap: Record<string, string> = {
+      'dashboard': '/admin/dashboard',
       'prologue': '/admin/info/prologue',
       'company-info': '/admin/info/company/about',
       'business-info': '/admin/info/business',
@@ -318,6 +329,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
 
             <nav className="space-y-2">
+              {/* 대시보드 메뉴 - 최상단 */}
+              <Link
+                href="/admin/dashboard"
+                onClick={() => {
+                  handleTabChange('dashboard');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors mb-2 ${
+                  getActiveTab() === 'dashboard'
+                    ? 'bg-[#1A2C6D] text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <LayoutDashboardIcon className="h-4 w-4" />
+                <span>대시보드</span>
+              </Link>
+
               {menuStructure.map((menu) => {
                 const isOpen = openMenus.includes(menu.id);
                 return (

@@ -7,8 +7,6 @@ import Contact from '@/src/features/home/ui/Contact';
 import Footer from '@/src/features/home/ui/Footer';
 import { getCompanyAboutInfo } from '@/src/features/management-company/api/company-actions';
 
-export const dynamic = 'force-dynamic';
-
 export default async function HomePage() {
     const aboutInfo = await getCompanyAboutInfo();
     return (

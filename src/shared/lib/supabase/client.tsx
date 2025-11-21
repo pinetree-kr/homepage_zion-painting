@@ -12,10 +12,6 @@ import { supabaseUrl, supabasePublishableKey } from './config';
  */
 
 export function createBrowserClient(): SupabaseClient<Database> {
-  console.log('createBrowserClient', {
-    supabaseUrl,
-    supabasePublishableKey,
-  });
   return createClient<Database>(
     supabaseUrl,
     supabasePublishableKey,

@@ -6,3 +6,4 @@ export * from './product';
 export * from './contact';
 export * from './system';
 export * from './prologue';
+export * from './dashboard';
