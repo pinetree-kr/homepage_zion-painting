@@ -58,7 +58,8 @@ export type Database = {
       business_achievements: {
         Row: {
           achievement_date: string
-          category: string | null
+          category_backup: string | null
+          category_id: string | null
           content: string
           created_at: string | null
           id: string
@@ -68,7 +69,8 @@ export type Database = {
         }
         Insert: {
           achievement_date: string
-          category?: string | null
+          category_backup?: string | null
+          category_id?: string | null
           content: string
           created_at?: string | null
           id?: string
@@ -78,7 +80,8 @@ export type Database = {
         }
         Update: {
           achievement_date?: string
-          category?: string | null
+          category_backup?: string | null
+          category_id?: string | null
           content?: string
           created_at?: string | null
           id?: string
@@ -86,7 +89,15 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_achievements_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "business_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_areas: {
         Row: {
@@ -114,6 +125,51 @@ export type Database = {
           features?: Json | null
           id?: string
           title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      business_categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      business_info: {
+        Row: {
+          areas: Json | null
+          created_at: string | null
+          id: string
+          introduction: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          areas?: Json | null
+          created_at?: string | null
+          id?: string
+          introduction?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          areas?: Json | null
+          created_at?: string | null
+          id?: string
+          introduction?: string | null
           updated_at?: string | null
         }
         Relationships: []

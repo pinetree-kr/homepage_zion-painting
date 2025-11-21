@@ -1,2 +1,2 @@
-export type { BusinessInfo, BusinessArea, Achievement } from './model/types';
+export type { BusinessInfo, BusinessArea, BusinessCategory, Achievement } from './model/types';
 
