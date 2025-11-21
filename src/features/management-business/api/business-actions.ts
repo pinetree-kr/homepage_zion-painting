@@ -73,14 +73,14 @@ export async function saveBusinessInfo(businessInfo: Partial<BusinessInfo>): Pro
     }
 
     if (businessInfo.areas !== undefined) {
-      updateData.areas = Array.isArray(businessInfo.areas) 
+      updateData.areas = Array.isArray(businessInfo.areas)
         ? businessInfo.areas.map(area => ({
-            title: area.title,
-            description: area.description,
-            icon: area.icon || '',
-            features: Array.isArray(area.features) ? area.features : [],
-            display_order: area.display_order || 0,
-          }))
+          title: area.title,
+          description: area.description,
+          icon: area.icon || '',
+          features: Array.isArray(area.features) ? area.features : [],
+          display_order: area.display_order || 0,
+        }))
         : [];
     }
 
@@ -120,6 +120,7 @@ export async function getBusinessCategories(): Promise<BusinessCategory[]> {
     const { data, error } = await supabase
       .from('business_categories')
       .select('*')
+      .order('display_order', { ascending: true })
       .order('title', { ascending: true }) as {
         data: BusinessCategory[] | null;
         error: any;
@@ -146,9 +147,14 @@ export async function saveBusinessCategory(category: Partial<BusinessCategory>):
 
     if (category.id) {
       // 업데이트
+      const updateData: any = { title: category.title };
+      if (category.display_order !== undefined) {
+        updateData.display_order = category.display_order;
+      }
+
       const { error, data } = await supabase
         .from('business_categories')
-        .update({ title: category.title })
+        .update(updateData)
         .eq('id', category.id)
         .select()
         .single();
@@ -159,10 +165,24 @@ export async function saveBusinessCategory(category: Partial<BusinessCategory>):
 
       return { success: true, id: data.id };
     } else {
-      // 새로 생성
+      // 새로 생성 - display_order는 최대값 + 1로 설정
+      const { data: maxOrderData } = await supabase
+        .from('business_categories')
+        .select('display_order')
+        .order('display_order', { ascending: false })
+        .limit(1)
+        .single() as { data: { display_order?: number } | null; error: any };
+
+      const nextOrder = maxOrderData?.display_order !== undefined 
+        ? (maxOrderData.display_order + 1) 
+        : 0;
+
       const { error, data } = await supabase
         .from('business_categories')
-        .insert({ title: category.title || '' })
+        .insert({ 
+          title: category.title || '',
+          display_order: category.display_order !== undefined ? category.display_order : nextOrder
+        } as any)
         .select()
         .single();
 
@@ -172,6 +192,35 @@ export async function saveBusinessCategory(category: Partial<BusinessCategory>):
 
       return { success: true, id: data.id };
     }
+  } catch (error: any) {
+    return { success: false, error: error.message || '알 수 없는 오류' };
+  }
+}
+
+/**
+ * 사업 카테고리 순서 업데이트
+ */
+export async function updateBusinessCategoriesOrder(categories: { id: string; display_order: number }[]): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createServerClient();
+
+    // 배치 업데이트
+    const updates = categories.map(cat =>
+      supabase
+        .from('business_categories')
+        .update({ display_order: cat.display_order } as any)
+        .eq('id', cat.id)
+    );
+
+    const results = await Promise.all(updates);
+    
+    const hasError = results.some(result => result.error);
+    if (hasError) {
+      const errorResult = results.find(result => result.error);
+      return { success: false, error: errorResult?.error?.message || '순서 업데이트 중 오류가 발생했습니다.' };
+    }
+
+    return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || '알 수 없는 오류' };
   }
@@ -200,9 +249,45 @@ export async function deleteBusinessCategory(id: string): Promise<{ success: boo
 }
 
 /**
+ * HTML에서 텍스트만 추출하고 길이를 제한합니다.
+ * @param html HTML 문자열
+ * @param maxLength 최대 길이 (기본값: 50)
+ * @param addEllipsis "..." 추가 여부 (기본값: false, DB 저장용)
+ */
+function stripHtmlAndTruncate(html: string, maxLength: number = 50, addEllipsis: boolean = false): string {
+  if (!html || typeof html !== 'string') {
+    return '';
+  }
+
+  // HTML 태그 제거 (정규식 사용)
+  let text = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // script 태그 제거
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // style 태그 제거
+    .replace(/<[^>]+>/g, '') // 모든 HTML 태그 제거
+    .replace(/&nbsp;/g, ' ') // &nbsp;를 공백으로
+    .replace(/&amp;/g, '&') // &amp;를 &로
+    .replace(/&lt;/g, '<') // &lt;를 <로
+    .replace(/&gt;/g, '>') // &gt;를 >로
+    .replace(/&quot;/g, '"') // &quot;를 "로
+    .replace(/&#39;/g, "'") // &#39;를 '로
+    .replace(/\s+/g, ' ') // 연속된 공백을 하나로
+    .trim();
+
+  // 길이 제한
+  if (text.length > maxLength) {
+    text = text.substring(0, maxLength);
+    if (addEllipsis) {
+      text += '...';
+    }
+  }
+
+  return text;
+}
+
+/**
  * 사업실적 목록 로드 (카테고리 정보 포함)
  */
-export async function getBusinessAchievements(): Promise<(Achievement & { category?: BusinessCategory | null })[]> {
+export async function getBusinessAchievements(): Promise<Achievement[]> {
   try {
     const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
@@ -233,6 +318,7 @@ export async function getBusinessAchievements(): Promise<(Achievement & { catego
       achievement_date: item.achievement_date,
       category_id: item.category_id,
       image_url: item.image_url,
+      content_summary: item.content_summary || null,
       created_at: item.created_at,
       updated_at: item.updated_at,
       category: item.business_categories || null,
@@ -246,9 +332,12 @@ export async function getBusinessAchievements(): Promise<(Achievement & { catego
 /**
  * 사업실적 저장
  */
-export async function saveBusinessAchievement(achievement: Partial<Achievement>): Promise<{ success: boolean; error?: string; id?: string }> {
+export async function saveBusinessAchievement(achievement: Omit<Achievement, 'id'> & { id?: string | null }): Promise<{ success: boolean; error?: string; id?: string }> {
   try {
     const supabase = await createServerClient();
+
+    // content_summary 자동 생성 (HTML 태그 제거 후 최대 50자)
+    const contentSummary = stripHtmlAndTruncate(achievement.content || '', 50);
 
     const updateData: any = {
       title: achievement.title || '',
@@ -256,9 +345,12 @@ export async function saveBusinessAchievement(achievement: Partial<Achievement>)
       achievement_date: achievement.achievement_date || new Date().toISOString().split('T')[0],
       category_id: achievement.category_id || null,
       image_url: achievement.image_url || null,
+      content_summary: contentSummary || null,
     };
+    console.error({ achievement })
 
     if (achievement.id) {
+      console.log('업데이트')
       // 업데이트
       const { error, data } = await supabase
         .from('business_achievements')
@@ -273,6 +365,7 @@ export async function saveBusinessAchievement(achievement: Partial<Achievement>)
 
       return { success: true, id: data.id };
     } else {
+      console.log('새로 생성')
       // 새로 생성
       const { error, data } = await supabase
         .from('business_achievements')
@@ -281,6 +374,7 @@ export async function saveBusinessAchievement(achievement: Partial<Achievement>)
         .single();
 
       if (error) {
+        console.error({ error })
         return { success: false, error: error.message };
       }
 

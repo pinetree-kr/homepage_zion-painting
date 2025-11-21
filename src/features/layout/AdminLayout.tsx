@@ -184,8 +184,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (pathname?.startsWith('/admin/info')) {
       if (pathname === '/admin/info/prologue') return 'prologue';
       if (pathname.startsWith('/admin/info/company')) return 'company-info';
-      if (pathname === '/admin/info/business') return 'business-info';
-      if (pathname === '/admin/info/products') return 'products-admin';
+      if (pathname.startsWith('/admin/info/business')) return 'business-info';
+      if (pathname.startsWith('/admin/info/products')) return 'products-admin';
       return 'prologue';
     }
     if (pathname?.startsWith('/admin/customer')) {
@@ -333,11 +333,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   handleTabChange('dashboard');
                   setIsSidebarOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors mb-2 ${
-                  getActiveTab() === 'dashboard'
-                    ? 'bg-[#1A2C6D] text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors mb-2 ${getActiveTab() === 'dashboard'
+                  ? 'bg-[#1A2C6D] text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+                  }`}
               >
                 <LayoutDashboardIcon className="h-4 w-4" />
                 <span>대시보드</span>

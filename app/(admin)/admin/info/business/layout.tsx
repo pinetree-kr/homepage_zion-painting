@@ -15,7 +15,8 @@ export default function BusinessLayout({
   const getActiveTab = () => {
     if (pathname?.endsWith('/introduction')) return 'introduction';
     if (pathname?.endsWith('/areas')) return 'areas';
-    if (pathname?.endsWith('/achievements')) return 'achievements';
+    if (pathname?.endsWith('/categories')) return 'categories';
+    if (pathname?.includes('/achievements')) return 'achievements';
     return 'introduction'; // 기본값
   };
 
@@ -28,14 +29,15 @@ export default function BusinessLayout({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-gray-900 text-2xl font-semibold">사업정보 관리</h2>
-          <p className="text-gray-500 text-sm mt-1">사업소개, 사업분야, 사업실적을 관리합니다</p>
+          <p className="text-gray-500 text-sm mt-1">사업소개, 사업분야, 적용산업, 사업실적을 관리합니다</p>
         </div>
       </div>
 
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="introduction">사업소개</TabsTrigger>
           <TabsTrigger value="areas">사업분야</TabsTrigger>
+          <TabsTrigger value="categories">적용산업</TabsTrigger>
           <TabsTrigger value="achievements">사업실적</TabsTrigger>
         </TabsList>
         <div className="mt-6">

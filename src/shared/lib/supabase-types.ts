@@ -61,6 +61,7 @@ export type Database = {
           category_backup: string | null
           category_id: string | null
           content: string
+          content_summary: string | null
           created_at: string | null
           id: string
           image_url: string | null
@@ -72,6 +73,7 @@ export type Database = {
           category_backup?: string | null
           category_id?: string | null
           content: string
+          content_summary?: string | null
           created_at?: string | null
           id?: string
           image_url?: string | null
@@ -83,6 +85,7 @@ export type Database = {
           category_backup?: string | null
           category_id?: string | null
           content?: string
+          content_summary?: string | null
           created_at?: string | null
           id?: string
           image_url?: string | null
@@ -132,18 +135,21 @@ export type Database = {
       business_categories: {
         Row: {
           created_at: string | null
+          display_order: number
           id: string
           title: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          display_order?: number
           id?: string
           title: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          display_order?: number
           id?: string
           title?: string
           updated_at?: string | null
