@@ -186,7 +186,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (pathname.startsWith('/admin/info/company')) return 'company-info';
       if (pathname === '/admin/info/business') return 'business-info';
       if (pathname === '/admin/info/products') return 'products-admin';
-      if (pathname === '/admin/info/contacts') return 'contact-info';
       return 'prologue';
     }
     if (pathname?.startsWith('/admin/customer')) {
@@ -211,9 +210,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       'dashboard': '/admin/dashboard',
       'prologue': '/admin/info/prologue',
       'company-info': '/admin/info/company/about',
-      'business-info': '/admin/info/business',
+      'business-info': '/admin/info/business/introduction',
       'products-admin': '/admin/info/products',
-      'contact-info': '/admin/info/contacts',
       'members': '/admin/customer/members',
       'notice': '/admin/customer/notices',
       'qna': '/admin/customer/qna',
@@ -245,10 +243,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       icon: Building2Icon,
       items: [
         { id: 'prologue', label: '프롤로그', icon: ImageIcon, route: '/admin/info/prologue' },
-        { id: 'company-info', label: '회사소개', icon: Building2Icon, route: '/admin/info/company' },
-        { id: 'business-info', label: '사업소개', icon: BriefcaseIcon, route: '/admin/info/business' },
-        { id: 'products-admin', label: '제품소개', icon: PackageIcon, route: '/admin/info/products' },
-        { id: 'contact-info', label: '회사정보', icon: PhoneIcon, route: '/admin/info/contacts' },
+        { id: 'company-info', label: '회사정보', icon: Building2Icon, route: '/admin/info/company' },
+        { id: 'business-info', label: '사업정보', icon: BriefcaseIcon, route: '/admin/info/business' },
+        { id: 'products-admin', label: '제품정보', icon: PackageIcon, route: '/admin/info/products' },
       ],
     },
     {

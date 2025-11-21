@@ -1,23 +1,13 @@
-"use server"
+'use server';
 
 import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous';
 import type { PrologueCarouselItem } from '@/src/entities/prologue/model/types';
-import HeroCarousel from './HeroCarousel';
-import HeroContent from './HeroContent';
+import type { HeroCarouselItem } from '@/src/features/prologue/ui/Hero';
 
 const DEFAULT_TITLE = '시온에 오신것을 환영합니다';
 const DEFAULT_DESCRIPTION = '';
 
-interface HeroCarouselItem {
-  id: string;
-  src: string;
-  alt: string;
-  title: string;
-  description: string;
-}
-
-async function getCarouselData() {
-  "use server"
+export async function getCarouselData() {
   const supabase = createAnonymousServerClient();
 
   try {
@@ -84,6 +74,8 @@ async function getCarouselData() {
       console.error('캐러셀 데이터 로드 오류:', error);
       return {
         items: [] as HeroCarouselItem[],
+        defaultTitle: DEFAULT_TITLE,
+        defaultDescription: DEFAULT_DESCRIPTION,
       };
     }
 
@@ -114,40 +106,7 @@ async function getCarouselData() {
       items: [] as HeroCarouselItem[],
       defaultTitle: DEFAULT_TITLE,
       defaultDescription: DEFAULT_DESCRIPTION,
-      defaultText: DEFAULT_TITLE, // 하위 호환성
     };
   }
-}
-
-export default async function Hero() {
-  const { items, defaultTitle, defaultDescription, defaultText } = await getCarouselData();
-
-  return (
-    <section
-      id="home"
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
-    >
-      {/* Carousel 배경 */}
-      <div className="absolute inset-0 z-0">
-        <HeroCarousel
-          items={items}
-          defaultTitle={defaultTitle || DEFAULT_TITLE}
-          defaultDescription={defaultDescription || DEFAULT_DESCRIPTION}
-        />
-      </div>
-
-      {/* 배경 원형 요소들 */}
-      {/* <div className="absolute inset-0 opacity-20 z-[1]">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
-        <div className="absolute top-40 right-10 md:right-40 w-72 h-72 bg-[#A5C93E] rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#2CA7DB] rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '4s' }}></div>
-      </div> */}
-
-      <HeroContent
-        defaultTitle={defaultTitle || DEFAULT_TITLE}
-        defaultDescription={defaultDescription || DEFAULT_DESCRIPTION}
-      />
-    </section>
-  );
 }
 

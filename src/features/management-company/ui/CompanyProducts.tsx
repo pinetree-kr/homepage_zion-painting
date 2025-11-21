@@ -186,7 +186,7 @@ export default function CompanyProducts() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-gray-900 text-2xl font-semibold">제품소개 관리</h2>
+          <h2 className="text-gray-900 text-2xl font-semibold">제품정보 관리</h2>
           <p className="text-gray-500 text-sm mt-1">제품 정보를 관리합니다</p>
         </div>
         <Button onClick={addProduct} className="gap-2">

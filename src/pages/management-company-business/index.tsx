@@ -1,6 +1,6 @@
 'use client';
 
-import CompanyBusiness from '@/src/features/management-company/ui/CompanyBusiness';
+import CompanyBusiness from '@/src/features/management-business/ui/CompanyBusiness';
 
 export default function ManagementCompanyBusinessPage() {
   return <CompanyBusiness />;

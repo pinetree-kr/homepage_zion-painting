@@ -16,6 +16,7 @@ export default function CompanyLayout({
     if (pathname?.endsWith('/about')) return 'about';
     if (pathname?.endsWith('/history')) return 'history';
     if (pathname?.endsWith('/organization')) return 'organization';
+    if (pathname?.endsWith('/contact')) return 'contact';
     return 'about'; // 기본값
   };
 
@@ -27,16 +28,17 @@ export default function CompanyLayout({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-gray-900 text-2xl font-semibold">회사소개 관리</h2>
-          <p className="text-gray-500 text-sm mt-1">회사소개, 연혁, 조직도를 관리합니다</p>
+          <h2 className="text-gray-900 text-2xl font-semibold">회사정보 관리</h2>
+          <p className="text-gray-500 text-sm mt-1">회사소개, 연혁, 조직도, 오시는 길 · 연락처를 관리합니다</p>
         </div>
       </div>
 
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="about">회사소개</TabsTrigger>
           <TabsTrigger value="history">연혁</TabsTrigger>
           <TabsTrigger value="organization">조직도</TabsTrigger>
+          <TabsTrigger value="contact">오시는 길 · 연락처</TabsTrigger>
         </TabsList>
         <div className="mt-6">
           {children}

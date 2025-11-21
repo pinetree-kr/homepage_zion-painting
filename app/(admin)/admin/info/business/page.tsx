@@ -1,4 +1,6 @@
-import ManagementCompanyBusinessPage from '@/src/pages/management-company-business';
+import { redirect } from 'next/navigation';
 
-export default ManagementCompanyBusinessPage;
+export default function BusinessPage() {
+  redirect('/admin/info/business/introduction');
+}
 

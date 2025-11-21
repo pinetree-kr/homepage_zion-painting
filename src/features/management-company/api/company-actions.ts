@@ -4,6 +4,7 @@ import { createServerClient } from '@/src/shared/lib/supabase/server';
 import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous';
 // import type { CompanyInfo, CompanyHistory } from '@/src/shared/lib/supabase-types';
 import type { CompanyInfo, CompanyHistory, CompanyHistoryType, OrganizationMember, CompanyAbout, CompanyStrength, CompanyValue } from '@/src/entities/company/model/types';
+import type { ContactInfo } from '@/src/entities/contact/model/types';
 
 // /**
 //  * 회사 소개 로드 (기존 텍스트 방식 - 하위 호환성)
@@ -376,6 +377,83 @@ export async function saveCompanyOrganizationMembers(members: OrganizationMember
       const { error } = await supabase
         .from('company_info')
         .insert({ organization_members: membersJson });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || '알 수 없는 오류' };
+  }
+}
+
+/**
+ * 회사정보(연락처) 로드
+ * 공개 데이터이므로 익명 클라이언트 사용
+ */
+export async function getContactInfo(): Promise<ContactInfo | null> {
+  try {
+    const supabase = createAnonymousServerClient();
+    const { data, error } = await supabase
+      .from('contact_info')
+      .select('*')
+      .limit(1)
+      .maybeSingle() as { data: ContactInfo | null; error: any };
+
+    if (error) {
+      console.error('회사정보 로드 오류:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('회사정보 로드 중 예외 발생:', error);
+    return null;
+  }
+}
+
+/**
+ * 회사정보(연락처) 저장
+ */
+export async function saveContactInfo(contactInfo: Partial<Omit<ContactInfo, 'id' | 'created_at' | 'updated_at'>>): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createServerClient();
+
+    // 기존 정보 확인
+    const { data: existingInfo } = await supabase
+      .from('contact_info')
+      .select('id')
+      .limit(1)
+      .maybeSingle() as { data: { id: string } | null; error: any };
+
+    const updateData = {
+      email: contactInfo.email || '',
+      address: contactInfo.address || '',
+      business_hours: contactInfo.business_hours || null,
+      phone_main: contactInfo.phone_main || null,
+      phone_manager: contactInfo.phone_manager || null,
+      fax: contactInfo.fax || null,
+      kakao_map_url: contactInfo.kakao_map_url || null,
+      naver_map_url: contactInfo.naver_map_url || null,
+    };
+
+    if (existingInfo) {
+      // 업데이트
+      const { error } = await supabase
+        .from('contact_info')
+        .update(updateData)
+        .eq('id', existingInfo.id);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } else {
+      // 새로 생성
+      const { error } = await supabase
+        .from('contact_info')
+        .insert(updateData);
 
       if (error) {
         return { success: false, error: error.message };
