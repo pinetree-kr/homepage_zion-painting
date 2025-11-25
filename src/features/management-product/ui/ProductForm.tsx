@@ -11,18 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { DynamicCustomEditor } from '@/src/features/editor';
 import { toast } from 'sonner';
-import { BusinessCategory, Achievement } from '@/src/entities';
+import { ProductCategory, Product } from '@/src/entities';
 import { resizeImage } from '@/src/shared/lib/image-resize';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import {
-  saveBusinessAchievement,
-  deleteBusinessAchievement,
-} from '../api/business-actions';
+  saveProduct,
+  deleteProduct,
+} from '../api/product-actions';
 
-interface BusinessAchievementFormProps {
-  achievementId?: string;
-  categories?: BusinessCategory[];
-  data?: Achievement | null;
+interface ProductFormProps {
+  productId?: string;
+  categories?: ProductCategory[];
+  data?: Product | null;
 }
 
 /**
@@ -61,6 +61,35 @@ function extractFirstImageUrl(htmlContent: string): string | null {
   }
 
   return null;
+}
+
+/**
+ * HTML content에서 텍스트를 추출하여 요약을 생성합니다.
+ */
+function extractContentSummary(htmlContent: string, maxLength: number = 50): string {
+  if (!htmlContent || typeof htmlContent !== 'string') {
+    return '';
+  }
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const text = doc.body.textContent || '';
+    
+    // HTML 태그 제거 및 공백 정리
+    const cleanText = text.replace(/\s+/g, ' ').trim();
+    
+    if (cleanText.length <= maxLength) {
+      return cleanText;
+    }
+    
+    return cleanText.substring(0, maxLength);
+  } catch (error) {
+    console.error('내용 요약 추출 오류:', error);
+    // 실패 시 HTML 태그 제거 후 텍스트만 추출
+    const text = htmlContent.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    return text.length > maxLength ? text.substring(0, maxLength) : text;
+  }
 }
 
 /**
@@ -116,7 +145,7 @@ async function createAndUploadThumbnail(imageUrl: string): Promise<string | null
     // Supabase Storage에 업로드
     const supabase = createBrowserClient();
     const fileExt = resizedFile.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const fileName = `achievements/thumbnails/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    const fileName = `products/thumbnails/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from('editor-images')
@@ -142,29 +171,31 @@ async function createAndUploadThumbnail(imageUrl: string): Promise<string | null
   }
 }
 
-export default function BusinessAchievementForm({
-  achievementId,
+export default function ProductForm({
+  productId,
   categories = [],
   data = null,
-}: BusinessAchievementFormProps) {
+}: ProductFormProps) {
   const router = useRouter();
-  const [achievement, setAchievement] = useState<Omit<Achievement, 'id'> & { id?: string | null }>(() => {
+  const [product, setProduct] = useState<Omit<Product, 'id'> & { id?: string | null }>(() => {
     if (data) {
       return {
         id: data.id,
         title: data.title,
         content: data.content,
-        achievement_date: data.achievement_date,
+        content_summary: data.content_summary || '',
         category_id: data.category_id,
-        thumbnail_url: data.thumbnail_url,
+        specs: data.specs,
         status: data.status,
+        thumbnail_url: data.thumbnail_url,
       };
     }
     return {
       title: '',
       content: '',
-      achievement_date: new Date().toISOString().split('T')[0],
+      content_summary: '',
       category_id: null,
+      specs: null,
       status: 'draft',
     };
   });
@@ -172,16 +203,13 @@ export default function BusinessAchievementForm({
   const [deleting, setDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // SSR로 데이터를 받았으므로 loading 상태 제거
-  // useEffect로 추가 데이터 로드가 필요한 경우에만 사용
-
   const handleSave = async () => {
-    if (!achievement.title?.trim()) {
+    if (!product.title?.trim()) {
       toast.error('제목을 입력해주세요.');
       return;
     }
 
-    if (!achievement.content?.trim()) {
+    if (!product.content?.trim()) {
       toast.error('내용을 입력해주세요.');
       return;
     }
@@ -190,14 +218,17 @@ export default function BusinessAchievementForm({
       setSaving(true);
 
       // content에서 첫 번째 이미지 URL 추출
-      const extractedImageUrl = extractFirstImageUrl(achievement.content);
+      const extractedImageUrl = extractFirstImageUrl(product.content);
+      
+      // content에서 요약 추출
+      const contentSummary = extractContentSummary(product.content);
 
       let thumbnailUrl: string | null = null;
 
       // 이미지가 있고, 기존에 thumbnail_url 없거나 변경된 경우 썸네일 생성
       if (extractedImageUrl) {
         // 기존 thumbnail_url과 다르거나 없는 경우에만 썸네일 생성
-        if (!achievement.thumbnail_url || achievement.thumbnail_url !== extractedImageUrl) {
+        if (!product.thumbnail_url || product.thumbnail_url !== extractedImageUrl) {
           toast.info('썸네일을 생성하는 중...');
           thumbnailUrl = await createAndUploadThumbnail(extractedImageUrl);
 
@@ -207,22 +238,23 @@ export default function BusinessAchievementForm({
           }
         } else {
           // 기존 썸네일 유지
-          thumbnailUrl = achievement.thumbnail_url;
+          thumbnailUrl = product.thumbnail_url;
         }
       } else {
         // 이미지가 없으면 기존 thumbnail_url 유지
-        thumbnailUrl = achievement.thumbnail_url || null;
+        thumbnailUrl = product.thumbnail_url || null;
       }
 
-      const achievementToSave = {
-        ...achievement,
+      const productToSave = {
+        ...product,
         thumbnail_url: thumbnailUrl,
+        content_summary: contentSummary,
       };
 
-      const result = await saveBusinessAchievement(achievementToSave);
+      const result = await saveProduct(productToSave);
       if (result.success) {
-        toast.success('사업실적이 저장되었습니다.');
-        router.push('/admin/info/business/achievements');
+        toast.success('제품이 저장되었습니다.');
+        router.push('/admin/info/products');
       } else {
         toast.error(`저장 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
       }
@@ -235,17 +267,17 @@ export default function BusinessAchievementForm({
   };
 
   const handleDelete = async () => {
-    if (!achievementId) {
-      toast.error('삭제할 사업실적이 없습니다.');
+    if (!productId) {
+      toast.error('삭제할 제품이 없습니다.');
       return;
     }
 
     try {
       setDeleting(true);
-      const result = await deleteBusinessAchievement(achievementId);
+      const result = await deleteProduct(productId);
       if (result.success) {
-        toast.success('사업실적이 삭제되었습니다.');
-        router.push('/admin/info/business/achievements');
+        toast.success('제품이 삭제되었습니다.');
+        router.push('/admin/info/products');
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
       }
@@ -264,15 +296,12 @@ export default function BusinessAchievementForm({
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => router.push('/admin/info/business/achievements')}
+            onClick={() => router.push('/admin/info/products')}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
             목록으로
           </Button>
-          {/* <h2 className="text-gray-900 text-2xl font-semibold">
-            사업실적 {achievementId ? '수정' : '추가'}
-          </h2> */}
         </div>
         <Button onClick={handleSave} className="gap-2" disabled={saving}>
           <Save className="h-4 w-4" />
@@ -286,16 +315,16 @@ export default function BusinessAchievementForm({
             <div>
               <Label>제목</Label>
               <Input
-                value={achievement.title}
-                onChange={(e) => setAchievement({ ...achievement, title: e.target.value })}
-                placeholder="프로젝트 제목"
+                value={product.title}
+                onChange={(e) => setProduct({ ...product, title: e.target.value })}
+                placeholder="제품명"
               />
             </div>
             <div>
               <Label>상태</Label>
               <Select
-                value={achievement.status}
-                onValueChange={(value: "draft" | "published") => setAchievement({ ...achievement, status: value })}
+                value={product.status}
+                onValueChange={(value: 'published' | 'draft') => setProduct({ ...product, status: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="상태 선택" />
@@ -306,47 +335,36 @@ export default function BusinessAchievementForm({
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>날짜</Label>
-              <Input
-                type="date"
-                value={achievement.achievement_date}
-                onChange={(e) => setAchievement({ ...achievement, achievement_date: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>적용산업</Label>
-              <Select
-                value={achievement.category_id || ''}
-                onValueChange={(value) => setAchievement({ ...achievement, category_id: value || null })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="적용산업 선택" />
-                </SelectTrigger>
-                <SelectContent className="z-100">
-                  {/* <SelectItem value="null">
-                    미지정
-                  </SelectItem> */}
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          </div>
+          <div>
+            <Label>제품 카테고리</Label>
+            <Select
+              value={product.category_id || ''}
+              onValueChange={(value) => setProduct({ ...product, category_id: value || null })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="제품 카테고리 선택" />
+              </SelectTrigger>
+              <SelectContent className="z-100">
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>내용</Label>
             <DynamicCustomEditor
-              text={achievement.content}
-              onChange={(content) => setAchievement({ ...achievement, content })}
+              text={product.content}
+              onChange={(content) => setProduct({ ...product, content })}
             />
           </div>
         </div>
       </Card>
 
-      {achievementId && (
+      {productId && (
         <div className="flex justify-start">
           <Button
             variant="destructive"
@@ -363,9 +381,9 @@ export default function BusinessAchievementForm({
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>사업실적 삭제</DialogTitle>
+            <DialogTitle>제품 삭제</DialogTitle>
             <DialogDescription>
-              정말로 이 사업실적을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              정말로 이 제품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

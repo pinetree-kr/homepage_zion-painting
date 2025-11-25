@@ -4,6 +4,8 @@ import { createServerClient } from '@/src/shared/lib/supabase/server';
 import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous';
 import type { BusinessInfo, BusinessArea, BusinessCategory, Achievement } from '@/src/entities/business/model/types';
 import { revalidatePath } from 'next/cache';
+import { Database } from '@/src/shared/lib/supabase-types';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * 사업소개 정보 로드
@@ -298,11 +300,26 @@ function stripHtmlAndTruncate(html: string, maxLength: number = 50, addEllipsis:
 }
 
 /**
- * 사업실적 목록 로드 (카테고리 정보 포함)
+ * 사업실적 목록 로드 (관리자용)
  */
-export async function getBusinessAchievements(): Promise<Achievement[]> {
+export async function getBusinessAchievementsUsingAdmin(): Promise<Achievement[]> {
+  const supabase = await createServerClient();
+  return await getBusinessAchievements(supabase);
+}
+
+/**
+ * 사업실적 목록 로드 (익명용)
+ */
+export async function getBusinessAchievementsUsingAnonymous(): Promise<Achievement[]> {
+  const supabase = createAnonymousServerClient();
+  return await getBusinessAchievements(supabase);
+}
+
+/**
+ * 사업실적 목록 로드 (SupabaseClient 전달)
+ */
+export async function getBusinessAchievements(supabase: SupabaseClient<Database>): Promise<Achievement[]> {
   try {
-    const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
       .from('business_achievements')
       .select(`
@@ -314,6 +331,7 @@ export async function getBusinessAchievements(): Promise<Achievement[]> {
           updated_at
         )
       `)
+      .is('deleted_at', null)
       .order('achievement_date', { ascending: false }) as {
         data: (Achievement & { business_categories: BusinessCategory | null })[] | null;
         error: any;
@@ -324,21 +342,50 @@ export async function getBusinessAchievements(): Promise<Achievement[]> {
       return [];
     }
 
-    return (data || []).map(item => ({
-      id: item.id,
-      title: item.title,
-      content: item.content,
-      achievement_date: item.achievement_date,
-      category_id: item.category_id,
-      thumbnail_url: item.thumbnail_url,
-      content_summary: item.content_summary || null,
-      created_at: item.created_at,
-      updated_at: item.updated_at,
-      category: item.business_categories || null,
-    }));
+    return data || [];
   } catch (error) {
     console.error('사업실적 로드 중 예외 발생:', error);
     return [];
+  }
+}
+
+/**
+ * 사업실적 상세 로드 (관리자용)
+ */
+export async function getBusinessAchievementUsingAdmin(id: string): Promise<Achievement | null> {
+  const supabase = await createServerClient();
+  return await getBusinessAchievement(supabase, id);
+}
+
+/**
+ * 사업실적 상세 로드 (익명용)
+ */
+export async function getBusinessAchievementUsingAnonymous(id: string): Promise<Achievement | null> {
+  const supabase = createAnonymousServerClient();
+  return await getBusinessAchievement(supabase, id);
+}
+
+/**
+ * 사업실적 상세 로드 (SupabaseClient 전달)
+ */
+export async function getBusinessAchievement(supabase: SupabaseClient<Database>, id: string): Promise<Achievement | null> {
+  try {
+    const { data, error } = await supabase
+      .from('business_achievements')
+      .select('*')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .maybeSingle() as { data: Achievement | null; error: any };
+
+    if (error) {
+      console.error('사업실적 로드 오류:', error);
+      return null;
+    }
+
+    return data || null;
+  } catch (error) {
+    console.error('사업실적 로드 중 예외 발생:', error);
+    return null;
   }
 }
 
@@ -359,6 +406,7 @@ export async function saveBusinessAchievement(achievement: Omit<Achievement, 'id
       category_id: achievement.category_id || null,
       thumbnail_url: achievement.thumbnail_url || null,
       content_summary: contentSummary || null,
+      status: achievement.status || 'draft',
     };
     console.error({ achievement })
 
@@ -399,20 +447,23 @@ export async function saveBusinessAchievement(achievement: Omit<Achievement, 'id
 }
 
 /**
- * 사업실적 삭제
+ * 사업실적 삭제 (soft delete)
  */
 export async function deleteBusinessAchievement(id: string): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createServerClient();
-
+    
     const { error } = await supabase
       .from('business_achievements')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() } as any)
       .eq('id', id);
 
     if (error) {
       return { success: false, error: error.message };
     }
+
+    // 화면 업데이트를 위한 캐시 무효화
+    revalidatePath('/admin/info/business/achievements');
 
     return { success: true };
   } catch (error: any) {

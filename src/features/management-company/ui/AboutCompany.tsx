@@ -97,16 +97,19 @@ function SortableStrengthItem({
         </Button>
       </div>
       <div className="space-y-4">
-        <IconSelector
-          value={strength.icon}
-          onChange={(iconName) => onUpdate(strength.id, 'icon', iconName)}
-        />
-        <div>
-          <Label>제목</Label>
-          <Input
-            value={strength.title}
-            onChange={(e) => onUpdate(strength.id, 'title', e.target.value)}
-            placeholder="강점 제목"
+        <div className="flex items-center justify-between mb-2">
+          <div className="mr-4">
+            <Label>제목</Label>
+            <Input
+              value={strength.title}
+              onChange={(e) => onUpdate(strength.id, 'title', e.target.value)}
+              placeholder="강점 제목"
+            />
+          </div>
+          <IconSelector
+            className="ml-2 min-w-[90px]"
+            value={strength.icon}
+            onChange={(iconName) => onUpdate(strength.id, 'icon', iconName)}
           />
         </div>
         <div>
@@ -204,7 +207,7 @@ export default function AboutCompany({ data }: AboutCompanyProps) {
   // 클라이언트에서만 실행되어 ID가 없는 항목들에 ID를 부여
   useEffect(() => {
     setIsMounted(true);
-    
+
     // ID가 없는 항목들에 ID 부여
     const normalizedData: CompanyAbout = {
       ...aboutInfo,
@@ -219,7 +222,7 @@ export default function AboutCompany({ data }: AboutCompanyProps) {
     };
 
     // ID가 없는 항목이 있으면 업데이트
-    const hasMissingIds = 
+    const hasMissingIds =
       normalizedData.strengths.some((s) => !s.id) ||
       normalizedData.values.some((v) => !v.id);
 
@@ -395,7 +398,7 @@ export default function AboutCompany({ data }: AboutCompanyProps) {
                 {/* 강점 추가 카드 */}
                 <button
                   onClick={addStrength}
-                  className="flex flex-col items-center justify-center gap-4 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-white hover:border-blue-400 hover:bg-gray-50 transition-colors cursor-pointer min-h-[400px]"
+                  className="flex flex-col items-center justify-center gap-4 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-white hover:border-blue-400 hover:bg-gray-50 transition-colors cursor-pointer min-h-[300px]"
                 >
                   <div className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center">
                     <Plus className="h-12 w-12 text-gray-400" />

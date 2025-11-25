@@ -25,11 +25,12 @@ const ICON_NAMES = [
 ].filter(iconName => iconName in LucideIcons) as string[];
 
 interface IconSelectorProps {
+  className?: string;
   value: string;
   onChange: (iconName: string) => void;
 }
 
-export function IconSelector({ value, onChange }: IconSelectorProps) {
+export function IconSelector({ className, value, onChange }: IconSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -48,7 +49,7 @@ export function IconSelector({ value, onChange }: IconSelectorProps) {
   };
 
   return (
-    <div>
+    <div className={className}>
       <Label>아이콘</Label>
       <div className="flex gap-2">
         <Button
@@ -60,22 +61,22 @@ export function IconSelector({ value, onChange }: IconSelectorProps) {
           {IconComponent ? (
             <>
               <IconComponent className="h-4 w-4" />
-              <span>{value}</span>
+              {/* <span>{value}</span> */}
             </>
           ) : (
             <>
               <Search className="h-4 w-4" />
-              <span>아이콘 선택</span>
+              <span>선택</span>
             </>
           )}
         </Button>
         {value && (
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="icon"
             onClick={() => onChange('')}
-            className="h-9 w-9"
+            className="h-8 w-8"
           >
             <X className="h-4 w-4" />
           </Button>

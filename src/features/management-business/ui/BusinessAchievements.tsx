@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Edit, Calendar, Tag } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
@@ -27,15 +27,9 @@ export default function BusinessAchievements({
   const router = useRouter();
   const [achievements, setAchievements] = useState<Achievement[]>(items);
 
-  const loadData = async () => {
-    try {
-      const achievementsData = await getBusinessAchievements();
-      setAchievements(achievementsData);
-    } catch (error) {
-      console.error('데이터 로드 오류:', error);
-      toast.error('데이터를 불러오는 중 오류가 발생했습니다.');
-    }
-  };
+  useEffect(() => {
+    setAchievements(items);
+  }, [items]);
 
   const addAchievement = () => {
     router.push('/admin/info/business/achievements/new');
@@ -54,7 +48,8 @@ export default function BusinessAchievements({
       const result = await deleteBusinessAchievement(id);
       if (result.success) {
         toast.success('사업실적이 삭제되었습니다.');
-        await loadData();
+        
+        router.refresh();
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
       }
@@ -79,7 +74,7 @@ export default function BusinessAchievements({
     },
     {
       id: 'category',
-      header: '카테고리',
+      header: '적용산업',
       accessor: (row) => (
         <Badge variant="outline" className="text-xs">
           <Tag className="h-3 w-3 mr-1" />
@@ -88,6 +83,18 @@ export default function BusinessAchievements({
       ),
       sortable: true,
       width: '15%',
+    },
+    
+    {
+      id: 'status',
+      header: '상태',
+      accessor: (row) => (
+        <Badge variant={row.status === 'published' ? 'default' : 'secondary'}>
+          {row.status === 'published' ? '게시됨' : '임시저장'}
+        </Badge>
+      ),
+      sortable: true,
+      width: '10%'
     },
     {
       id: 'date',

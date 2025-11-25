@@ -31,6 +31,7 @@ export interface Achievement {
   category_id?: string | null;
   thumbnail_url?: string | null;
   content_summary?: string | null; // DB에 저장되는 요약 필드 (최대 50자)
+  status: "draft" | "published";
   created_at?: string | null;
   updated_at?: string | null;
 }

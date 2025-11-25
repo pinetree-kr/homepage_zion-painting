@@ -94,16 +94,19 @@ const SortableBusinessAreaItem = memo(function SortableBusinessAreaItem({
         </Button>
       </div>
       <div className="space-y-4">
-        <IconSelector
-          value={area.icon || ''}
-          onChange={(iconName) => onUpdate(area.id!, 'icon', iconName)}
-        />
-        <div>
-          <Label>사업분야명</Label>
-          <Input
-            value={area.title}
-            onChange={(e) => onUpdate(area.id!, 'title', e.target.value)}
-            placeholder="도장설비"
+        <div className="flex items-center justify-between mb-2">
+          <div className="mr-4">
+            <Label>사업분야명</Label>
+            <Input
+              value={area.title}
+              onChange={(e) => onUpdate(area.id!, 'title', e.target.value)}
+              placeholder="도장설비"
+            />
+          </div>
+          <IconSelector
+            className="ml-2 min-w-[90px]"
+            value={area.icon || ''}
+            onChange={(iconName) => onUpdate(area.id!, 'icon', iconName)}
           />
         </div>
         <div>
@@ -155,11 +158,11 @@ const SortableBusinessAreaItem = memo(function SortableBusinessAreaItem({
 export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
   const [businessAreas, setBusinessAreas] = useState<BusinessArea[]>([]);
   const [saving, setSaving] = useState(false);
-  
+
   // ID 정규화
   useEffect(() => {
     const hasMissingIds = items.some((a) => !a.id);
-    
+
     if (hasMissingIds) {
       const normalizedAreas = items.map((area) => ({
         ...area,

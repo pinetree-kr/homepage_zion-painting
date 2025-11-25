@@ -1,4 +1,6 @@
-import ManagementCompanyProductsPage from '@/src/pages/management-company-products';
+import ManagementProductsPage from '@/src/pages/management-products';
 
-export default ManagementCompanyProductsPage;
+export default function ProductsPage() {
+  return <ManagementProductsPage />;
+}
 

@@ -6,7 +6,7 @@ import Products from '@/src/features/home/ui/Products';
 import Contact from '@/src/features/home/ui/Contact';
 import Footer from '@/src/features/home/ui/Footer';
 import { getCompanyAboutInfo } from '@/src/features/management-company/api/company-actions';
-import { getBusinessInfo, getBusinessCategories, getBusinessAchievements } from '@/src/features/management-business/api/business-actions';
+import { getBusinessInfo, getBusinessCategories, getBusinessAchievementsUsingAnonymous } from '@/src/features/management-business/api/business-actions';
 import { getCarouselData } from '@/src/features/prologue/api/prologue-actions';
 
 export default async function HomePage() {
@@ -14,22 +14,22 @@ export default async function HomePage() {
         getCompanyAboutInfo(),
         getBusinessInfo(),
         getBusinessCategories(),
-        getBusinessAchievements(),
+        getBusinessAchievementsUsingAnonymous(),
         getCarouselData(),
     ]);
-    
+
     return (
         <main>
             <div className="relative bg-[#F4F6F8]">
                 <Header />
-                <Hero 
+                <Hero
                     items={carouselData.items}
                     defaultTitle={carouselData.defaultTitle}
                     defaultDescription={carouselData.defaultDescription}
                 />
             </div>
             <About aboutInfo={aboutInfo} />
-            <Business 
+            <Business
                 businessInfo={businessInfo}
                 categories={categories}
                 achievements={achievements}
