@@ -1,16 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Edit, Tag } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { Product, ProductCategory } from '@/src/entities';
-import { DataTable, DataTableColumn } from '@/src/shared/ui';
+import { DataTable, DataTableColumn, DataTableSearchBar, DataTablePagination } from '@/src/shared/ui';
 import { Badge } from '@/src/shared/ui';
 import {
-  getProductsUsingAdmin,
   deleteProduct,
 } from '../api/product-actions';
 import Link from 'next/link';
@@ -18,18 +16,23 @@ import Link from 'next/link';
 interface ProductsProps {
   categories: ProductCategory[];
   items: Product[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  searchTerm: string;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 export default function Products({
   categories,
-  items
+  items,
+  totalItems,
+  totalPages,
+  currentPage,
+  searchTerm
 }: ProductsProps) {
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
-
-  useEffect(() => {
-    setProducts(items);
-  }, [items]);
 
   const addProduct = () => {
     router.push('/admin/info/products/new');
@@ -141,8 +144,15 @@ export default function Products({
           </Button>
         </div>
 
+        <div className="mb-4">
+          <DataTableSearchBar
+            placeholder="제품명, 내용으로 검색..."
+            className="max-w-md"
+          />
+        </div>
+
         <DataTable
-          data={products.map(product => ({
+          data={items.map(product => ({
             ...product,
             category: product.category_id ? categoryMap.get(product.category_id) || null : null,
           }))}
@@ -150,6 +160,15 @@ export default function Products({
           getRowId={(row) => row.id}
           emptyMessage="등록된 제품이 없습니다"
         />
+
+        {totalPages > 0 && (
+          <DataTablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
+        )}
       </Card>
     </div>
   );

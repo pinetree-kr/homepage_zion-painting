@@ -1,19 +1,35 @@
 import BusinessAchievements from '@/src/features/management-business/ui/BusinessAchievements';
 import {
   getBusinessCategories,
-  getBusinessAchievementsUsingAdmin,
+  searchBusinessAchievementsUsingAdmin,
 } from '@/src/features/management-business/api/business-actions';
 
-export default async function BusinessAchievementsPage() {
-  const [categories, achievements] = await Promise.all([
+interface BusinessAchievementsPageProps {
+  searchParams: {
+    search?: string;
+    page?: string;
+  };
+}
+
+const ITEMS_PER_PAGE = 10;
+
+export default async function BusinessAchievementsPage({ searchParams }: BusinessAchievementsPageProps) {
+  const searchTerm = searchParams.search || '';
+  const page = parseInt(searchParams.page || '1', 10);
+  
+  const [result, categories] = await Promise.all([
+    searchBusinessAchievementsUsingAdmin(searchTerm, page, ITEMS_PER_PAGE),
     getBusinessCategories(),
-    getBusinessAchievementsUsingAdmin(),
   ]);
 
   return (
     <BusinessAchievements
       categories={categories}
-      items={achievements}
+      items={result.data}
+      totalItems={result.total}
+      totalPages={result.totalPages}
+      currentPage={page}
+      searchTerm={searchTerm}
     />
   );
 }

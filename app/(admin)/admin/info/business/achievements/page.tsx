@@ -1,5 +1,12 @@
 import BusinessAchievements from '@/src/pages/management-business-achievements';
 
-export default function BusinessAchievementsPage() {
-  return <BusinessAchievements />;
+interface BusinessAchievementsPageProps {
+  searchParams: {
+    search?: string;
+    page?: string;
+  };
+}
+
+export default function BusinessAchievementsPage({ searchParams }: BusinessAchievementsPageProps) {
+  return <BusinessAchievements searchParams={searchParams} />;
 }

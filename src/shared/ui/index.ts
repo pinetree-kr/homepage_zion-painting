@@ -5,6 +5,8 @@ export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 export { type CarouselApi, Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from './Carousel';
 export { Checkbox } from './Checkbox';
 export { DataTable, type DataTableColumn, type DataTableAction } from './DataTable';
+export { DataTableSearchBar, type DataTableSearchBarProps } from './DataTableSearchBar';
+export { DataTablePagination, type DataTablePaginationProps } from './DataTablePagination';
 export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './Dialog';
 export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './DropdownMenu';
 export { Input } from './Input';

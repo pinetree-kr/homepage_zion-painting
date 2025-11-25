@@ -350,6 +350,94 @@ export async function getBusinessAchievements(supabase: SupabaseClient<Database>
 }
 
 /**
+ * 사업실적 목록 조회 (검색 및 페이지네이션 지원, 관리자용)
+ */
+export async function searchBusinessAchievementsUsingAdmin(
+  searchTerm: string = '',
+  page: number = 1,
+  itemsPerPage: number = 10
+): Promise<{ data: Achievement[]; total: number; totalPages: number }> {
+  const supabase = await createServerClient();
+  return searchBusinessAchievements(supabase, searchTerm, page, itemsPerPage);
+}
+
+/**
+ * 사업실적 목록 조회 (검색 및 페이지네이션 지원, SupabaseClient 전달)
+ */
+export async function searchBusinessAchievements(
+  supabase: SupabaseClient<Database>,
+  searchTerm: string = '',
+  page: number = 1,
+  itemsPerPage: number = 10
+): Promise<{ data: Achievement[]; total: number; totalPages: number }> {
+  try {
+    let query = supabase
+      .from('business_achievements')
+      .select('*', { count: 'exact' })
+      .is('deleted_at', null);
+
+    // 검색어가 있으면 제목과 내용에서 검색
+    if (searchTerm.trim()) {
+      query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,content_summary.ilike.%${searchTerm}%`);
+    }
+
+    // 전체 개수 조회
+    const { count, error: countError } = await query;
+
+    if (countError) {
+      console.error('사업실적 개수 조회 오류:', countError);
+      return { data: [], total: 0, totalPages: 0 };
+    }
+
+    const total = count || 0;
+    const totalPages = Math.ceil(total / itemsPerPage);
+
+    // 페이지네이션 적용
+    const from = (page - 1) * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+
+    let dataQuery = supabase
+      .from('business_achievements')
+      .select(`
+        *,
+        business_categories (
+          id,
+          title,
+          created_at,
+          updated_at
+        )
+      `)
+      .is('deleted_at', null)
+      .order('achievement_date', { ascending: false })
+      .range(from, to);
+
+    // 검색어가 있으면 제목과 내용에서 검색
+    if (searchTerm.trim()) {
+      dataQuery = dataQuery.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,content_summary.ilike.%${searchTerm}%`);
+    }
+
+    const { data, error } = await dataQuery as {
+      data: (Achievement & { business_categories: BusinessCategory | null })[] | null;
+      error: any;
+    };
+
+    if (error) {
+      console.error('사업실적 로드 오류:', error);
+      return { data: [], total: 0, totalPages: 0 };
+    }
+
+    return {
+      data: data || [],
+      total,
+      totalPages
+    };
+  } catch (error) {
+    console.error('사업실적 검색 중 예외 발생:', error);
+    return { data: [], total: 0, totalPages: 0 };
+  }
+}
+
+/**
  * 사업실적 상세 로드 (관리자용)
  */
 export async function getBusinessAchievementUsingAdmin(id: string): Promise<Achievement | null> {

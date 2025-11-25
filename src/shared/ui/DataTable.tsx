@@ -33,6 +33,7 @@ interface DataTableProps<T> {
   onSelectionChange?: (selectedRows: T[]) => void;
   getRowId: (row: T) => string;
   emptyMessage?: string;
+  enableSelection?: boolean; // 체크박스 선택 기능 활성화 여부
 }
 
 export function DataTable<T>({
@@ -41,7 +42,8 @@ export function DataTable<T>({
   actions,
   onSelectionChange,
   getRowId,
-  emptyMessage = '데이터가 없습니다'
+  emptyMessage = '데이터가 없습니다',
+  enableSelection = false
 }: DataTableProps<T>) {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -49,6 +51,7 @@ export function DataTable<T>({
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
   const handleSelectAll = () => {
+    if (!enableSelection) return;
     if (selectedRows.size === data.length) {
       setSelectedRows(new Set());
       onSelectionChange?.([]);
@@ -60,6 +63,7 @@ export function DataTable<T>({
   };
 
   const handleSelectRow = (rowId: string) => {
+    if (!enableSelection) return;
     const newSelection = new Set(selectedRows);
     if (newSelection.has(rowId)) {
       newSelection.delete(rowId);
@@ -123,13 +127,15 @@ export function DataTable<T>({
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="w-12 px-4 py-3">
-                <Checkbox
-                  checked={selectedRows.size === data.length && data.length > 0}
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all"
-                />
-              </th>
+              {enableSelection && (
+                <th className="w-12 px-4 py-3">
+                  <Checkbox
+                    checked={selectedRows.size === data.length && data.length > 0}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all"
+                  />
+                </th>
+              )}
               {columns.map((column) => (
                 <th
                   key={column.id}
@@ -158,7 +164,7 @@ export function DataTable<T>({
             {sortedData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + (actions ? 2 : 1)}
+                  colSpan={columns.length + (enableSelection ? 1 : 0) + (actions ? 1 : 0)}
                   className="px-4 py-12 text-center text-sm text-gray-500"
                 >
                   {emptyMessage}
@@ -167,7 +173,7 @@ export function DataTable<T>({
             ) : (
               sortedData.map((row) => {
                 const rowId = getRowId(row);
-                const isSelected = selectedRows.has(rowId);
+                const isSelected = enableSelection ? selectedRows.has(rowId) : false;
                 const isHovered = hoveredRow === rowId;
 
                 return (
@@ -181,13 +187,15 @@ export function DataTable<T>({
                     onMouseEnter={() => setHoveredRow(rowId)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
-                    <td className="px-4 py-3">
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => handleSelectRow(rowId)}
-                        aria-label={`Select row ${rowId}`}
-                      />
-                    </td>
+                    {enableSelection && (
+                      <td className="px-4 py-3">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => handleSelectRow(rowId)}
+                          aria-label={`Select row ${rowId}`}
+                        />
+                      </td>
+                    )}
                     {columns.map((column) => (
                       <td
                         key={column.id}

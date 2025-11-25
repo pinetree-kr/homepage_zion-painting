@@ -1,16 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Edit, Calendar, Tag } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { BusinessCategory, Achievement } from '@/src/entities';
-import { DataTable, DataTableColumn, DataTableAction } from '@/src/shared/ui';
+import { DataTable, DataTableColumn, DataTableAction, DataTableSearchBar, DataTablePagination } from '@/src/shared/ui';
 import { Badge } from '@/src/shared/ui';
 import {
-  getBusinessAchievements,
   deleteBusinessAchievement,
 } from '../api/business-actions';
 import Link from 'next/link';
@@ -18,18 +16,23 @@ import Link from 'next/link';
 interface BusinessAchievementsProps {
   categories: BusinessCategory[];
   items: Achievement[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  searchTerm: string;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 export default function BusinessAchievements({
   categories,
-  items
+  items,
+  totalItems,
+  totalPages,
+  currentPage,
+  searchTerm
 }: BusinessAchievementsProps) {
   const router = useRouter();
-  const [achievements, setAchievements] = useState<Achievement[]>(items);
-
-  useEffect(() => {
-    setAchievements(items);
-  }, [items]);
 
   const addAchievement = () => {
     router.push('/admin/info/business/achievements/new');
@@ -154,8 +157,15 @@ export default function BusinessAchievements({
           </Button>
         </div>
 
+        <div className="mb-4">
+          <DataTableSearchBar
+            placeholder="제목, 내용으로 검색..."
+            className="max-w-md"
+          />
+        </div>
+
         <DataTable
-          data={achievements.map(achievement => ({
+          data={items.map(achievement => ({
             ...achievement,
             category: achievement.category_id ? categoryMap.get(achievement.category_id) || null : null,
           }))}
@@ -164,6 +174,15 @@ export default function BusinessAchievements({
           getRowId={(row) => row.id}
           emptyMessage="등록된 사업실적이 없습니다"
         />
+
+        {totalPages > 0 && (
+          <DataTablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
+        )}
       </Card>
     </div>
   );

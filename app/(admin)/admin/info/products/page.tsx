@@ -1,6 +1,13 @@
 import ManagementProductsPage from '@/src/pages/management-products';
 
-export default function ProductsPage() {
-  return <ManagementProductsPage />;
+interface ProductsPageProps {
+  searchParams: {
+    search?: string;
+    page?: string;
+  };
+}
+
+export default function ProductsPage({ searchParams }: ProductsPageProps) {
+  return <ManagementProductsPage searchParams={searchParams} />;
 }
 

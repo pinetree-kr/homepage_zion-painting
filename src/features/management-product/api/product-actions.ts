@@ -240,6 +240,86 @@ export async function getProducts(supabase: SupabaseClient<Database>): Promise<P
 }
 
 /**
+ * 제품 목록 조회 (검색 및 페이지네이션 지원, 관리자용)
+ */
+export async function searchProductsUsingAdmin(
+  searchTerm: string = '',
+  page: number = 1,
+  itemsPerPage: number = 10
+): Promise<{ data: Product[]; total: number; totalPages: number }> {
+  const supabase = await createServerClient();
+  return searchProducts(supabase, searchTerm, page, itemsPerPage);
+}
+
+/**
+ * 제품 목록 조회 (검색 및 페이지네이션 지원, supabase 클라이언트 전달)
+ */
+export async function searchProducts(
+  supabase: SupabaseClient<Database>,
+  searchTerm: string = '',
+  page: number = 1,
+  itemsPerPage: number = 10
+): Promise<{ data: Product[]; total: number; totalPages: number }> {
+  try {
+    let query = supabase
+      .from('products')
+      .select('*', { count: 'exact' })
+      .is('deleted_at', null);
+
+    // 검색어가 있으면 제목과 내용에서 검색
+    if (searchTerm.trim()) {
+      query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,content_summary.ilike.%${searchTerm}%`);
+    }
+
+    // 전체 개수 조회
+    const { count, error: countError } = await query;
+
+    if (countError) {
+      console.error('제품 개수 조회 오류:', countError);
+      return { data: [], total: 0, totalPages: 0 };
+    }
+
+    const total = count || 0;
+    const totalPages = Math.ceil(total / itemsPerPage);
+
+    // 페이지네이션 적용
+    const from = (page - 1) * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+
+    let dataQuery = supabase
+      .from('products')
+      .select('*')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    // 검색어가 있으면 제목과 내용에서 검색
+    if (searchTerm.trim()) {
+      dataQuery = dataQuery.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,content_summary.ilike.%${searchTerm}%`);
+    }
+
+    const { data, error } = await dataQuery as {
+      data: Product[] | null;
+      error: any;
+    };
+
+    if (error) {
+      console.error('제품 로드 오류:', error);
+      return { data: [], total: 0, totalPages: 0 };
+    }
+
+    return {
+      data: data || [],
+      total,
+      totalPages
+    };
+  } catch (error) {
+    console.error('제품 검색 중 예외 발생:', error);
+    return { data: [], total: 0, totalPages: 0 };
+  }
+}
+
+/**
  * 제품 저장
  */
 export async function saveProduct(product: Omit<Product, 'id'> & { id?: string | null }): Promise<{ success: boolean; error?: string; id?: string }> {
