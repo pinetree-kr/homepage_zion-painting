@@ -13,8 +13,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     // 전체 가입자 수
     const { count: totalCount, error: totalError } = await supabase
       .from('profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active');
+      .select('id', { count: 'exact', head: true });
 
     if (totalError) {
       console.error('전체 가입자 수 조회 오류:', totalError);
@@ -28,8 +27,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
     const { count: recentCount, error: recentError } = await supabase
       .from('profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active')
+      .select('id', { count: 'exact', head: true })
       .gte('created_at', oneWeekAgoISO);
 
     if (recentError) {
@@ -190,8 +188,8 @@ export async function getEmptyInfo(): Promise<EmptyInfo[]> {
 
     // 사업 분야 체크
     const { count: businessAreasCount, error: businessAreasError } = await supabase
-      .from('business_areas')
-      .select('*', { count: 'exact', head: true });
+      .from('business_info')
+      .select('areas', { count: 'exact', head: true });
 
     if (!businessAreasError && (!businessAreasCount || businessAreasCount === 0)) {
       emptyInfo.push({ type: 'business', field: 'areas', label: '사업 분야' });
@@ -219,8 +217,8 @@ export async function getEmptyInfo(): Promise<EmptyInfo[]> {
       if (!contactInfo.address || contactInfo.address.trim() === '') {
         emptyInfo.push({ type: 'contact', field: 'address', label: '주소' });
       }
-      if (!contactInfo.phone_main || contactInfo.phone_main.trim() === '') {
-        emptyInfo.push({ type: 'contact', field: 'phone_main', label: '대표 전화' });
+      if (!contactInfo.phone_primary || contactInfo.phone_primary.trim() === '') {
+        emptyInfo.push({ type: 'contact', field: 'phone_primary', label: '대표 전화' });
       }
     } else {
       // 연락처 정보가 아예 없는 경우

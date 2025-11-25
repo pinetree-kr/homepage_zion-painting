@@ -13,6 +13,7 @@ import {
   getBusinessAchievements,
   deleteBusinessAchievement,
 } from '../api/business-actions';
+import Link from 'next/link';
 
 interface BusinessAchievementsProps {
   categories: BusinessCategory[];
@@ -70,8 +71,10 @@ export default function BusinessAchievements({
     {
       id: 'title',
       header: '제목',
-      accessor: (row) => row.title,
-      sortable: true,
+      accessor: (row) => {
+        return <Link href={`/admin/info/business/achievements/${row.id}`} className="text-blue-500 hover:text-blue-700">{row.title}</Link>
+      },
+      // sortable: true,
       width: '30%'
     },
     {
@@ -84,7 +87,7 @@ export default function BusinessAchievements({
         </Badge>
       ),
       sortable: true,
-      width: '15%'
+      width: '15%',
     },
     {
       id: 'date',
@@ -118,19 +121,19 @@ export default function BusinessAchievements({
     }
   ];
 
-  const achievementActions: DataTableAction<Achievement & { category?: BusinessCategory | null }>[] = [
-    {
-      label: '수정',
-      icon: <Edit className="h-4 w-4" />,
-      onClick: editAchievement
-    },
-    {
-      label: '삭제',
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row) => removeAchievement(row.id),
-      variant: 'destructive'
-    }
-  ];
+  // const achievementActions: DataTableAction<Achievement & { category?: BusinessCategory | null }>[] = [
+  //   {
+  //     label: '수정',
+  //     icon: <Edit className="h-4 w-4" />,
+  //     onClick: editAchievement
+  //   },
+  //   {
+  //     label: '삭제',
+  //     icon: <Trash2 className="h-4 w-4" />,
+  //     onClick: (row) => removeAchievement(row.id),
+  //     variant: 'destructive'
+  //   }
+  // ];
 
   return (
     <div className="space-y-6">
@@ -150,7 +153,7 @@ export default function BusinessAchievements({
             category: achievement.category_id ? categoryMap.get(achievement.category_id) || null : null,
           }))}
           columns={achievementColumns}
-          actions={achievementActions}
+          // actions={achievementActions}
           getRowId={(row) => row.id}
           emptyMessage="등록된 사업실적이 없습니다"
         />

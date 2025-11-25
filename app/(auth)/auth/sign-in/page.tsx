@@ -48,7 +48,7 @@ export default function SignInPage() {
 
       // 로그인 성공 시 last_login 업데이트
       const { error: updateError } = await (supabaseClient
-        .from('profiles') as any)
+        .from('profiles'))
         .update({ last_login: new Date().toISOString() })
         .eq('id', authData.user.id);
 
@@ -56,15 +56,18 @@ export default function SignInPage() {
         console.error('last_login 업데이트 실패:', updateError);
       }
 
-      // profiles 테이블에서 관리자 여부 확인 (role 필드 사용)
-      const { data: profileData } = await supabaseClient
-        .from('profiles')
-        .select('role')
+      // administrators 테이블에서 관리자 여부 확인
+      const { data: adminData } = await supabaseClient
+        .from('administrators')
+        .select('id')
         .eq('id', authData.user.id)
-        .single<Pick<Profile, 'role'>>();
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      const isAdmin = adminData !== null;
 
       // 관리자인 경우 관리자 페이지로, 아니면 홈으로
-      if (profileData?.role === 'admin') {
+      if (isAdmin) {
         // router.push('/admin');
         router.push('/');
       } else {

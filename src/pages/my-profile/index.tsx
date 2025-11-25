@@ -37,7 +37,7 @@ export default function ProfilePage() {
         }
         const { data: profileData } = await supabaseClient
           .from('profiles')
-          .select('id, name, email, role, status, email_verified, last_login, phone, created_at, updated_at')
+          .select('id, name, email, last_login, phone, created_at, updated_at')
           .eq('id', user?.id)
           .single<Profile>();
 

@@ -6,18 +6,19 @@ import {
 import { redirect } from 'next/navigation';
 
 interface BusinessAchievementEditPageProps {
-  params: {
+  params: Promise<{
     achievement_id: string;
-  };
+  }>;
 }
 
 export default async function BusinessAchievementEditPage({ params }: BusinessAchievementEditPageProps) {
+  const { achievement_id } = await params;
   const [categories, achievements] = await Promise.all([
     getBusinessCategories(),
     getBusinessAchievements(),
   ]);
 
-  const achievement = achievements.find(a => a.id === params.achievement_id);
+  const achievement = achievements.find(a => a.id === achievement_id);
 
   if (!achievement) {
     redirect('/admin/info/business/achievements');
@@ -25,7 +26,7 @@ export default async function BusinessAchievementEditPage({ params }: BusinessAc
 
   return (
     <BusinessAchievementForm
-      achievementId={params.achievement_id}
+      achievementId={achievement_id}
       categories={categories}
       data={achievement}
     />

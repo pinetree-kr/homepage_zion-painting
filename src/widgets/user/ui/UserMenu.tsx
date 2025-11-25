@@ -14,6 +14,8 @@ import { supabaseClient } from "@/src/shared/lib/supabase/client";
 export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
     // const { user, loading } = useCurrentUser();
     const [user, setUser] = useState<Profile | undefined>(undefined);
+    const [isAdmin, setIsAdmin] = useState(false);
+
     const [loading, setLoading] = useState(true);
     useEffect(() => {
         const loadUser = async () => {
@@ -29,7 +31,7 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
 
             const { data: profileData } = await supabaseClient
                 .from('profiles')
-                .select('id, name, email, role, status')
+                .select('id, name, email')
                 .eq('id', user.id)
                 .single<Profile>();
 
@@ -40,6 +42,18 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
             }
 
             setUser(profileData);
+
+            // administrators 테이블에서 관리자 여부 확인
+            const { data: adminData } = await supabaseClient
+                .from('administrators')
+                .select('id')
+                .eq('id', user.id)
+                .is('deleted_at', null)
+                .maybeSingle();
+
+            setIsAdmin(adminData !== null);
+
+
             setLoading(false);
         };
         loadUser();
@@ -175,7 +189,7 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
                     <span>마이페이지</span>
                 </DropdownMenuItem>
                 {
-                    user.role === 'admin' && !pathname?.startsWith('/admin') && (
+                    isAdmin && !pathname?.startsWith('/admin') && (
                         <>
                             <DropdownMenuItem onClick={handleMoveAdminPage} className="cursor-pointer">
                                 <Settings className="h-4 w-4 mr-2" />

@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type User } from '@/src/entities/user';
-// import { useSupabase }     from '@/src/shared/lib/supabase/client';
 import { LogOut, Settings } from 'lucide-react';
 import { getScrollbarWidth } from '@/src/shared/lib/utils';
 import UserMenu from '@/src/widgets/user/ui/UserMenu';
@@ -30,70 +29,6 @@ export default function Header() {
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Supabase 로그인 상태 확인
-  // useEffect(() => {
-  //   let mounted = true;
-
-  //   const loadUserProfile = async (userId: string) => {
-  //     try {
-  //       // profiles 테이블에서 사용자 프로필 정보 가져오기 (role 포함)
-  //       const { data: profileData } = await supabase
-  //         .from('profiles')
-  //         .select('id, name, email, role, status, email_verified, last_login, phone, created_at, updated_at')
-  //         .eq('id', userId)
-  //         .single<Profile>();
-
-  //       if (!mounted) return;
-
-  //       if (!profileData) {
-  //         setCurrentUser(null);
-  //         return;
-  //       }
-
-  //       // User 타입으로 변환 (Profile의 role 사용)
-  //       const userData: User = {
-  //         id: profileData.id,
-  //         email: profileData.email || '',
-  //         name: profileData.name || '사용자',
-  //         role: profileData.role === 'admin' ? 'admin' : 'user',
-  //         email_verified: profileData.email_verified ?? false,
-  //         created_at: profileData.created_at,
-  //         updated_at: profileData.updated_at,
-  //         status: profileData.status || null,
-  //         last_login: profileData.last_login || null,
-  //         phone: profileData.phone || null,
-  //       };
-
-  //       setCurrentUser(userData);
-  //     } catch (error) {
-  //       console.error('프로필 로드 중 오류 발생:', error);
-  //       if (mounted) {
-  //         setCurrentUser(null);
-  //       }
-  //     }
-  //   };
-
-  //   // onAuthStateChange를 사용하여 초기 세션을 가져옴 (쿠키 직접 읽기 방지)
-  //   const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-  //     if (!mounted) return;
-
-  //     if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-  //       if (session?.user?.id) {
-  //         await loadUserProfile(session.user.id);
-  //       } else {
-  //         setCurrentUser(null);
-  //       }
-  //     } else if (event === 'SIGNED_OUT') {
-  //       setCurrentUser(null);
-  //     }
-  //   });
-
-  //   return () => {
-  //     mounted = false;
-  //     subscription.unsubscribe();
-  //   };
-  // }, [supabase]);
 
   const handleLogout = async () => {
     try {
@@ -312,7 +247,7 @@ export default function Header() {
 
           {/* 사이드 메뉴 푸터 */}
           <div className="p-6 border-t border-gray-200">
-            {currentUser ? (
+            {/* {currentUser ? (
               <div className="space-y-3">
                 <div className="px-4 py-2 bg-gray-50 rounded-lg">
                   <p className="text-sm font-medium text-gray-900">{currentUser.name}</p>
@@ -347,7 +282,7 @@ export default function Header() {
               >
                 로그인
               </Link>
-            )}
+            )} */}
           </div>
         </div>
       </aside>

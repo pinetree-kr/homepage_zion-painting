@@ -317,7 +317,7 @@ export async function getBusinessAchievements(): Promise<Achievement[]> {
       content: item.content,
       achievement_date: item.achievement_date,
       category_id: item.category_id,
-      image_url: item.image_url,
+      thumbnail_url: item.thumbnail_url,
       content_summary: item.content_summary || null,
       created_at: item.created_at,
       updated_at: item.updated_at,
@@ -344,7 +344,7 @@ export async function saveBusinessAchievement(achievement: Omit<Achievement, 'id
       content: achievement.content || '',
       achievement_date: achievement.achievement_date || new Date().toISOString().split('T')[0],
       category_id: achievement.category_id || null,
-      image_url: achievement.image_url || null,
+      thumbnail_url: achievement.thumbnail_url || null,
       content_summary: contentSummary || null,
     };
     console.error({ achievement })

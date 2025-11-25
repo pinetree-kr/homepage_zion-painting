@@ -28,9 +28,8 @@ export default function MyPageLayoutWrapper({
         // profiles 테이블에서 사용자 프로필 정보 가져오기
         const { data: profileData } = await supabaseClient
           .from('profiles')
-          .select('id, status')
+          .select('id')
           .eq('id', user.id)
-          .eq('status', 'active')
           .single<Profile>();
 
         if (!profileData) {

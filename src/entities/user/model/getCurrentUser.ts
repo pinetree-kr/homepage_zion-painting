@@ -32,8 +32,6 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
         const { data, error: profileError } = await supabase.from('profiles')
             .select('*')
             .eq('id', user.id)
-            .eq('status', 'active')
-            // .eq('email_verified', true)
             .single<Profile>();
 
         if (profileError) {

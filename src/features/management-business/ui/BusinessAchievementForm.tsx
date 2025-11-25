@@ -133,7 +133,7 @@ export default function BusinessAchievementForm({
         content: data.content,
         achievement_date: data.achievement_date,
         category_id: data.category_id,
-        image_url: data.image_url,
+        thumbnail_url: data.thumbnail_url,
       };
     }
     return {
@@ -167,10 +167,10 @@ export default function BusinessAchievementForm({
 
       let thumbnailUrl: string | null = null;
 
-      // 이미지가 있고, 기존에 image_url이 없거나 변경된 경우 썸네일 생성
+      // 이미지가 있고, 기존에 thumbnail_url 없거나 변경된 경우 썸네일 생성
       if (extractedImageUrl) {
-        // 기존 image_url과 다르거나 없는 경우에만 썸네일 생성
-        if (!achievement.image_url || achievement.image_url !== extractedImageUrl) {
+        // 기존 thumbnail_url과 다르거나 없는 경우에만 썸네일 생성
+        if (!achievement.thumbnail_url || achievement.thumbnail_url !== extractedImageUrl) {
           toast.info('썸네일을 생성하는 중...');
           thumbnailUrl = await createAndUploadThumbnail(extractedImageUrl);
 
@@ -180,16 +180,16 @@ export default function BusinessAchievementForm({
           }
         } else {
           // 기존 썸네일 유지
-          thumbnailUrl = achievement.image_url;
+          thumbnailUrl = achievement.thumbnail_url;
         }
       } else {
-        // 이미지가 없으면 기존 image_url 유지
-        thumbnailUrl = achievement.image_url || null;
+        // 이미지가 없으면 기존 thumbnail_url 유지
+        thumbnailUrl = achievement.thumbnail_url || null;
       }
 
       const achievementToSave = {
         ...achievement,
-        image_url: thumbnailUrl,
+        thumbnail_url: thumbnailUrl,
       };
 
       const result = await saveBusinessAchievement(achievementToSave);

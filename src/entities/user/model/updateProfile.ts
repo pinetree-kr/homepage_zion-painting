@@ -20,7 +20,7 @@ export async function updateProfile(
       updated_at: new Date().toISOString(),
     })
     .eq('id', userId)
-    .select('id, name, email, role, status, email_verified, last_login, phone, created_at, updated_at')
+    .select('id, name, email, last_login, phone, created_at, updated_at')
     .single<Profile>();
 
   if (error) {

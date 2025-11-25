@@ -31,12 +31,9 @@ const mockAdmins: Member[] = [
     id: 'admin1',
     email: 'admin@zion.com',
     name: '시온관리자',
-    role: 'admin',
     created_at: '2024-01-01T00:00:00Z',
-    status: 'active',
     last_login: '2024-11-10T08:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
-    email_verified: false,
     phone: null,
   },
 ];
@@ -59,12 +56,9 @@ export default function AdminManagement() {
       id: `admin${Date.now()}`,
       email: inviteForm.email,
       name: inviteForm.name,
-      role: 'admin',
       created_at: new Date().toISOString(),
       updated_at: null,
-      email_verified: false,
       phone: null,
-      status: 'active',
       last_login: null,
     };
 
@@ -137,17 +131,17 @@ export default function AdminManagement() {
       sortable: true,
       width: '25%'
     },
-    {
-      id: 'status',
-      header: '상태',
-      accessor: (row) => (
-        <Badge variant={row.status === 'active' ? 'default' : 'secondary'} className="text-xs">
-          {row.status === 'active' ? '활성' : '비활성'}
-        </Badge>
-      ),
-      sortable: true,
-      width: '15%'
-    },
+    // {
+    //   id: 'status',
+    //   header: '상태',
+    //   accessor: (row) => (
+    //     <Badge variant={row.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+    //       {row.status === 'active' ? '활성' : '비활성'}
+    //     </Badge>
+    //   ),
+    //   sortable: true,
+    //   width: '15%'
+    // },
     {
       id: 'created_at',
       header: '등록일',
@@ -226,7 +220,7 @@ export default function AdminManagement() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-green-600" />
-              <span className="text-2xl">{admins.filter(a => a.status === 'active').length}</span>
+              {/* <span className="text-2xl">{admins.filter(a => a.status === 'active').length}</span> */}
             </div>
           </CardContent>
         </Card>
@@ -238,7 +232,7 @@ export default function AdminManagement() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-orange-600" />
-              <span className="text-2xl">{admins.filter(a => a.status === 'inactive').length}</span>
+              {/* <span className="text-2xl">{admins.filter(a => a.status === 'inactive').length}</span> */}
             </div>
           </CardContent>
         </Card>
