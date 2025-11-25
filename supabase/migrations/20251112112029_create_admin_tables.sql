@@ -203,14 +203,15 @@ CREATE TABLE IF NOT EXISTS boards (
   allow_file BOOLEAN NOT NULL DEFAULT FALSE, -- 파일 첨부 허용 여부
   display_order INTEGER NOT NULL DEFAULT 0, -- 게시판 순서
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ -- soft delete
 );
   
 INSERT INTO boards (code, name, description, is_public, allow_anonymous, allow_comment, allow_file, display_order) VALUES
-('notice', '공지사항', '공지사항 게시판', TRUE, FALSE, FALSE, FALSE, 0),
+('notices', '공지사항', '공지사항 게시판', TRUE, FALSE, FALSE, FALSE, 0),
 ('qna', 'Q&A', 'Q&A 게시판', TRUE, FALSE, TRUE, FALSE, 1),
-('quote', '견적문의', '견적문의 게시판', TRUE, FALSE, TRUE, FALSE, 2),
-('review', '고객후기', '고객후기 게시판', TRUE, FALSE, TRUE, FALSE, 3);
+('quotes', '견적문의', '견적문의 게시판', TRUE, FALSE, TRUE, FALSE, 2),
+('reviews', '고객후기', '고객후기 게시판', TRUE, FALSE, TRUE, FALSE, 3);
 
 -- 9.0. board_categories 테이블 생성 (게시판 전용 카테고리)
 CREATE TABLE IF NOT EXISTS board_categories (
@@ -639,7 +640,10 @@ CREATE POLICY "Admin delete access for products" ON products
 
 -- 12. boards 테이블 정책
 CREATE POLICY "Public read access for boards" ON boards
-  FOR SELECT USING (true);
+  FOR SELECT USING (deleted_at IS NULL);
+
+CREATE POLICY "Admin can view all boards" ON boards
+  FOR SELECT USING (is_admin(auth.uid()));
 
 CREATE POLICY "Admin write access for boards" ON boards
   FOR INSERT WITH CHECK (is_admin(auth.uid()));

@@ -96,7 +96,7 @@ export default function ProfileForm({ user, onUpdate }: ProfileFormProps) {
           </div>
 
           {/* 역할 입력 (비활성화) */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <label htmlFor="role" className="text-sm font-normal text-[#1A1A1A]">
               역할
             </label>
@@ -107,7 +107,7 @@ export default function ProfileForm({ user, onUpdate }: ProfileFormProps) {
               disabled
               className="h-9 px-3 py-1 border border-[#E2E8F0] rounded-[10px] text-sm text-[#1A1A1A] bg-[#F4F6F8] opacity-50"
             />
-          </div>
+          </div> */}
         </div>
       </CardContent>
     </Card>

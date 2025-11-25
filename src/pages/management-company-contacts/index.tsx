@@ -1,8 +1,8 @@
-'use client';
+"use server"
 
 import ContactInfo from '@/src/features/management-company/ui/ContactInfo';
 
-export default function ManagementCompanyContactsPage() {
+export default async function ManagementCompanyContactsPage() {
   return <ContactInfo />;
 }
 

@@ -1,3 +1,5 @@
+"use server"
+
 import BusinessAchievements from '@/src/features/management-business/ui/BusinessAchievements';
 import {
   getBusinessCategories,
@@ -5,18 +7,19 @@ import {
 } from '@/src/features/management-business/api/business-actions';
 
 interface BusinessAchievementsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     search?: string;
     page?: string;
-  };
+  }>;
 }
 
 const ITEMS_PER_PAGE = 10;
 
 export default async function BusinessAchievementsPage({ searchParams }: BusinessAchievementsPageProps) {
-  const searchTerm = searchParams.search || '';
-  const page = parseInt(searchParams.page || '1', 10);
-  
+  const searchParamsData = await searchParams;
+  const searchTerm = searchParamsData?.search || '';
+  const page = parseInt(searchParamsData?.page || '1', 10);
+
   const [result, categories] = await Promise.all([
     searchBusinessAchievementsUsingAdmin(searchTerm, page, ITEMS_PER_PAGE),
     getBusinessCategories(),

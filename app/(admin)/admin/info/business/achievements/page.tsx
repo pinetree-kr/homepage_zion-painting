@@ -1,12 +1,14 @@
 import BusinessAchievements from '@/src/pages/management-business-achievements';
 
 interface BusinessAchievementsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     search?: string;
     page?: string;
-  };
+  }>;
 }
 
-export default function BusinessAchievementsPage({ searchParams }: BusinessAchievementsPageProps) {
+export const dynamic = 'force-dynamic';
+
+export default async function BusinessAchievementsPage({ searchParams }: BusinessAchievementsPageProps) {
   return <BusinessAchievements searchParams={searchParams} />;
 }

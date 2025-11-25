@@ -21,11 +21,11 @@ export function DataTableSearchBar({
 }: DataTableSearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState(searchParams.get(searchParamKey) || '');
+  const [searchTerm, setSearchTerm] = useState(searchParams?.get(searchParamKey) || '');
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const currentUrlSearchTerm = searchParams.get(searchParamKey) || '';
+      const currentUrlSearchTerm = searchParams?.get(searchParamKey) || '';
       const trimmedSearchTerm = searchTerm.trim();
       
       // URL과 현재 입력값이 같으면 업데이트하지 않음
@@ -33,7 +33,7 @@ export function DataTableSearchBar({
         return;
       }
 
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(searchParams?.toString() || '');
       
       if (trimmedSearchTerm) {
         params.set(searchParamKey, trimmedSearchTerm);
@@ -51,16 +51,16 @@ export function DataTableSearchBar({
 
   // URL의 searchParam이 변경되면 동기화 (외부에서 URL이 변경된 경우)
   useEffect(() => {
-    const urlSearchTerm = searchParams.get(searchParamKey) || '';
+    const urlSearchTerm = searchParams?.get(searchParamKey) || '';
     // URL이 변경되었고, 현재 입력값과 다를 때만 동기화
     if (urlSearchTerm !== searchTerm) {
       setSearchTerm(urlSearchTerm);
     }
-  }, [searchParams, searchParamKey]); // searchTerm을 의존성에서 제거하여 무한 루프 방지
+  }, [searchParams, searchTerm, searchParamKey]); // searchTerm을 의존성에서 제거하여 무한 루프 방지
 
   const handleClear = () => {
     setSearchTerm('');
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() || '');
     params.delete(searchParamKey);
     params.delete('page');
     router.push(`?${params.toString()}`, { scroll: false });

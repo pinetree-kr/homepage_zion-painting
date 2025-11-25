@@ -26,7 +26,7 @@ export function DataTablePagination({
 }: DataTablePaginationProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
@@ -36,7 +36,7 @@ export function DataTablePagination({
       onPageChange(page);
     } else {
       // URL 기반 방식
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(searchParams?.toString() || '');
       if (page === 1) {
         params.delete(pageParamKey);
       } else {

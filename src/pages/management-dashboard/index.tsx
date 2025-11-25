@@ -1,3 +1,5 @@
+"use server"
+
 import { DashboardContent } from '@/src/features/admin/dashboard';
 import {
   getDashboardStats,

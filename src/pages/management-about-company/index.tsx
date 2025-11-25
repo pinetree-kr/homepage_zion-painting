@@ -1,7 +1,7 @@
+"use server"
+
 import AboutCompany from '@/src/features/management-company/ui/AboutCompany';
 import { getCompanyAboutInfo } from '@/src/features/management-company/api/company-actions';
-
-export const dynamic = 'force-dynamic';
 
 export default async function ManangementAboutCompanyPage() {
   const aboutInfo = await getCompanyAboutInfo();

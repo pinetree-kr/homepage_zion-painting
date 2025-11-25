@@ -172,8 +172,7 @@ export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
     } else {
       setBusinessAreas(items);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items]);
+  }, [items, setBusinessAreas]);
 
 
   const handleSave = useCallback(async () => {

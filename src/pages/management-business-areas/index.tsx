@@ -1,3 +1,5 @@
+"use server"
+
 import BusinessAreas from '@/src/features/management-business/ui/BusinessAreas';
 import { getBusinessAreas } from '@/src/features/management-business/api/business-actions';
 

@@ -190,11 +190,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     if (pathname?.startsWith('/admin/customer')) {
       if (pathname === '/admin/customer/members') return 'members';
-      if (pathname === '/admin/customer/notices') return 'notice';
-      if (pathname === '/admin/customer/qna') return 'qna';
-      if (pathname === '/admin/customer/estimates') return 'quote';
-      if (pathname === '/admin/customer/reviews') return 'review';
       return 'members';
+    }
+    if (pathname?.startsWith('/admin/boards')) {
+      if (pathname === '/admin/boards/notices') return 'notices';
+      if (pathname === '/admin/boards/qna') return 'qna';
+      if (pathname === '/admin/boards/quotes') return 'quotes';
+      if (pathname === '/admin/boards/reviews') return 'reviews';
+      return 'notices';
     }
     if (pathname?.startsWith('/admin/system')) {
       if (pathname === '/admin/system/administrators') return 'admin-management';
@@ -213,10 +216,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       'business-info': '/admin/info/business/introduction',
       'products-admin': '/admin/info/products',
       'members': '/admin/customer/members',
-      'notice': '/admin/customer/notices',
-      'qna': '/admin/customer/qna',
-      'quote': '/admin/customer/estimates',
-      'review': '/admin/customer/reviews',
+      'notices': '/admin/boards/notices',
+      'qna': '/admin/boards/qna',
+      'quotes': '/admin/boards/quotes',
+      'reviews': '/admin/boards/reviews',
       'admin-management': '/admin/system/administrators',
       'logs': '/admin/system/logs',
       'resources': '/admin/system/resources',
@@ -254,10 +257,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       icon: MessageSquareIcon,
       items: [
         { id: 'members', label: '회원관리', icon: UsersIcon, route: '/admin/customer/members' },
-        { id: 'notice', label: '공지사항', icon: FileTextIcon, route: '/admin/customer/notices' },
-        { id: 'qna', label: 'Q&A', icon: MessageSquareIcon, route: '/admin/customer/qna' },
-        { id: 'quote', label: '견적문의', icon: CalculatorIcon, route: '/admin/customer/estimates' },
-        { id: 'review', label: '고객후기', icon: StarIcon, route: '/admin/customer/reviews' },
+        { id: 'notices', label: '공지사항', icon: FileTextIcon, route: '/admin/boards/notices' },
+        { id: 'qna', label: 'Q&A', icon: MessageSquareIcon, route: '/admin/boards/qna' },
+        { id: 'quotes', label: '견적문의', icon: CalculatorIcon, route: '/admin/boards/quotes' },
+        { id: 'reviews', label: '고객후기', icon: StarIcon, route: '/admin/boards/reviews' },
       ],
     },
     {
