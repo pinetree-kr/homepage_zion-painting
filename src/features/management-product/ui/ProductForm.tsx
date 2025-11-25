@@ -74,20 +74,26 @@ function extractContentSummary(htmlContent: string, maxLength: number = 50): str
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, 'text/html');
+    // 이미지 관련 요소 제거
+    const images = doc.querySelectorAll('img, figure, figcaption');
+    images.forEach(img => img.remove());
+
+    // 텍스트만 추출
     const text = doc.body.textContent || '';
-    
+
     // HTML 태그 제거 및 공백 정리
     const cleanText = text.replace(/\s+/g, ' ').trim();
-    
+
     if (cleanText.length <= maxLength) {
       return cleanText;
     }
-    
+
     return cleanText.substring(0, maxLength);
   } catch (error) {
     console.error('내용 요약 추출 오류:', error);
-    // 실패 시 HTML 태그 제거 후 텍스트만 추출
-    const text = htmlContent.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    // 실패 시 이미지 태그를 먼저 제거한 후 HTML 태그 제거
+    const withoutImages = htmlContent.replace(/<img[^>]*>/gi, '').replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, '');
+    const text = withoutImages.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
     return text.length > maxLength ? text.substring(0, maxLength) : text;
   }
 }
@@ -102,10 +108,10 @@ async function createAndUploadThumbnail(imageUrl: string): Promise<string | null
     try {
       const url = new URL(imageUrl);
       const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-      const isExternalImage = url.origin !== currentOrigin && 
-                              !url.hostname.includes('supabase.co') &&
-                              !url.hostname.includes('localhost') &&
-                              !url.hostname.includes('127.0.0.1');
+      const isExternalImage = url.origin !== currentOrigin &&
+        !url.hostname.includes('supabase.co') &&
+        !url.hostname.includes('localhost') &&
+        !url.hostname.includes('127.0.0.1');
 
       if (isExternalImage) {
         // 외부 이미지는 API 라우트를 통해 프록시하여 가져오기 (CORS 문제 해결)
@@ -219,7 +225,7 @@ export default function ProductForm({
 
       // content에서 첫 번째 이미지 URL 추출
       const extractedImageUrl = extractFirstImageUrl(product.content);
-      
+
       // content에서 요약 추출
       const contentSummary = extractContentSummary(product.content);
 
