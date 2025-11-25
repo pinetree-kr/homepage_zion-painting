@@ -1,4 +1,8 @@
-import ManagementSystemLogsPage from '@/src/pages/management-system-logs';
+'use client';
 
-export default ManagementSystemLogsPage;
+import { LogManagement } from '@/src/features/admin/system';
+
+export default function ManagementSystemLogsPage() {
+  return <LogManagement />;
+}
 

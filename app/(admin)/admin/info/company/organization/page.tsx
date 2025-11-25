@@ -1,4 +1,11 @@
-import ManagementCompanyOrganizationPage from '@/src/pages/management-company-organization';
+import CompanyOrganization from '@/src/features/management-company/ui/CompanyOrganization';
+import { getCompanyOrganizationMembers } from '@/src/features/management-company/api/company-actions';
 
-export default ManagementCompanyOrganizationPage;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export default async function ManagementCompanyOrganizationPage() {
+  const members = await getCompanyOrganizationMembers();
+  return <CompanyOrganization items={members} />;
+}
 

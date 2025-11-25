@@ -1,4 +1,8 @@
-import ManagementCompanyContactsPage from '@/src/pages/management-company-contacts';
+"use server"
 
-export default ManagementCompanyContactsPage;
+import ContactInfo from '@/src/features/management-company/ui/ContactInfo';
+
+export default async function ManagementCompanyContactsPage() {
+  return <ContactInfo />;
+}
 
