@@ -1,6 +1,6 @@
-import BusinessAreas from '@/src/features/management-business/ui/BusinessAreas';
+import ManagementBusinessAreas from '@/src/pages/management-business-areas';
 
-export default function BusinessAreasPage() {
-  return <BusinessAreas />;
+export default function ManagementBusinessAreasPage() {
+  return <ManagementBusinessAreas />;
 }
 

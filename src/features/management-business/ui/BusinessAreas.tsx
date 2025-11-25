@@ -152,49 +152,26 @@ function SortableBusinessAreaItem({
   );
 }
 
-export default function BusinessAreas() {
+export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
   const [businessAreas, setBusinessAreas] = useState<BusinessArea[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-    loadData();
-  }, []);
-
+  
   // ID 정규화
   useEffect(() => {
-    if (isMounted) {
-      const normalizedAreas = businessAreas.map((area) => ({
+    const hasMissingIds = items.some((a) => !a.id);
+    
+    if (hasMissingIds) {
+      const normalizedAreas = items.map((area) => ({
         ...area,
         id: area.id || generateId(),
       }));
-      const hasMissingIds = normalizedAreas.some((a) => !a.id);
-      if (hasMissingIds) {
-        setBusinessAreas(normalizedAreas);
-      }
+      setBusinessAreas(normalizedAreas);
+    } else {
+      setBusinessAreas(items);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMounted]);
+  }, [items]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const businessInfo = await getBusinessInfo();
-      if (businessInfo) {
-        setBusinessAreas(Array.isArray(businessInfo.areas) ? businessInfo.areas.map((area: any) => ({
-          ...area,
-          id: area.id || generateId(),
-        })) : []);
-      }
-    } catch (error) {
-      console.error('데이터 로드 오류:', error);
-      toast.error('데이터를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSave = async () => {
     try {
@@ -279,13 +256,13 @@ export default function BusinessAreas() {
     })
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-gray-500">로딩 중...</p>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex items-center justify-center py-12">
+  //       <p className="text-gray-500">로딩 중...</p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <Card className="p-6">
@@ -300,7 +277,7 @@ export default function BusinessAreas() {
           {saving ? '저장 중...' : '저장'}
         </Button>
       </div>
-      {isMounted ? (
+      {businessAreas.length > 0 ? (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -338,7 +315,7 @@ export default function BusinessAreas() {
       ) : (
         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 310px))' }}>
           {businessAreas.map((area) => (
-            <Card key={area.id || `temp-${area.title}`} className="p-4">
+            <Card key={area.id} className="p-4">
               <div className="flex items-start justify-between mb-4">
                 <span className="text-sm text-gray-500">사업분야</span>
                 <Button

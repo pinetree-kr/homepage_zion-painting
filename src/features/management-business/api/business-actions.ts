@@ -173,13 +173,13 @@ export async function saveBusinessCategory(category: Partial<BusinessCategory>):
         .limit(1)
         .single() as { data: { display_order?: number } | null; error: any };
 
-      const nextOrder = maxOrderData?.display_order !== undefined 
-        ? (maxOrderData.display_order + 1) 
+      const nextOrder = maxOrderData?.display_order !== undefined
+        ? (maxOrderData.display_order + 1)
         : 0;
 
       const { error, data } = await supabase
         .from('business_categories')
-        .insert({ 
+        .insert({
           title: category.title || '',
           display_order: category.display_order !== undefined ? category.display_order : nextOrder
         } as any)
@@ -213,7 +213,7 @@ export async function updateBusinessCategoriesOrder(categories: { id: string; di
     );
 
     const results = await Promise.all(updates);
-    
+
     const hasError = results.some(result => result.error);
     if (hasError) {
       const errorResult = results.find(result => result.error);
@@ -407,3 +407,29 @@ export async function deleteBusinessAchievement(id: string): Promise<{ success: 
   }
 }
 
+
+/**
+ * 사업 분야 목록 로드
+ */
+export async function getBusinessAreas(): Promise<BusinessArea[]> {
+  try {
+    const supabase = createAnonymousServerClient();
+    const { data, error } = await supabase
+      .from('business_info')
+      .select('areas')
+      .maybeSingle() as {
+        data: { areas: BusinessArea[] | null } | null;
+        error: any;
+      };
+
+    if (error) {
+      console.error('사업 분야 로드 오류:', error);
+      return [];
+    }
+
+    return data?.areas || [];
+  } catch (error) {
+    console.error('사업 분야 로드 중 예외 발생:', error);
+    return [];
+  }
+}
