@@ -3,6 +3,7 @@
 import { createServerClient } from '@/src/shared/lib/supabase/server';
 import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous';
 import type { BusinessInfo, BusinessArea, BusinessCategory, Achievement } from '@/src/entities/business/model/types';
+import { revalidatePath } from 'next/cache';
 
 /**
  * 사업소개 정보 로드
@@ -163,6 +164,9 @@ export async function saveBusinessCategory(category: Partial<BusinessCategory>):
         return { success: false, error: error.message };
       }
 
+      // 화면 업데이트를 위한 캐시 무효화
+      revalidatePath('/admin/info/business/categories');
+
       return { success: true, id: data.id };
     } else {
       // 새로 생성 - display_order는 최대값 + 1로 설정
@@ -189,6 +193,9 @@ export async function saveBusinessCategory(category: Partial<BusinessCategory>):
       if (error) {
         return { success: false, error: error.message };
       }
+
+      // 화면 업데이트를 위한 캐시 무효화
+      revalidatePath('/admin/info/business/categories');
 
       return { success: true, id: data.id };
     }
@@ -220,6 +227,9 @@ export async function updateBusinessCategoriesOrder(categories: { id: string; di
       return { success: false, error: errorResult?.error?.message || '순서 업데이트 중 오류가 발생했습니다.' };
     }
 
+    // 화면 업데이트를 위한 캐시 무효화
+    revalidatePath('/admin/info/business/categories');
+
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || '알 수 없는 오류' };
@@ -241,6 +251,9 @@ export async function deleteBusinessCategory(id: string): Promise<{ success: boo
     if (error) {
       return { success: false, error: error.message };
     }
+
+    // 화면 업데이트를 위한 캐시 무효화
+    revalidatePath('/admin/info/business/categories');
 
     return { success: true };
   } catch (error: any) {

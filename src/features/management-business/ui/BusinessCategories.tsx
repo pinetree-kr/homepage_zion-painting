@@ -27,11 +27,11 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-  getBusinessCategories,
   saveBusinessCategory,
   deleteBusinessCategory,
   updateBusinessCategoriesOrder,
 } from '../api/business-actions';
+import { useRouter } from 'next/navigation';
 
 // SortableCategoryItem 컴포넌트
 function SortableCategoryItem({
@@ -98,31 +98,18 @@ function SortableCategoryItem({
   );
 }
 
-export default function BusinessCategories() {
+export default function BusinessCategories({ items }: { items: BusinessCategory[] }) {
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<BusinessCategory | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  
   const [saving, setSaving] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
 
+  // items prop이 변경될 때 categories 상태 업데이트
   useEffect(() => {
-    setIsMounted(true);
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const categoriesData = await getBusinessCategories();
-      setCategories(categoriesData);
-    } catch (error) {
-      console.error('데이터 로드 오류:', error);
-      toast.error('데이터를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    setCategories(items);
+  }, [items]);
 
   const handleSaveCategory = async () => {
     if (!selectedCategory || !selectedCategory.title?.trim()) {
@@ -137,7 +124,7 @@ export default function BusinessCategories() {
         toast.success('적용산업이 저장되었습니다.');
         setIsEditDialogOpen(false);
         setSelectedCategory(null);
-        await loadData();
+        router.refresh();
       } else {
         toast.error(`저장 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
       }
@@ -158,7 +145,7 @@ export default function BusinessCategories() {
       const result = await deleteBusinessCategory(id);
       if (result.success) {
         toast.success('적용산업이 삭제되었습니다.');
-        await loadData();
+        router.refresh();
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
       }
@@ -195,13 +182,13 @@ export default function BusinessCategories() {
         } else {
           toast.error(`순서 변경 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
           // 실패 시 원래 데이터로 복구
-          await loadData();
+          router.refresh();
         }
       } catch (error: any) {
         console.error('순서 변경 오류:', error);
         toast.error(`순서 변경 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
         // 실패 시 원래 데이터로 복구
-        await loadData();
+        router.refresh();
       }
     }
   };
@@ -213,13 +200,7 @@ export default function BusinessCategories() {
     })
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-gray-500">로딩 중...</p>
-      </div>
-    );
-  }
+
 
   return (
     <div className="space-y-6">
@@ -238,7 +219,7 @@ export default function BusinessCategories() {
           </Button>
         </div>
 
-        {isMounted ? (
+        {categories.length > 0 ? (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

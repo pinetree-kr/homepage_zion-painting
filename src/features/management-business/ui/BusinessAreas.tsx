@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Plus, Trash2, Save, GripVertical } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
@@ -34,13 +34,13 @@ function generateId() {
     return window.crypto.randomUUID();
   }
   if (typeof window !== 'undefined') {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }
   return '';
 }
 
 // SortableBusinessAreaItem 컴포넌트
-function SortableBusinessAreaItem({
+const SortableBusinessAreaItem = memo(function SortableBusinessAreaItem({
   area,
   onUpdate,
   onRemove,
@@ -150,7 +150,7 @@ function SortableBusinessAreaItem({
       </div>
     </Card>
   );
-}
+});
 
 export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
   const [businessAreas, setBusinessAreas] = useState<BusinessArea[]>([]);
@@ -173,7 +173,7 @@ export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
   }, [items]);
 
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       setSaving(true);
       const result = await saveBusinessInfo({ areas: businessAreas });
@@ -188,53 +188,63 @@ export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
     } finally {
       setSaving(false);
     }
-  };
+  }, [businessAreas]);
 
-  const addBusinessArea = () => {
-    const newArea: BusinessArea = {
-      id: generateId(),
-      title: '',
-      description: '',
-      icon: '',
-      features: [],
-      display_order: businessAreas.length + 1,
-    };
-    setBusinessAreas([...businessAreas, newArea]);
-  };
+  const addBusinessArea = useCallback(() => {
+    setBusinessAreas((prevAreas) => {
+      const newArea: BusinessArea = {
+        id: generateId(),
+        title: '',
+        description: '',
+        icon: '',
+        features: [],
+        display_order: prevAreas.length + 1,
+      };
+      return [...prevAreas, newArea];
+    });
+  }, []);
 
-  const removeBusinessArea = (id: string) => {
-    setBusinessAreas(businessAreas.filter(area => area.id !== id));
-  };
+  const removeBusinessArea = useCallback((id: string) => {
+    setBusinessAreas((prevAreas) => prevAreas.filter(area => area.id !== id));
+  }, []);
 
-  const updateBusinessArea = (id: string, field: keyof BusinessArea, value: any) => {
-    setBusinessAreas(businessAreas.map(area =>
-      area.id === id ? { ...area, [field]: value } : area
-    ));
-  };
+  const updateBusinessArea = useCallback((id: string, field: keyof BusinessArea, value: any) => {
+    setBusinessAreas((prevAreas) =>
+      prevAreas.map(area =>
+        area.id === id ? { ...area, [field]: value } : area
+      )
+    );
+  }, []);
 
-  const addFeature = (areaId: string) => {
-    setBusinessAreas(businessAreas.map(area =>
-      area.id === areaId ? { ...area, features: [...(area.features || []), ''] } : area
-    ));
-  };
+  const addFeature = useCallback((areaId: string) => {
+    setBusinessAreas((prevAreas) =>
+      prevAreas.map(area =>
+        area.id === areaId ? { ...area, features: [...(area.features || []), ''] } : area
+      )
+    );
+  }, []);
 
-  const updateFeature = (areaId: string, index: number, value: string) => {
-    setBusinessAreas(businessAreas.map(area =>
-      area.id === areaId
-        ? { ...area, features: (area.features || []).map((f, i) => i === index ? value : f) }
-        : area
-    ));
-  };
+  const updateFeature = useCallback((areaId: string, index: number, value: string) => {
+    setBusinessAreas((prevAreas) =>
+      prevAreas.map(area =>
+        area.id === areaId
+          ? { ...area, features: (area.features || []).map((f, i) => i === index ? value : f) }
+          : area
+      )
+    );
+  }, []);
 
-  const removeFeature = (areaId: string, index: number) => {
-    setBusinessAreas(businessAreas.map(area =>
-      area.id === areaId
-        ? { ...area, features: (area.features || []).filter((_, i) => i !== index) }
-        : area
-    ));
-  };
+  const removeFeature = useCallback((areaId: string, index: number) => {
+    setBusinessAreas((prevAreas) =>
+      prevAreas.map(area =>
+        area.id === areaId
+          ? { ...area, features: (area.features || []).filter((_, i) => i !== index) }
+          : area
+      )
+    );
+  }, []);
 
-  const handleAreaDragEnd = (event: DragEndEvent) => {
+  const handleAreaDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -247,7 +257,7 @@ export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
         }));
       });
     }
-  };
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor),

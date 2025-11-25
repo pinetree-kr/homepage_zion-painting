@@ -1,6 +1,6 @@
-import BusinessCategories from '@/src/features/management-business/ui/BusinessCategories';
+import BusinessCategoriesPage from '@/src/pages/management-business-categories';
 
-export default function BusinessCategoriesPage() {
-  return <BusinessCategories />;
+export default function ManagementBusinessCategoriesPage() {
+  return <BusinessCategoriesPage />;
 }
 

@@ -10,7 +10,7 @@ function generateId(): string {
   }
   // Fallback for older browsers - 클라이언트에서만 실행됨
   if (typeof window !== 'undefined') {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }
   // SSR 시에는 빈 문자열 반환 (useEffect에서 처리)
   return '';
