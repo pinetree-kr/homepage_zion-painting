@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Edit, Tag } from 'lucide-react';
+import { Plus, Trash2, Edit, Tag, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
 import { toast } from 'sonner';
@@ -70,7 +70,16 @@ export default function Products({
       id: 'title',
       header: '제목',
       accessor: (row) => {
-        return <Link href={`/admin/info/products/${row.id}`} className="text-blue-500 hover:text-blue-700">{row.title}</Link>
+        return (
+          <div className="flex items-center gap-2">
+            {row.thumbnail_url && (
+              <ImageIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            )}
+            <Link href={`/admin/info/products/${row.id}`} className="text-blue-500 hover:text-blue-700">
+              {row.title}
+            </Link>
+          </div>
+        );
       },
       width: '30%'
     },
@@ -108,8 +117,11 @@ export default function Products({
           displayText = displayText.substring(0, 30) + '...';
         }
         return (
-          <div className="text-sm text-gray-600 max-w-md">
-            {displayText}
+          <div className="flex items-center gap-2 text-sm text-gray-600 max-w-md">
+            {/* {row.thumbnail_url && (
+              <ImageIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            )} */}
+            <span>{displayText}</span>
           </div>
         );
       },
