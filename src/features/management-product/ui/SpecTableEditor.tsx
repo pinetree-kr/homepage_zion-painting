@@ -5,12 +5,12 @@ import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Textarea } from '@/src/shared/ui';
-import { Plus, Trash2, GripVertical, Merge, Split } from 'lucide-react';
+import { Plus, Trash2, GripVertical } from 'lucide-react';
 
 export interface LineCellData {
   content: string; // 줄 내용
-  rowspan: number; // 세로 병합 개수
-  colspan: number; // 가로 병합 개수
+  rowspan: number; // 항상 1 (병합 기능 제거됨)
+  colspan: number; // 항상 1 (병합 기능 제거됨)
 }
 
 export interface CellData {
@@ -43,7 +43,6 @@ export function SpecTableEditor({ value, onChange }: SpecTableEditorProps) {
     };
   });
 
-  const [selectedCells, setSelectedCells] = useState<{ row: number; col: number; line: number }[]>([]);
 
   useEffect(() => {
     if (value && value.headers && value.rows) {
@@ -71,8 +70,8 @@ export function SpecTableEditor({ value, onChange }: SpecTableEditorProps) {
                 return {
                   lines: cell.lines.map((line: any) => ({
                     content: line.content || '',
-                    rowspan: line.rowspan || 1,
-                    colspan: line.colspan || 1,
+                    rowspan: 1, // 병합 기능 제거: 항상 1로 고정
+                    colspan: 1, // 병합 기능 제거: 항상 1로 고정
                   })),
                 };
               }
@@ -230,258 +229,6 @@ export function SpecTableEditor({ value, onChange }: SpecTableEditorProps) {
     updateCellLines(rowIndex, cellIndex, newLines);
   };
 
-  // 줄 셀 선택 토글 (각 줄을 독립적인 셀로 취급)
-  const toggleLineCellSelection = (rowIndex: number, colIndex: number, lineIndex: number) => {
-    setSelectedCells((prev) => {
-      const exists = prev.some(
-        (c) => c.row === rowIndex && c.col === colIndex && c.line === lineIndex
-      );
-      if (exists) {
-        return prev.filter(
-          (c) => !(c.row === rowIndex && c.col === colIndex && c.line === lineIndex)
-        );
-      }
-      return [...prev, { row: rowIndex, col: colIndex, line: lineIndex }];
-    });
-  };
-
-  // 선택된 줄 셀들 병합
-  const mergeSelectedCells = () => {
-    if (selectedCells.length < 2) return;
-
-    // 선택된 셀들을 정렬 (행 우선, 그 다음 열, 그 다음 줄)
-    const sorted = [...selectedCells].sort((a, b) => {
-      if (a.row !== b.row) return a.row - b.row;
-      if (a.col !== b.col) return a.col - b.col;
-      return a.line - b.line;
-    });
-
-    const firstCell = sorted[0];
-    const minRow = Math.min(...sorted.map((c) => c.row));
-    const maxRow = Math.max(...sorted.map((c) => c.row));
-    const minCol = Math.min(...sorted.map((c) => c.col));
-    const maxCol = Math.max(...sorted.map((c) => c.col));
-
-    // 행과 열 범위 계산
-    const rowspan = maxRow - minRow + 1;
-    const colspan = maxCol - minCol + 1;
-
-    // 모든 선택된 줄 셀의 내용을 첫 번째 셀로 병합
-    const mergedContents: string[] = [];
-    sorted.forEach((cell) => {
-      const lineCell = specData.rows[cell.row]?.cells[cell.col]?.lines[cell.line];
-      if (lineCell && lineCell.content.trim()) {
-        mergedContents.push(lineCell.content);
-      }
-    });
-
-    // 첫 번째 셀의 줄을 병합된 셀로 업데이트
-    const firstLineCell = specData.rows[firstCell.row]?.cells[firstCell.col]?.lines[firstCell.line];
-    if (!firstLineCell) return;
-
-    const newData = {
-      ...specData,
-      rows: specData.rows.map((row, rIdx) => ({
-        cells: row.cells.map((cell, cIdx) => {
-          if (rIdx === firstCell.row && cIdx === firstCell.col) {
-            // 첫 번째 셀: 해당 줄을 병합된 셀로 업데이트
-            return {
-              lines: cell.lines.map((line, lIdx) => {
-                if (lIdx === firstCell.line) {
-                  return {
-                    content: mergedContents.join('\n') || '',
-                    rowspan,
-                    colspan,
-                  };
-                }
-                // 병합 범위 내의 다른 줄들: 숨김 처리
-                const isInMergeRange = sorted.some(
-                  (c) => c.row === rIdx && c.col === cIdx && c.line === lIdx
-                );
-                if (isInMergeRange) {
-                  return {
-                    content: '',
-                    rowspan: 0,
-                    colspan: 0,
-                  };
-                }
-                return line;
-              }),
-            };
-          }
-          // 다른 셀의 병합 범위 내 줄들: 숨김 처리
-          const isInMergeRange = sorted.some(
-            (c) => c.row === rIdx && c.col === cIdx
-          );
-          if (isInMergeRange) {
-            return {
-              lines: cell.lines.map((line, lIdx) => {
-                const isSelected = sorted.some(
-                  (c) => c.row === rIdx && c.col === cIdx && c.line === lIdx
-                );
-                if (isSelected) {
-                  return {
-                    content: '',
-                    rowspan: 0,
-                    colspan: 0,
-                  };
-                }
-                return line;
-              }),
-            };
-          }
-          return cell;
-        }),
-      })),
-    };
-
-    updateSpecData(newData);
-    setSelectedCells([]);
-  };
-
-  // 줄 셀 병합 해제
-  const unmergeLineCell = (rowIndex: number, colIndex: number, lineIndex: number) => {
-    const lineCell = specData.rows[rowIndex]?.cells[colIndex]?.lines[lineIndex];
-    if (!lineCell || (lineCell.rowspan === 1 && lineCell.colspan === 1)) return;
-
-    const rowspan = lineCell.rowspan;
-    const colspan = lineCell.colspan;
-    const content = lineCell.content;
-
-    // 병합된 셀의 내용을 각 줄 셀로 분배
-    const contents = content.split('\n').filter((c) => c.trim());
-    const contentsPerCell = Math.ceil(contents.length / (rowspan * colspan));
-
-    const newData = {
-      ...specData,
-      rows: specData.rows.map((row, rIdx) => ({
-        cells: row.cells.map((cell, cIdx) => {
-          if (rIdx === rowIndex && cIdx === colIndex) {
-            // 같은 셀 내의 줄들 업데이트
-            return {
-              lines: cell.lines.map((line, lIdx) => {
-                if (lIdx === lineIndex) {
-                  // 병합 해제: 첫 번째 줄 셀만 내용 유지
-                  return {
-                    content: contents[0] || '',
-                    rowspan: 1,
-                    colspan: 1,
-                  };
-                }
-                // 병합 범위 내의 다른 줄들: 복원
-                const isInMergeRange =
-                  rIdx >= rowIndex &&
-                  rIdx < rowIndex + rowspan &&
-                  cIdx >= colIndex &&
-                  cIdx < colIndex + colspan &&
-                  line.rowspan === 0 &&
-                  line.colspan === 0;
-
-                if (isInMergeRange) {
-                  const cellIndex = (rIdx - rowIndex) * colspan + (cIdx - colIndex);
-                  const contentIndex = cellIndex * contentsPerCell + (lIdx > lineIndex ? 1 : 0);
-                  return {
-                    content: contents[contentIndex] || '',
-                    rowspan: 1,
-                    colspan: 1,
-                  };
-                }
-                return line;
-              }),
-            };
-          }
-          // 다른 셀의 병합 범위 내 줄들 복원
-          const isInMergeRange =
-            rIdx >= rowIndex &&
-            rIdx < rowIndex + rowspan &&
-            cIdx >= colIndex &&
-            cIdx < colIndex + colspan;
-
-          if (isInMergeRange) {
-            return {
-              lines: cell.lines.map((line) => {
-                if (line.rowspan === 0 && line.colspan === 0) {
-                  const cellIndex = (rIdx - rowIndex) * colspan + (cIdx - colIndex);
-                  const contentIndex = cellIndex * contentsPerCell + 1;
-                  return {
-                    content: contents[contentIndex] || '',
-                    rowspan: 1,
-                    colspan: 1,
-                  };
-                }
-                return line;
-              }),
-            };
-          }
-          return cell;
-        }),
-      })),
-    };
-
-    updateSpecData(newData);
-  };
-
-  // 줄 셀이 병합된 셀의 일부인지 확인 (렌더링하지 않아야 함)
-  const isLineCellHidden = (rowIndex: number, colIndex: number, lineIndex: number): boolean => {
-    const currentRow = specData.rows[rowIndex];
-    if (!currentRow) return false;
-
-    const currentCell = currentRow.cells[colIndex];
-    if (!currentCell) return false;
-
-    const currentLineCell = currentCell.lines[lineIndex];
-    if (!currentLineCell) return false;
-
-    // 현재 줄 셀이 rowspan=0, colspan=0인 경우 (병합된 셀의 일부)
-    if (currentLineCell.rowspan === 0 && currentLineCell.colspan === 0) {
-      return true;
-    }
-
-    // 이전 행들을 확인하여 rowspan이 이 줄 셀을 덮는지 확인
-    for (let r = 0; r < rowIndex; r++) {
-      const row = specData.rows[r];
-      if (!row) continue;
-      for (let c = 0; c < row.cells.length; c++) {
-        const cell = row.cells[c];
-        if (!cell) continue;
-        for (let l = 0; l < cell.lines.length; l++) {
-          const lineCell = cell.lines[l];
-          if (lineCell.rowspan > 1) {
-            // 이 줄 셀의 rowspan 범위가 현재 줄 셀을 포함하는지 확인
-            if (
-              r + lineCell.rowspan > rowIndex &&
-              c <= colIndex &&
-              c + lineCell.colspan > colIndex
-            ) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-
-    // 같은 행의 이전 셀들을 확인하여 colspan이 이 줄 셀을 덮는지 확인
-    for (let c = 0; c < colIndex; c++) {
-      const cell = currentRow.cells[c];
-      if (!cell) continue;
-      for (let l = 0; l < cell.lines.length; l++) {
-        const lineCell = cell.lines[l];
-        if (lineCell.colspan > 1 && c + lineCell.colspan > colIndex) {
-          return true;
-        }
-      }
-    }
-
-    // 같은 셀 내의 이전 줄들을 확인하여 rowspan이 이 줄을 덮는지 확인
-    for (let l = 0; l < lineIndex; l++) {
-      const lineCell = currentCell.lines[l];
-      if (lineCell.rowspan > 1 && l + lineCell.rowspan > lineIndex) {
-        return true;
-      }
-    }
-
-    return false;
-  };
 
   if (!specData.headers.length) {
     return null;
@@ -516,34 +263,6 @@ export function SpecTableEditor({ value, onChange }: SpecTableEditorProps) {
       </div>
 
       <div className="border border-gray-300 rounded-md overflow-hidden">
-        {selectedCells.length > 1 && (
-          <div className="bg-blue-50 border-b border-blue-200 p-2 flex items-center justify-between">
-            <span className="text-sm text-blue-700">
-              {selectedCells.length}개 셀이 선택되었습니다.
-            </span>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={mergeSelectedCells}
-                className="gap-1 text-blue-700 border-blue-300 hover:bg-blue-100"
-              >
-                <Merge className="h-3 w-3" />
-                셀 병합
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedCells([])}
-                className="text-gray-600"
-              >
-                선택 해제
-              </Button>
-            </div>
-          </div>
-        )}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
@@ -628,40 +347,14 @@ export function SpecTableEditor({ value, onChange }: SpecTableEditorProps) {
                           lineCell = { content: '', rowspan: 1, colspan: 1 };
                         }
 
-                        // 숨겨진 줄 셀은 렌더링하지 않음
-                        if (isLineCellHidden(rowIndex, cellIndex, lineIndex)) {
-                          return null;
-                        }
-
-                        const isSelected = selectedCells.some(
-                          (c) =>
-                            c.row === rowIndex &&
-                            c.col === cellIndex &&
-                            c.line === lineIndex
-                        );
-                        const isMerged = lineCell.rowspan > 1 || lineCell.colspan > 1;
                         const isVirtualCell = !cell.lines[lineIndex]; // 실제 데이터에 없는 가상 셀
 
                         return (
                           <td
                             key={cellIndex}
-                            rowSpan={lineCell.rowspan > 1 ? lineCell.rowspan : undefined}
-                            colSpan={lineCell.colspan > 1 ? lineCell.colspan : undefined}
                             className={`p-2 border-r border-gray-300 last:border-r-0 ${
                               isVirtualCell ? 'align-middle' : 'align-top'
-                            } ${
-                              isSelected ? 'bg-blue-100 ring-2 ring-blue-500' : ''
-                            } ${isMerged ? 'bg-yellow-50' : ''}`}
-                            onClick={(e) => {
-                              // 버튼 클릭 시에는 셀 선택 토글하지 않음
-                              if ((e.target as HTMLElement).closest('button')) {
-                                return;
-                              }
-                              // 가상 셀은 셀 클릭으로 줄 추가하지 않음 (버튼으로만 추가)
-                              if (!isVirtualCell) {
-                                toggleLineCellSelection(rowIndex, cellIndex, lineIndex);
-                              }
-                            }}
+                            }`}
                           >
                             {isVirtualCell ? (
                               // 가상 셀: 원형 + 아이콘 버튼
@@ -725,23 +418,6 @@ export function SpecTableEditor({ value, onChange }: SpecTableEditorProps) {
                                     )}
                                   </div>
                                 </div>
-                                {isMerged && (
-                                  <div className="mt-2 pt-2 border-t border-gray-200">
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        unmergeLineCell(rowIndex, cellIndex, lineIndex);
-                                      }}
-                                      className="w-full gap-1 text-xs"
-                                    >
-                                      <Split className="h-3 w-3" />
-                                      병합 해제
-                                    </Button>
-                                  </div>
-                                )}
                               </>
                             )}
                           </td>
