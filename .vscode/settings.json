@@ -1,8 +1,5 @@
 {
 	"files.associations": {
 		"wrangler.json": "jsonc"
-	},
-	"deno.enable": true,
-	"deno.lint": true,
-	"deno.unstable": true
+	}
 }

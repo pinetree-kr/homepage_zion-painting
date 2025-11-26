@@ -10,25 +10,31 @@ import { getScrollbarWidth } from '@/src/shared/lib/utils';
 import UserMenu from '@/src/widgets/user/ui/UserMenu';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 
-export default function Header() {
+interface HeaderProps {
+  enableScrollAnimation?: boolean;
+}
+
+export default function Header({ enableScrollAnimation = true }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(!enableScrollAnimation);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const router = useRouter();
   // const supabase = useSupabase();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-
     // 스크롤바 너비를 CSS 변수로 설정 (스크롤바 쉬프팅 방지용)
     const scrollbarWidth = getScrollbarWidth();
     document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
 
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    // 스크롤 애니메이션이 활성화된 경우에만 스크롤 이벤트 리스너 추가
+    if (enableScrollAnimation) {
+      const handleScroll = () => {
+        setIsScrolled(window.scrollY > 50);
+      };
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
+  }, [enableScrollAnimation]);
 
   const handleLogout = async () => {
     try {
@@ -60,28 +66,27 @@ export default function Header() {
 
 
   const navItems = [
-    { label: '회사소개', href: '#about' },
-    { label: '사업소개', href: '#business' },
-    { label: '제품소개', href: '#products' },
-    { label: '문의', href: '#contact' },
+    { label: '회사소개', href: '/about' },
+    { label: '사업소개', href: '/business' },
+    { label: '제품소개', href: '/products' },
+    { label: '문의', href: '/contact' },
   ];
 
   const handleNavClick = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setIsMenuOpen(false);
-    }
+    router.push(href);
+    setIsMenuOpen(false);
   };
 
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-colors transition-shadow duration-300 ${
-          // 모바일/태블릿: 항상 앱처럼 보이게 (배경색과 그림자)
-          // 데스크톱: 스크롤 시에만 배경색
-          // transition-all 대신 transition-colors, transition-shadow만 사용하여 padding-right는 트랜지션 제외
-          isScrolled || isMenuOpen
+        className={`fixed top-0 left-0 right-0 z-50 ${enableScrollAnimation
+            ? 'transition-colors transition-shadow duration-300'
+            : ''
+          } ${
+          // 스크롤 애니메이션이 비활성화된 경우 항상 배경색과 그림자 표시
+          // 스크롤 애니메이션이 활성화된 경우: 모바일/태블릿은 항상 배경색, 데스크톱은 스크롤 시에만 배경색
+          !enableScrollAnimation || isScrolled || isMenuOpen
             ? 'bg-white shadow-lg'
             : 'bg-white shadow-md md:bg-transparent md:shadow-none'
           }`}
@@ -106,7 +111,7 @@ export default function Header() {
             </button>
 
             {/* 로고 - 모바일에서는 중앙, 데스크톱에서는 좌측 */}
-            <div className={`flex-1 flex justify-center md:flex-none md:justify-start ${isMenuOpen ? 'md:flex-1 md:justify-center' : ''
+            <Link href="/" className={`flex-1 flex justify-center md:flex-none md:justify-start ${isMenuOpen ? 'md:flex-1 md:justify-center' : ''
               }`}>
               <div className="w-10 h-10 md:w-[52px] md:h-[52px] bg-white rounded-xl border-2 border-[#E5E7EB] shadow-sm p-2 md:p-2.5 flex items-center justify-center">
                 <Image
@@ -118,25 +123,25 @@ export default function Header() {
                   priority
                 />
               </div>
-            </div>
+            </Link>
 
             {/* 데스크톱 네비게이션 메뉴 */}
             <div className="hidden md:flex items-center gap-8">
               {navItems.map((item, index) => (
-                <button
+                <Link
                   key={index}
-                  onClick={() => handleNavClick(item.href)}
-                  className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] ${isScrolled ? 'text-[#101828]' : 'text-white'
+                  href={item.href}
+                  className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] ${!enableScrollAnimation || isScrolled ? 'text-[#101828]' : 'text-white'
                     }`}
                 >
                   {item.label}
-                </button>
+                </Link>
               ))}
 
               {/* 고객센터 드롭다운 */}
               <div className="relative group">
                 <button
-                  className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] flex items-center gap-1 ${isScrolled ? 'text-[#101828]' : 'text-white'
+                  className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] flex items-center gap-1 ${!enableScrollAnimation || isScrolled ? 'text-[#101828]' : 'text-white'
                     }`}
                 >
                   고객센터
@@ -162,7 +167,7 @@ export default function Header() {
 
               {/* 로그인/사용자 메뉴 */}
               <div className="flex min-w-20 items-center justify-center">
-                <UserMenu isScrolled={isScrolled} />
+                <UserMenu isScrolled={!enableScrollAnimation || isScrolled} />
               </div>
             </div>
 
@@ -216,13 +221,14 @@ export default function Header() {
           <nav className="flex-1 overflow-y-auto py-6">
             <div className="flex flex-col">
               {navItems.map((item, index) => (
-                <button
+                <Link
                   key={index}
-                  onClick={() => handleNavClick(item.href)}
+                  href={item.href}
+                  onClick={() => setIsMenuOpen(false)}
                   className="px-6 py-4 text-left text-base font-normal text-[#101828] hover:bg-gray-50 hover:text-[#1A2C6D] transition-colors border-b border-gray-100 last:border-b-0"
                 >
                   {item.label}
-                </button>
+                </Link>
               ))}
             </div>
 

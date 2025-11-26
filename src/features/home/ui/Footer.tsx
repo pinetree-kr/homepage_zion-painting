@@ -32,10 +32,10 @@ const YoutubeIcon = ({ className }: { className?: string }) => (
 export default function Footer() {
   const footerLinks = {
     company: [
-      { label: '회사소개', href: '#about' },
-      { label: '사업분야', href: '#business' },
-      { label: '제품소개', href: '#products' },
-      { label: '오시는 길', href: '#contact' },
+      { label: '회사소개', href: '/about' },
+      { label: '사업분야', href: '/business' },
+      { label: '제품소개', href: '/products' },
+      { label: '오시는 길', href: '/contact' },
     ],
     support: [
       { label: '공지사항', href: '#support' },

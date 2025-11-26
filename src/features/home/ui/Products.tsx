@@ -1,5 +1,7 @@
 import { Container } from '@/src/shared/ui';
 import Image from 'next/image';
+import Link from 'next/link';
+import type { Product, ProductCategory } from '@/src/entities/product/model/types';
 
 // Icon Components (lucide-react 기반)
 const SettingsIcon = ({ className }: { className?: string }) => (
@@ -30,75 +32,32 @@ const ShieldIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export default function Products() {
-  const products = [
-    {
-      id: 1,
-      category: '도장 장비',
-      title: '자동 스프레이 건',
-      description: '정밀한 도장 작업을 위한 자동 스프레이 건',
-      specs: [
-        '분사압력: 0.5~3.0 bar',
-        '노즐 크기: 0.8~2.0mm',
-        '도료 용량: 1L'
-      ]
-    },
-    {
-      id: 2,
-      category: '이송 설비',
-      title: '컨베이어 시스템',
-      description: '효율적인 생산라인 구축을 위한 컨베이어',
-      specs: [
-        '속도: 1~10m/min',
-        '내하중: 500kg',
-        '길이: 맞춤 제작'
-      ]
-    },
-    {
-      id: 3,
-      category: '열처리 설비',
-      title: '건조로',
-      description: '고효율 적외선 건조 시스템',
-      specs: [
-        '온도: 80~200°C',
-        '용량: 5~50㎡',
-        '에너지: 전기/가스'
-      ]
-    },
-    {
-      id: 4,
-      category: '부스 설비',
-      title: '도장 부스',
-      description: '산업용 도장 부스 시스템',
-      specs: [
-        '크기: 맞춤 제작',
-        '환기: 20,000㎥/h',
-        '조명: LED 방폭등'
-      ]
-    },
-    {
-      id: 5,
-      category: '특수 설비',
-      title: '분체도장 설비',
-      description: '친환경 분체도장 시스템',
-      specs: [
-        '분사압력: 60~100kPa',
-        '회수율: 95% 이상',
-        '자동 색상 교체'
-      ]
-    },
-    {
-      id: 6,
-      category: '자동화 설비',
-      title: '로봇 도장 시스템',
-      description: '6축 로봇을 활용한 자동 도장',
-      specs: [
-        '도달거리: 2.5m',
-        '반복정도: ±0.1mm',
-        '프로그램 저장: 1000개'
-      ]
+interface ProductsProps {
+  products?: Product[];
+  categories?: ProductCategory[];
+}
+
+export default function Products({ products = [], categories = [] }: ProductsProps) {
+  // published 상태인 제품만 필터링
+  const publishedProducts = products.filter(p => p.status === 'published');
+  
+  // 카테고리 맵 생성
+  const categoryMap = new Map(categories.map(cat => [cat.id, cat.title]));
+  
+  // specs를 배열로 변환하는 헬퍼 함수
+  const parseSpecs = (specs: any): string[] => {
+    if (!specs) return [];
+    if (Array.isArray(specs)) return specs;
+    if (typeof specs === 'string') {
+      try {
+        const parsed = JSON.parse(specs);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
     }
-  ];
+    return [];
+  };
 
 
   return (
@@ -113,46 +72,72 @@ export default function Products() {
         </div>
 
         {/* 제품 그리드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {products.map((product, index) => (
-            <div
-              key={product.id}
-              className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300"
-            >
-              {/* Image */}
-              <div className="relative h-48 bg-gradient-to-br from-[#F4F6F8] to-[#2CA7DB]/20 overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
-                </div>
-                <div className="absolute top-4 right-4">
-                  <span className="px-3 py-1 bg-[#1A2C6D] text-white text-xs rounded-full">
-                    {product.category}
-                  </span>
-                </div>
-              </div>
+        {publishedProducts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {publishedProducts.map((product) => {
+              const categoryTitle = product.category_id ? categoryMap.get(product.category_id) || '기타' : '기타';
+              const specs = parseSpecs(product.specs);
+              const description = product.content_summary || product.content?.replace(/<[^>]*>/g, '').substring(0, 100) || '';
 
-              {/* Content */}
-              <div className="p-6">
-                <h3 className="text-gray-900 mb-2 text-xl font-normal">{product.title}</h3>
-                <p className="text-gray-600 mb-4 text-sm">{product.description}</p>
-
-                {/* Specs */}
-                <div className="space-y-2 mb-4">
-                  {product.specs.map((spec, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-sm">
-                      <SettingsIcon className="w-4 h-4 text-[#2CA7DB] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{spec}</span>
+              return (
+                <div
+                  key={product.id}
+                  className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300"
+                >
+                  {/* Image */}
+                  <div className="relative h-48 bg-gradient-to-br from-[#F4F6F8] to-[#2CA7DB]/20 overflow-hidden">
+                    {product.thumbnail_url ? (
+                      <Image
+                        src={product.thumbnail_url}
+                        alt={product.title}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
+                      </div>
+                    )}
+                    <div className="absolute top-4 right-4">
+                      <span className="px-3 py-1 bg-[#1A2C6D] text-white text-xs rounded-full">
+                        {categoryTitle}
+                      </span>
                     </div>
-                  ))}
-                </div>
+                  </div>
 
-                <button className="w-full py-2 bg-[#F4F6F8] text-[#1A2C6D] rounded-lg hover:bg-[#A5C93E] hover:text-white transition-colors text-sm">
-                  상세보기
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+                  {/* Content */}
+                  <div className="p-6">
+                    <h3 className="text-gray-900 mb-2 text-xl font-normal">{product.title}</h3>
+                    <p className="text-gray-600 mb-4 text-sm line-clamp-2">{description}</p>
+
+                    {/* Specs */}
+                    {specs.length > 0 && (
+                      <div className="space-y-2 mb-4">
+                        {specs.slice(0, 3).map((spec, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-sm">
+                            <SettingsIcon className="w-4 h-4 text-[#2CA7DB] flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-700">{spec}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <Link
+                      href={`/products/${product.id}`}
+                      className="block w-full py-2 bg-[#F4F6F8] text-[#1A2C6D] rounded-lg hover:bg-[#A5C93E] hover:text-white transition-colors text-sm text-center"
+                    >
+                      상세보기
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            등록된 제품이 없습니다.
+          </div>
+        )}
 
         {/* Features */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">

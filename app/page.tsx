@@ -7,15 +7,18 @@ import Contact from '@/src/features/home/ui/Contact';
 import Footer from '@/src/features/home/ui/Footer';
 import { getCompanyAboutInfo } from '@/src/features/management-company/api/company-actions';
 import { getBusinessInfo, getBusinessCategories, getBusinessAchievementsUsingAnonymous } from '@/src/features/management-business/api/business-actions';
+import { getProductsUsingAnonymous, getProductCategories } from '@/src/features/management-product/api/product-actions';
 import { getCarouselData } from '@/src/features/prologue/api/prologue-actions';
 
 export default async function HomePage() {
-    const [aboutInfo, businessInfo, categories, achievements, carouselData] = await Promise.all([
+    const [aboutInfo, businessInfo, categories, achievements, carouselData, products, productCategories] = await Promise.all([
         getCompanyAboutInfo(),
         getBusinessInfo(),
         getBusinessCategories(),
         getBusinessAchievementsUsingAnonymous(),
         getCarouselData(),
+        getProductsUsingAnonymous(),
+        getProductCategories(),
     ]);
 
     return (
@@ -34,7 +37,7 @@ export default async function HomePage() {
                 categories={categories}
                 achievements={achievements}
             />
-            <Products />
+            <Products products={products} categories={productCategories} />
             <Contact />
             <Footer />
         </main>
