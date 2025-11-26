@@ -277,18 +277,11 @@ export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
   // }
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-gray-900 text-lg font-semibold">사업분야 목록</h3>
-        <Button
-          onClick={handleSave}
-          className="gap-2"
-          disabled={saving}
-        >
-          <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <Card className="p-6">
+        <div className="mb-6">
+          <h3 className="text-gray-900 text-lg font-semibold">사업분야 목록</h3>
+        </div>
       {businessAreas.length > 0 ? (
         <DndContext
           sensors={sensors}
@@ -408,7 +401,20 @@ export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
           </button>
         </div>
       )}
-    </Card>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button
+          onClick={handleSave}
+          className="gap-2"
+          disabled={saving}
+          size="lg"
+        >
+          <Save className="h-4 w-4" />
+          {saving ? '저장 중...' : '저장'}
+        </Button>
+      </div>
+    </div>
   );
 }
 

@@ -15,11 +15,10 @@ export default function ContactInfo() {
     email: '',
     address: '',
     businessHours: '',
-    phoneMain: '',
-    phoneManager: '',
+    phonePrimary: '',
+    phoneSecondary: '',
     fax: '',
-    kakaoMapUrl: '',
-    naverMapUrl: '',
+    mapUrl: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,11 +36,10 @@ export default function ContactInfo() {
           email: data.email || '',
           address: data.address || '',
           businessHours: data.business_hours || '',
-          phoneMain: data.phone_main || '',
-          phoneManager: data.phone_manager || '',
+          phonePrimary: data.phone_primary || '',
+          phoneSecondary: data.phone_secondary || '',
           fax: data.fax || '',
-          kakaoMapUrl: data.kakao_map_url || '',
-          naverMapUrl: data.naver_map_url || '',
+          mapUrl: data.map_url || '',
         });
       }
     } catch (error) {
@@ -59,11 +57,10 @@ export default function ContactInfo() {
         email: contactInfo.email,
         address: contactInfo.address,
         business_hours: contactInfo.businessHours,
-        phone_main: contactInfo.phoneMain,
-        phone_manager: contactInfo.phoneManager,
+        phone_primary: contactInfo.phonePrimary,
+        phone_secondary: contactInfo.phoneSecondary,
         fax: contactInfo.fax,
-        kakao_map_url: contactInfo.kakaoMapUrl,
-        naver_map_url: contactInfo.naverMapUrl,
+        map_url: contactInfo.mapUrl,
       });
 
       if (result.success) {
@@ -90,12 +87,8 @@ export default function ContactInfo() {
   return (
     <div className="space-y-6">
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <h3 className="text-gray-900 text-lg font-semibold">오시는 길 · 연락처</h3>
-          <Button onClick={handleSave} className="gap-2" disabled={saving}>
-            <Save className="h-4 w-4" />
-            {saving ? '저장 중...' : '저장'}
-          </Button>
         </div>
         <div className="space-y-6">
           <div>
@@ -123,8 +116,8 @@ export default function ContactInfo() {
               <Label>대표 전화번호</Label>
               <Input
                 type="tel"
-                value={contactInfo.phoneMain}
-                onChange={(e) => setContactInfo({ ...contactInfo, phoneMain: e.target.value })}
+                value={contactInfo.phonePrimary}
+                onChange={(e) => setContactInfo({ ...contactInfo, phonePrimary: e.target.value })}
                 placeholder="031-123-4567"
               />
             </div>
@@ -132,8 +125,8 @@ export default function ContactInfo() {
               <Label>담당자 전화번호</Label>
               <Input
                 type="tel"
-                value={contactInfo.phoneManager}
-                onChange={(e) => setContactInfo({ ...contactInfo, phoneManager: e.target.value })}
+                value={contactInfo.phoneSecondary}
+                onChange={(e) => setContactInfo({ ...contactInfo, phoneSecondary: e.target.value })}
                 placeholder="010-1234-5678"
               />
             </div>
@@ -159,51 +152,34 @@ export default function ContactInfo() {
             />
           </div>
 
-          <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-gray-900 mb-4 text-lg font-semibold">지도 링크</h3>
-            <div className="space-y-4">
-              <div>
-                <Label>카카오맵 링크</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={contactInfo.kakaoMapUrl}
-                    onChange={(e) => setContactInfo({ ...contactInfo, kakaoMapUrl: e.target.value })}
-                    placeholder="https://map.kakao.com/..."
-                  />
-                  {contactInfo.kakaoMapUrl && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => window.open(contactInfo.kakaoMapUrl, '_blank')}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-              <div>
-                <Label>네이버 지도 링크</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={contactInfo.naverMapUrl}
-                    onChange={(e) => setContactInfo({ ...contactInfo, naverMapUrl: e.target.value })}
-                    placeholder="https://map.naver.com/..."
-                  />
-                  {contactInfo.naverMapUrl && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => window.open(contactInfo.naverMapUrl, '_blank')}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
+          <div>
+            <Label>지도 링크</Label>
+            <div className="flex gap-2">
+              <Input
+                value={contactInfo.mapUrl}
+                onChange={(e) => setContactInfo({ ...contactInfo, mapUrl: e.target.value })}
+                placeholder="https://map.kakao.com/... 또는 https://map.naver.com/..."
+              />
+              {contactInfo.mapUrl && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => window.open(contactInfo.mapUrl, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSave} className="gap-2" disabled={saving} size="lg">
+          <Save className="h-4 w-4" />
+          {saving ? '저장 중...' : '저장'}
+        </Button>
+      </div>
     </div>
   );
 }

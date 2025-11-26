@@ -58,19 +58,24 @@ export default function BusinessIntroduction() {
   }
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-gray-900 text-lg font-semibold">소개글</h3>
-        <Button onClick={handleSave} className="gap-2" disabled={saving}>
+    <div className="space-y-6">
+      <Card className="p-6">
+        <div className="mb-4">
+          <h3 className="text-gray-900 text-lg font-semibold">소개글</h3>
+        </div>
+        <DynamicCustomEditor
+          text={introduction}
+          onChange={setIntroduction}
+        />
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSave} className="gap-2" disabled={saving} size="lg">
           <Save className="h-4 w-4" />
           {saving ? '저장 중...' : '저장'}
         </Button>
       </div>
-      <DynamicCustomEditor
-        text={introduction}
-        onChange={setIntroduction}
-      />
-    </Card>
+    </div>
   );
 }
 

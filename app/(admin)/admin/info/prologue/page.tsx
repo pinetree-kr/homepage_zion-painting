@@ -627,70 +627,62 @@ export default function ManagementProloguePage() {
       </div>
 
       {/* 프롤로그 설정 카드 */}
-      <Card className="p-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-gray-900 text-lg font-semibold">프롤로그 설정</h3>
-            <Button onClick={handleSaveSettings} className="gap-2" disabled={isSavingSettings} size="sm">
-              {isSavingSettings ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  저장 중...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  저장
-                </>
-              )}
-            </Button>
-          </div>
+      <div className="space-y-6">
+        <Card className="p-6">
           <div className="space-y-4">
-            <div>
-              <Label>대표 타이틀</Label>
-              <Input
-                value={defaultTitle}
-                onChange={(e) => setDefaultTitle(e.target.value)}
-                placeholder="모든 캐러셀 이미지에 공통으로 표시될 대표 타이틀을 입력하세요"
-                className="mt-1"
-              />
+            <div className="mb-4">
+              <h3 className="text-gray-900 text-lg font-semibold">프롤로그 설정</h3>
             </div>
-            <div>
-              <Label>대표 설명</Label>
-              <Textarea
-                value={defaultDescription}
-                onChange={(e) => setDefaultDescription(e.target.value)}
-                placeholder="모든 캐러셀 이미지에 공통으로 표시될 대표 설명을 입력하세요"
-                className="mt-1"
-                rows={3}
-              />
+            <div className="space-y-4">
+              <div>
+                <Label>대표 타이틀</Label>
+                <Input
+                  value={defaultTitle}
+                  onChange={(e) => setDefaultTitle(e.target.value)}
+                  placeholder="모든 캐러셀 이미지에 공통으로 표시될 대표 타이틀을 입력하세요"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>대표 설명</Label>
+                <Textarea
+                  value={defaultDescription}
+                  onChange={(e) => setDefaultDescription(e.target.value)}
+                  placeholder="모든 캐러셀 이미지에 공통으로 표시될 대표 설명을 입력하세요"
+                  className="mt-1"
+                  rows={3}
+                />
+              </div>
+              <p className="text-gray-500 text-xs">
+                이미지별 타이틀/설명이 비어있을 때 대표 타이틀/설명이 표시됩니다
+              </p>
             </div>
-            <p className="text-gray-500 text-xs">
-              이미지별 타이틀/설명이 비어있을 때 대표 타이틀/설명이 표시됩니다
-            </p>
           </div>
+        </Card>
+        <div className="flex justify-end">
+          <Button onClick={handleSaveSettings} className="gap-2" disabled={isSavingSettings} size="lg">
+            {isSavingSettings ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                저장 중...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                저장
+              </>
+            )}
+          </Button>
         </div>
-      </Card>
+      </div>
 
       {/* 캐러셀 이미지 관리 카드 */}
-      <Card className="p-6">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-gray-900 text-lg font-semibold">캐러셀 이미지 관리</h3>
-            <Button onClick={handleSaveCarouselItemsClick} className="gap-2" disabled={isSavingCarouselItems} size="sm">
-              {isSavingCarouselItems ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  저장 중...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  저장
-                </>
-              )}
-            </Button>
-          </div>
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="space-y-6">
+            <div className="mb-4">
+              <h3 className="text-gray-900 text-lg font-semibold">캐러셀 이미지 관리</h3>
+            </div>
 
           <input
             ref={fileInputRef}
@@ -748,7 +740,23 @@ export default function ManagementProloguePage() {
             </p>
           </div>
         </div>
-      </Card>
+        </Card>
+        <div className="flex justify-end">
+          <Button onClick={handleSaveCarouselItemsClick} className="gap-2" disabled={isSavingCarouselItems} size="lg">
+            {isSavingCarouselItems ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                저장 중...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                저장
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
 
       {/* 항목 제거 확인 모달 */}
       {itemToDelete && (

@@ -345,37 +345,35 @@ export default function AboutCompany({ data }: AboutCompanyProps) {
   return (
     <div className="space-y-6">
       {/* 회사소개 카드 */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-gray-900 text-lg font-semibold">소개글</h3>
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="mb-4">
+            <h3 className="text-gray-900 text-lg font-semibold">소개글</h3>
+          </div>
+          <DynamicCustomEditor
+            text={aboutInfo.introduction}
+            onChange={(value) => setAboutInfo({ ...aboutInfo, introduction: value })}
+          />
+        </Card>
+        <div className="flex justify-end">
           <Button
             onClick={() => handleSaveField('introduction', '회사소개')}
             className="gap-2"
             disabled={savingFields.introduction}
+            size="lg"
           >
             <Save className="h-4 w-4" />
             {savingFields.introduction ? '저장 중...' : '저장'}
           </Button>
         </div>
-        <DynamicCustomEditor
-          text={aboutInfo.introduction}
-          onChange={(value) => setAboutInfo({ ...aboutInfo, introduction: value })}
-        />
-      </Card>
+      </div>
 
       {/* 강점 카드 */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-gray-900 text-lg font-semibold">강점</h3>
-          <Button
-            onClick={() => handleSaveField('strengths', '강점')}
-            className="gap-2"
-            disabled={savingFields.strengths}
-          >
-            <Save className="h-4 w-4" />
-            {savingFields.strengths ? '저장 중...' : '저장'}
-          </Button>
-        </div>
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="mb-6">
+            <h3 className="text-gray-900 text-lg font-semibold">강점</h3>
+          </div>
         {isMounted ? (
           <DndContext
             sensors={sensors}
@@ -460,40 +458,50 @@ export default function AboutCompany({ data }: AboutCompanyProps) {
             </button>
           </div>
         )}
-      </Card>
+        </Card>
+        <div className="flex justify-end">
+          <Button
+            onClick={() => handleSaveField('strengths', '강점')}
+            className="gap-2"
+            disabled={savingFields.strengths}
+            size="lg"
+          >
+            <Save className="h-4 w-4" />
+            {savingFields.strengths ? '저장 중...' : '저장'}
+          </Button>
+        </div>
+      </div>
 
       {/* 비전 카드 */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-gray-900 text-lg font-semibold">비전</h3>
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="mb-4">
+            <h3 className="text-gray-900 text-lg font-semibold">비전</h3>
+          </div>
+          <DynamicCustomEditor
+            text={aboutInfo.vision}
+            onChange={(value) => setAboutInfo({ ...aboutInfo, vision: value })}
+          />
+        </Card>
+        <div className="flex justify-end">
           <Button
             onClick={() => handleSaveField('vision', '비전')}
             className="gap-2"
             disabled={savingFields.vision}
+            size="lg"
           >
             <Save className="h-4 w-4" />
             {savingFields.vision ? '저장 중...' : '저장'}
           </Button>
         </div>
-        <DynamicCustomEditor
-          text={aboutInfo.vision}
-          onChange={(value) => setAboutInfo({ ...aboutInfo, vision: value })}
-        />
-      </Card>
+      </div>
 
       {/* 핵심가치 카드 */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-gray-900 text-lg font-semibold">핵심가치</h3>
-          <Button
-            onClick={() => handleSaveField('values', '핵심가치')}
-            className="gap-2"
-            disabled={savingFields.values}
-          >
-            <Save className="h-4 w-4" />
-            {savingFields.values ? '저장 중...' : '저장'}
-          </Button>
-        </div>
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="mb-4">
+            <h3 className="text-gray-900 text-lg font-semibold">핵심가치</h3>
+          </div>
 
         {isMounted ? (
           <DndContext
@@ -575,45 +583,67 @@ export default function AboutCompany({ data }: AboutCompanyProps) {
             클릭하여 새로운 핵심가치를 추가하세요
           </p>
         </div>
-      </Card>
+        </Card>
+        <div className="flex justify-end">
+          <Button
+            onClick={() => handleSaveField('values', '핵심가치')}
+            className="gap-2"
+            disabled={savingFields.values}
+            size="lg"
+          >
+            <Save className="h-4 w-4" />
+            {savingFields.values ? '저장 중...' : '저장'}
+          </Button>
+        </div>
+      </div>
 
       {/* 인사말 카드 */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-gray-900 text-lg font-semibold">인사말</h3>
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="mb-4">
+            <h3 className="text-gray-900 text-lg font-semibold">인사말</h3>
+          </div>
+          <DynamicCustomEditor
+            text={aboutInfo.greetings}
+            onChange={(value) => setAboutInfo({ ...aboutInfo, greetings: value })}
+          />
+        </Card>
+        <div className="flex justify-end">
           <Button
             onClick={() => handleSaveField('greetings', '인사말')}
             className="gap-2"
             disabled={savingFields.greetings}
+            size="lg"
           >
             <Save className="h-4 w-4" />
             {savingFields.greetings ? '저장 중...' : '저장'}
           </Button>
         </div>
-        <DynamicCustomEditor
-          text={aboutInfo.greetings}
-          onChange={(value) => setAboutInfo({ ...aboutInfo, greetings: value })}
-        />
-      </Card>
+      </div>
 
       {/* 경영철학 카드 */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-gray-900 text-lg font-semibold">경영철학</h3>
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="mb-4">
+            <h3 className="text-gray-900 text-lg font-semibold">경영철학</h3>
+          </div>
+          <DynamicCustomEditor
+            text={aboutInfo.mission}
+            onChange={(value) => setAboutInfo({ ...aboutInfo, mission: value })}
+          />
+        </Card>
+        <div className="flex justify-end">
           <Button
             onClick={() => handleSaveField('mission', '경영철학')}
             className="gap-2"
             disabled={savingFields.mission}
+            size="lg"
           >
             <Save className="h-4 w-4" />
             {savingFields.mission ? '저장 중...' : '저장'}
           </Button>
         </div>
-        <DynamicCustomEditor
-          text={aboutInfo.mission}
-          onChange={(value) => setAboutInfo({ ...aboutInfo, mission: value })}
-        />
-      </Card>
+      </div>
     </div>
   );
 }

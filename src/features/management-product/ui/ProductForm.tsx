@@ -283,7 +283,12 @@ export default function ProductForm({
       const result = await saveProduct(productToSave);
       if (result.success) {
         toast.success('제품이 저장되었습니다.');
-        router.push('/admin/info/products');
+        // 수정인 경우 refresh, 생성인 경우 목록으로 이동
+        if (product.id || productId) {
+          router.refresh();
+        } else {
+          router.push('/admin/info/products');
+        }
       } else {
         toast.error(`저장 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
       }
@@ -332,10 +337,6 @@ export default function ProductForm({
             목록으로
           </Button>
         </div>
-        <Button onClick={handleSave} className="gap-2" disabled={saving}>
-          <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
       </div>
 
       <Card className="p-6">
@@ -404,19 +405,24 @@ export default function ProductForm({
         </div>
       </Card>
 
-      {productId && (
-        <div className="flex justify-start">
+      <div className="flex justify-end gap-2">
+        {productId && (
           <Button
             variant="destructive"
             onClick={() => setShowDeleteDialog(true)}
             className="gap-2"
             disabled={deleting}
+            size="lg"
           >
             <Trash2 className="h-4 w-4" />
             {deleting ? '삭제 중...' : '삭제'}
           </Button>
-        </div>
-      )}
+        )}
+        <Button onClick={handleSave} className="gap-2" disabled={saving} size="lg">
+          <Save className="h-4 w-4" />
+          {saving ? '저장 중...' : '저장'}
+        </Button>
+      </div>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>

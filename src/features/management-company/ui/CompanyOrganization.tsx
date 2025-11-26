@@ -331,47 +331,52 @@ export default function CompanyOrganization({ items }: CompanyOrganizationProps)
   };
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-gray-900 text-lg font-semibold">조직도</h3>
-        <Button onClick={handleSave} className="gap-2" disabled={saving}>
+    <div className="space-y-6">
+      <Card className="p-6">
+        <div className="mb-6">
+          <h3 className="text-gray-900 text-lg font-semibold">조직도</h3>
+        </div>
+
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={members.map(m => m.id)}
+            strategy={horizontalListSortingStrategy}
+          >
+            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 310px))' }}>
+              {members.map((member) => (
+                <SortableMemberItem
+                  key={member.id}
+                  member={member}
+                  onUpdate={updateMember}
+                  onRemove={removeMember}
+                  onImageUpload={handleImageUpload}
+                />
+              ))}
+              {/* 구성원 추가 카드 */}
+              <button
+                onClick={addMember}
+                className="flex flex-col items-center justify-center gap-4 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-white hover:border-blue-400 hover:bg-gray-50 transition-colors cursor-pointer min-h-[400px]"
+              >
+                <div className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Plus className="h-12 w-12 text-gray-400" />
+                </div>
+                <span className="text-gray-600 font-medium">구성원 추가</span>
+              </button>
+            </div>
+          </SortableContext>
+        </DndContext>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSave} className="gap-2" disabled={saving} size="lg">
           <Save className="h-4 w-4" />
           {saving ? '저장 중...' : '저장'}
         </Button>
       </div>
-
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={members.map(m => m.id)}
-          strategy={horizontalListSortingStrategy}
-        >
-          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 310px))' }}>
-            {members.map((member) => (
-              <SortableMemberItem
-                key={member.id}
-                member={member}
-                onUpdate={updateMember}
-                onRemove={removeMember}
-                onImageUpload={handleImageUpload}
-              />
-            ))}
-            {/* 구성원 추가 카드 */}
-            <button
-              onClick={addMember}
-              className="flex flex-col items-center justify-center gap-4 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-white hover:border-blue-400 hover:bg-gray-50 transition-colors cursor-pointer min-h-[400px]"
-            >
-              <div className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center">
-                <Plus className="h-12 w-12 text-gray-400" />
-              </div>
-              <span className="text-gray-600 font-medium">구성원 추가</span>
-            </button>
-          </div>
-        </SortableContext>
-      </DndContext>
-    </Card>
+    </div>
   );
 }

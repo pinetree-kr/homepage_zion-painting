@@ -233,52 +233,57 @@ export default function CompanyHistories({ items }: CompanyHistoriesProps) {
   };
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-gray-900 text-lg font-semibold">연혁 목록</h3>
-        <Button onClick={handleSave} className="gap-2" disabled={saving}>
+    <div className="space-y-6">
+      <Card className="p-6">
+        <div className="mb-4">
+          <h3 className="text-gray-900 text-lg font-semibold">연혁 목록</h3>
+        </div>
+
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={histories.map((item) => item.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-4">
+              {histories.map((item) => (
+                <SortableHistoryItem
+                  key={item.id}
+                  item={item}
+                  onUpdate={updateHistoryItem}
+                  onRemove={removeHistoryItem}
+                  getTypeIcon={getTypeIcon}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        {/* 연혁 추가 영역 - 하단에 큰 영역으로 표시 */}
+        <div
+          className="border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer mt-4 border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+          onClick={addHistoryItem}
+        >
+          <Plus className="h-10 w-10 mx-auto mb-2 text-gray-400" />
+          <p className="text-sm font-medium text-gray-500">
+            새 연혁 추가
+          </p>
+          <p className="text-xs mt-1 text-gray-400">
+            클릭하여 새로운 연혁을 추가하세요
+          </p>
+        </div>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSave} className="gap-2" disabled={saving} size="lg">
           <Save className="h-4 w-4" />
           {saving ? '저장 중...' : '저장'}
         </Button>
       </div>
-
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={histories.map((item) => item.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="space-y-4">
-            {histories.map((item) => (
-              <SortableHistoryItem
-                key={item.id}
-                item={item}
-                onUpdate={updateHistoryItem}
-                onRemove={removeHistoryItem}
-                getTypeIcon={getTypeIcon}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-
-      {/* 연혁 추가 영역 - 하단에 큰 영역으로 표시 */}
-      <div
-        className="border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer mt-4 border-gray-300 hover:border-gray-400 hover:bg-gray-50"
-        onClick={addHistoryItem}
-      >
-        <Plus className="h-10 w-10 mx-auto mb-2 text-gray-400" />
-        <p className="text-sm font-medium text-gray-500">
-          새 연혁 추가
-        </p>
-        <p className="text-xs mt-1 text-gray-400">
-          클릭하여 새로운 연혁을 추가하세요
-        </p>
-      </div>
-    </Card>
+    </div>
   );
 }
 

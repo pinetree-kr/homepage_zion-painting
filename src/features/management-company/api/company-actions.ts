@@ -400,14 +400,29 @@ export async function getContactInfo(): Promise<ContactInfo | null> {
       .from('contact_info')
       .select('*')
       .limit(1)
-      .maybeSingle() as { data: ContactInfo | null; error: any };
+      .maybeSingle();
 
     if (error) {
       console.error('회사정보 로드 오류:', error);
       return null;
     }
 
-    return data;
+    if (!data) {
+      return null;
+    }
+
+    return {
+      id: data.id,
+      email: data.email || '',
+      address: data.address || '',
+      business_hours: data.business_hours || null,
+      phone_primary: data.phone_primary || null,
+      phone_secondary: data.phone_secondary || null,
+      fax: data.fax || null,
+      map_url: data.map_url || null,
+      created_at: data.created_at || null,
+      updated_at: data.updated_at || null,
+    };
   } catch (error) {
     console.error('회사정보 로드 중 예외 발생:', error);
     return null;
@@ -426,17 +441,16 @@ export async function saveContactInfo(contactInfo: Partial<Omit<ContactInfo, 'id
       .from('contact_info')
       .select('id')
       .limit(1)
-      .maybeSingle() as { data: { id: string } | null; error: any };
+      .maybeSingle();
 
     const updateData = {
       email: contactInfo.email || '',
       address: contactInfo.address || '',
       business_hours: contactInfo.business_hours || null,
-      phone_main: contactInfo.phone_main || null,
-      phone_manager: contactInfo.phone_manager || null,
+      phone_primary: contactInfo.phone_primary || null,
+      phone_secondary: contactInfo.phone_secondary || null,
       fax: contactInfo.fax || null,
-      kakao_map_url: contactInfo.kakao_map_url || null,
-      naver_map_url: contactInfo.naver_map_url || null,
+      map_url: contactInfo.map_url || null,
     };
 
     if (existingInfo) {
