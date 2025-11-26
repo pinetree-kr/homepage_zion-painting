@@ -18,11 +18,34 @@ import {
   saveProduct,
   deleteProduct,
 } from '../api/product-actions';
+import { SpecTableEditor, SpecTableData } from './SpecTableEditor';
 
 interface ProductFormProps {
   productId?: string;
   categories?: ProductCategory[];
   data?: Product | null;
+}
+
+/**
+ * specs JSONB 데이터를 SpecTableData로 변환합니다.
+ */
+function parseSpecsData(specs: any): SpecTableData | null {
+  if (!specs) {
+    return null;
+  }
+
+  try {
+    // 이미 올바른 형식인 경우
+    if (specs.headers && Array.isArray(specs.headers) && specs.rows && Array.isArray(specs.rows)) {
+      return specs as SpecTableData;
+    }
+
+    // 다른 형식의 데이터가 있을 경우 변환 로직 추가 가능
+    return null;
+  } catch (error) {
+    console.error('스펙 데이터 파싱 오류:', error);
+    return null;
+  }
 }
 
 /**
@@ -365,6 +388,17 @@ export default function ProductForm({
             <DynamicCustomEditor
               text={product.content}
               onChange={(content) => setProduct({ ...product, content })}
+            />
+          </div>
+          <div>
+            <SpecTableEditor
+              value={parseSpecsData(product.specs)}
+              onChange={(specsData) => {
+                setProduct({
+                  ...product,
+                  specs: specsData,
+                });
+              }}
             />
           </div>
         </div>
