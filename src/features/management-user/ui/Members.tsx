@@ -62,6 +62,7 @@ export default function Members({
           </Link>
         );
       },
+      sortable: true,
       width: '20%'
     },
     {
@@ -140,6 +141,7 @@ export default function Members({
           columns={memberColumns}
           getRowId={(row) => row.id}
           emptyMessage="등록된 회원이 없습니다"
+          useUrlSort={true}
         />
 
         {totalPages > 0 && (

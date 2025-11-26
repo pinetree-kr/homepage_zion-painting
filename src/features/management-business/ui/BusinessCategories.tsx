@@ -6,7 +6,7 @@ import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/src/shared/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { BusinessCategory } from '@/src/entities';
 import {
@@ -102,6 +102,8 @@ export default function BusinessCategories({ items }: { items: BusinessCategory[
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<BusinessCategory | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   
   const [saving, setSaving] = useState(false);
   const router = useRouter();
@@ -136,15 +138,21 @@ export default function BusinessCategories({ items }: { items: BusinessCategory[
     }
   };
 
-  const handleDeleteCategory = async (id: string) => {
-    if (!confirm('이 적용산업을 삭제하시겠습니까? 관련된 사업실적의 적용산업이 해제됩니다.')) {
+  const handleDeleteCategory = (id: string) => {
+    setCategoryToDelete(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!categoryToDelete) {
       return;
     }
 
     try {
-      const result = await deleteBusinessCategory(id);
+      setDeleting(true);
+      const result = await deleteBusinessCategory(categoryToDelete);
       if (result.success) {
         toast.success('적용산업이 삭제되었습니다.');
+        setCategoryToDelete(null);
         router.refresh();
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
@@ -152,7 +160,13 @@ export default function BusinessCategories({ items }: { items: BusinessCategory[
     } catch (error: any) {
       console.error('삭제 오류:', error);
       toast.error(`삭제 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setCategoryToDelete(null);
   };
 
   const handleCategoryDragEnd = async (event: DragEndEvent) => {
@@ -318,6 +332,34 @@ export default function BusinessCategories({ items }: { items: BusinessCategory[
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 삭제 확인 다이얼로그 */}
+      <Dialog open={categoryToDelete !== null} onOpenChange={(open) => !open && handleDeleteCancel()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>적용산업 삭제</DialogTitle>
+            <DialogDescription>
+              이 적용산업을 삭제하시겠습니까? 관련된 사업실적의 적용산업이 해제됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleDeleteCancel}
+              disabled={deleting}
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+            >
+              {deleting ? '삭제 중...' : '삭제'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -81,7 +81,8 @@ export default function Products({
           </div>
         );
       },
-      width: '30%'
+      sortable: true,
+      width: '25%'
     },
     {
       id: 'category',
@@ -125,7 +126,7 @@ export default function Products({
           </div>
         );
       },
-      width: '35%'
+      width: '30%'
     },
     {
       id: 'created_at',
@@ -140,7 +141,7 @@ export default function Products({
         );
       },
       sortable: true,
-      width: '10%'
+      width: '20%'
     }
   ];
 
@@ -171,6 +172,7 @@ export default function Products({
           columns={productColumns}
           getRowId={(row) => row.id}
           emptyMessage="등록된 제품이 없습니다"
+          useUrlSort={true}
         />
 
         {totalPages > 0 && (

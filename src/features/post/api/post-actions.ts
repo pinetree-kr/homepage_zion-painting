@@ -13,10 +13,12 @@ export async function searchPostsByBoardCodeUsingAdmin(
   boardCode: string,
   searchTerm: string = '',
   page: number = 1,
-  itemsPerPage: number = 10
+  itemsPerPage: number = 10,
+  sortColumn?: string | null,
+  sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<{ data: Post[]; total: number; totalPages: number }> {
   const supabase = await createServerClient();
-  return searchPostsByBoardCode(supabase, boardCode, searchTerm, page, itemsPerPage);
+  return searchPostsByBoardCode(supabase, boardCode, searchTerm, page, itemsPerPage, sortColumn, sortDirection);
 }
 
 /**
@@ -73,13 +75,41 @@ export async function searchPostsByBoardCode(
       .select('*')
       .eq('board_id', board.id)
       .is('deleted_at', null)
-      .order('is_pinned', { ascending: false })
-      .order('created_at', { ascending: false })
       .range(from, to);
 
     // 검색어가 있으면 제목과 내용에서 검색
     if (searchTerm.trim()) {
       dataQuery = dataQuery.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,content_summary.ilike.%${searchTerm}%`);
+    }
+
+    // 정렬 적용
+    // 고정 게시글은 항상 먼저 표시
+    dataQuery = dataQuery.order('is_pinned', { ascending: false });
+    
+    if (sortColumn) {
+      // 컬럼 ID를 DB 컬럼명으로 매핑
+      const columnMapping: Record<string, string> = {
+        'title': 'title',
+        'author': 'author_name',
+        'status': 'status',
+        'created_at': 'created_at',
+        'view_count': 'view_count',
+        'like_count': 'like_count',
+        'comment_count': 'comment_count',
+      };
+
+      const dbColumn = columnMapping[sortColumn];
+      if (dbColumn) {
+        dataQuery = dataQuery
+          .order(dbColumn, { ascending: sortDirection === 'asc' })
+          .order('created_at', { ascending: false });
+      } else {
+        // 기본 정렬: created_at 내림차순
+        dataQuery = dataQuery.order('created_at', { ascending: false });
+      }
+    } else {
+      // 정렬이 없으면 기본 정렬: created_at 내림차순
+      dataQuery = dataQuery.order('created_at', { ascending: false });
     }
 
     const { data, error } = await dataQuery as {

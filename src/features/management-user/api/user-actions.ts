@@ -12,10 +12,12 @@ import { Database } from '@/src/shared/lib/supabase-types';
 export async function searchUsersUsingAdmin(
   searchTerm: string = '',
   page: number = 1,
-  itemsPerPage: number = 10
+  itemsPerPage: number = 10,
+  sortColumn?: string | null,
+  sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<{ data: Profile[]; total: number; totalPages: number }> {
   const supabase = await createServerClient();
-  return searchUsers(supabase, searchTerm, page, itemsPerPage);
+  return searchUsers(supabase, searchTerm, page, itemsPerPage, sortColumn, sortDirection);
 }
 
 /**
@@ -25,7 +27,9 @@ export async function searchUsers(
   supabase: SupabaseClient<Database>,
   searchTerm: string = '',
   page: number = 1,
-  itemsPerPage: number = 10
+  itemsPerPage: number = 10,
+  sortColumn?: string | null,
+  sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<{ data: Profile[]; total: number; totalPages: number }> {
   try {
     let query = supabase
@@ -57,12 +61,36 @@ export async function searchUsers(
       .from('profiles')
       .select('*')
       .is('deleted_at', null)
-      .order('created_at', { ascending: false })
       .range(from, to);
 
     // 검색어가 있으면 이름, 이메일, 전화번호에서 검색
     if (searchTerm.trim()) {
       dataQuery = dataQuery.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+    }
+
+    // 정렬 적용
+    if (sortColumn) {
+      // 컬럼 ID를 DB 컬럼명으로 매핑
+      const columnMapping: Record<string, string> = {
+        'name': 'name',
+        'email': 'email',
+        'phone': 'phone',
+        'last_login': 'last_login',
+        'created_at': 'created_at',
+      };
+
+      const dbColumn = columnMapping[sortColumn];
+      if (dbColumn) {
+        dataQuery = dataQuery
+          .order(dbColumn, { ascending: sortDirection === 'asc' })
+          .order('created_at', { ascending: false });
+      } else {
+        // 기본 정렬: created_at 내림차순
+        dataQuery = dataQuery.order('created_at', { ascending: false });
+      }
+    } else {
+      // 정렬이 없으면 기본 정렬: created_at 내림차순
+      dataQuery = dataQuery.order('created_at', { ascending: false });
     }
 
     const { data, error } = await dataQuery as {

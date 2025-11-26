@@ -8,6 +8,8 @@ interface BusinessAchievementsPageProps {
   searchParams: Promise<{
     search?: string;
     page?: string;
+    sort?: string;
+    order?: string;
   }>;
 }
 
@@ -20,9 +22,11 @@ export default async function BusinessAchievementsPage({ searchParams }: Busines
   const searchParamsData = await searchParams;
   const searchTerm = searchParamsData?.search || '';
   const page = parseInt(searchParamsData?.page || '1', 10);
+  const sortColumn = searchParamsData?.sort || null;
+  const sortDirection = (searchParamsData?.order === 'desc' ? 'desc' : 'asc') as 'asc' | 'desc';
 
   const [result, categories] = await Promise.all([
-    searchBusinessAchievementsUsingAdmin(searchTerm, page, ITEMS_PER_PAGE),
+    searchBusinessAchievementsUsingAdmin(searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection),
     getBusinessCategories(),
   ]);
 

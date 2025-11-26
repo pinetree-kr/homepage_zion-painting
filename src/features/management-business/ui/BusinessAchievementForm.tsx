@@ -320,20 +320,23 @@ export default function BusinessAchievementForm({
               <Select
                 value={achievement.category_id || ''}
                 onValueChange={(value) => setAchievement({ ...achievement, category_id: value || null })}
+                disabled={categories.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="적용산업 선택" />
+                  <SelectValue placeholder={categories.length === 0 ? "분야 없음" : "적용산업 선택"} />
                 </SelectTrigger>
-                <SelectContent className="z-100">
-                  {/* <SelectItem value="null">
-                    미지정
-                  </SelectItem> */}
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                {categories.length > 0 && (
+                  <SelectContent className="z-100">
+                    {/* <SelectItem value="null">
+                      미지정
+                    </SelectItem> */}
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                )}
               </Select>
             </div>
           </div>

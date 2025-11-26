@@ -245,10 +245,12 @@ export async function getProducts(supabase: SupabaseClient<Database>): Promise<P
 export async function searchProductsUsingAdmin(
   searchTerm: string = '',
   page: number = 1,
-  itemsPerPage: number = 10
+  itemsPerPage: number = 10,
+  sortColumn?: string | null,
+  sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<{ data: Product[]; total: number; totalPages: number }> {
   const supabase = await createServerClient();
-  return searchProducts(supabase, searchTerm, page, itemsPerPage);
+  return searchProducts(supabase, searchTerm, page, itemsPerPage, sortColumn, sortDirection);
 }
 
 /**
@@ -258,7 +260,9 @@ export async function searchProducts(
   supabase: SupabaseClient<Database>,
   searchTerm: string = '',
   page: number = 1,
-  itemsPerPage: number = 10
+  itemsPerPage: number = 10,
+  sortColumn?: string | null,
+  sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<{ data: Product[]; total: number; totalPages: number }> {
   try {
     let query = supabase
@@ -290,12 +294,35 @@ export async function searchProducts(
       .from('products')
       .select('*')
       .is('deleted_at', null)
-      .order('created_at', { ascending: false })
       .range(from, to);
 
     // 검색어가 있으면 제목과 내용에서 검색
     if (searchTerm.trim()) {
       dataQuery = dataQuery.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,content_summary.ilike.%${searchTerm}%`);
+    }
+
+    // 정렬 적용
+    if (sortColumn) {
+      // 컬럼 ID를 DB 컬럼명으로 매핑
+      const columnMapping: Record<string, string> = {
+        'title': 'title',
+        'status': 'status',
+        'created_at': 'created_at',
+        'category': 'category_id', // 카테고리는 category_id로 정렬
+      };
+
+      const dbColumn = columnMapping[sortColumn];
+      if (dbColumn) {
+        dataQuery = dataQuery
+          .order(dbColumn, { ascending: sortDirection === 'asc' })
+          .order('created_at', { ascending: false });
+      } else {
+        // 기본 정렬: created_at 내림차순
+        dataQuery = dataQuery.order('created_at', { ascending: false });
+      }
+    } else {
+      // 정렬이 없으면 기본 정렬: created_at 내림차순
+      dataQuery = dataQuery.order('created_at', { ascending: false });
     }
 
     const { data, error } = await dataQuery as {

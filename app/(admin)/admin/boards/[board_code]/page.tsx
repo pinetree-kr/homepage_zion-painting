@@ -14,6 +14,8 @@ interface BoardPageProps {
   searchParams: Promise<{
     search?: string;
     page?: string;
+    sort?: string;
+    order?: string;
   }>;
 }
 
@@ -24,6 +26,8 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
   const searchParamsData = await searchParams;
   const searchTerm = searchParamsData?.search || '';
   const page = parseInt(searchParamsData?.page || '1', 10);
+  const sortColumn = searchParamsData?.sort || null;
+  const sortDirection = (searchParamsData?.order === 'desc' ? 'desc' : 'asc') as 'asc' | 'desc';
 
   const boardInfo = await getBoardInfoUsingAdmin(board_code);
 
@@ -31,7 +35,7 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
     return notFound();
   }
 
-  const result = await searchPostsByBoardCodeUsingAdmin(board_code, searchTerm, page, ITEMS_PER_PAGE);
+  const result = await searchPostsByBoardCodeUsingAdmin(board_code, searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection);
 
   return (
     <Posts

@@ -371,17 +371,20 @@ export default function ProductForm({
             <Select
               value={product.category_id || ''}
               onValueChange={(value) => setProduct({ ...product, category_id: value || null })}
+              disabled={categories.length === 0}
             >
               <SelectTrigger>
-                <SelectValue placeholder="제품 카테고리 선택" />
+                <SelectValue placeholder={categories.length === 0 ? "카테고리 없음" : "제품 카테고리 선택"} />
               </SelectTrigger>
-              <SelectContent className="z-100">
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
+              {categories.length > 0 && (
+                <SelectContent className="z-100">
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              )}
             </Select>
           </div>
           <div>

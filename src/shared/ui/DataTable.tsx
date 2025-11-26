@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronUp, ChevronDown, ChevronsUpDown, MoreVertical } from 'lucide-react';
 import { Checkbox } from './Checkbox';
 
@@ -34,6 +35,9 @@ interface DataTableProps<T> {
   getRowId: (row: T) => string;
   emptyMessage?: string;
   enableSelection?: boolean; // 체크박스 선택 기능 활성화 여부
+  useUrlSort?: boolean; // URL searchParams를 사용한 정렬 활성화 여부
+  sortParamKey?: string; // 정렬 컬럼 파라미터 키 (기본값: 'sort')
+  orderParamKey?: string; // 정렬 방향 파라미터 키 (기본값: 'order')
 }
 
 export function DataTable<T>({
@@ -43,12 +47,28 @@ export function DataTable<T>({
   onSelectionChange,
   getRowId,
   emptyMessage = '데이터가 없습니다',
-  enableSelection = false
+  enableSelection = false,
+  useUrlSort = false,
+  sortParamKey = 'sort',
+  orderParamKey = 'order'
 }: DataTableProps<T>) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-  const [sortColumn, setSortColumn] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  
+  // URL 기반 정렬 상태
+  const urlSortColumn = useUrlSort ? searchParams?.get(sortParamKey) || null : null;
+  const urlSortDirection = useUrlSort ? (searchParams?.get(orderParamKey) as 'asc' | 'desc' | null) || 'asc' : 'asc';
+  
+  // 클라이언트 사이드 정렬 상태 (useUrlSort가 false일 때만 사용)
+  const [clientSortColumn, setClientSortColumn] = useState<string | null>(null);
+  const [clientSortDirection, setClientSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // 정렬 상태 결정
+  const sortColumn = useUrlSort ? urlSortColumn : clientSortColumn;
+  const sortDirection = useUrlSort ? urlSortDirection : clientSortDirection;
 
   const handleSelectAll = () => {
     if (!enableSelection) return;
@@ -77,16 +97,40 @@ export function DataTable<T>({
   };
 
   const handleSort = (columnId: string) => {
-    if (sortColumn === columnId) {
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
+    if (useUrlSort) {
+      // URL 기반 정렬
+      const params = new URLSearchParams(searchParams?.toString() || '');
+      
+      if (sortColumn === columnId) {
+        if (sortDirection === 'asc') {
+          params.set(orderParamKey, 'desc');
+        } else {
+          // 정렬 해제
+          params.delete(sortParamKey);
+          params.delete(orderParamKey);
+        }
       } else {
-        setSortColumn(null);
-        setSortDirection('asc');
+        params.set(sortParamKey, columnId);
+        params.set(orderParamKey, 'asc');
       }
+      
+      // 페이지를 1로 리셋 (정렬 변경 시)
+      params.delete('page');
+      
+      router.push(`?${params.toString()}`, { scroll: false });
     } else {
-      setSortColumn(columnId);
-      setSortDirection('asc');
+      // 클라이언트 사이드 정렬
+      if (clientSortColumn === columnId) {
+        if (clientSortDirection === 'asc') {
+          setClientSortDirection('desc');
+        } else {
+          setClientSortColumn(null);
+          setClientSortDirection('asc');
+        }
+      } else {
+        setClientSortColumn(columnId);
+        setClientSortDirection('asc');
+      }
     }
   };
 

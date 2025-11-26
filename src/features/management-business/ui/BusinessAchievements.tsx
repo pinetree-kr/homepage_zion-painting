@@ -81,7 +81,7 @@ export default function BusinessAchievements({
           </div>
         );
       },
-      // sortable: true,
+      sortable: true,
       width: '30%'
     },
     {
@@ -185,6 +185,7 @@ export default function BusinessAchievements({
           // actions={achievementActions}
           getRowId={(row) => row.id}
           emptyMessage="등록된 사업실적이 없습니다"
+          useUrlSort={true}
         />
 
         {totalPages > 0 && (

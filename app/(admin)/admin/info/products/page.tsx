@@ -8,6 +8,8 @@ interface ProductsPageProps {
   searchParams: Promise<{
     search?: string;
     page?: string;
+    sort?: string;
+    order?: string;
   }>;
 }
 
@@ -17,9 +19,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const searchParamsData = await searchParams;
   const searchTerm = searchParamsData?.search || '';
   const page = parseInt(searchParamsData?.page || '1', 10);
+  const sortColumn = searchParamsData?.sort || null;
+  const sortDirection = (searchParamsData?.order === 'desc' ? 'desc' : 'asc') as 'asc' | 'desc';
   
   const [result, categories] = await Promise.all([
-    searchProductsUsingAdmin(searchTerm, page, ITEMS_PER_PAGE),
+    searchProductsUsingAdmin(searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection),
     getProductCategories(),
   ]);
   

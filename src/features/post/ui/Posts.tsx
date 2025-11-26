@@ -59,6 +59,7 @@ export default function Posts({
           </div>
         );
       },
+      sortable: true,
       width: '35%'
     },
     {
@@ -70,6 +71,7 @@ export default function Posts({
           {row.author_name || '-'}
         </div>
       ),
+      sortable: true,
       width: '15%',
     },
     {
@@ -145,6 +147,7 @@ export default function Posts({
           columns={postColumns}
           getRowId={(row) => row.id}
           emptyMessage="등록된 게시글이 없습니다"
+          useUrlSort={true}
         />
 
         {totalPages > 0 && (
