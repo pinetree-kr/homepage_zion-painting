@@ -13,11 +13,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { DynamicCustomEditor } from '@/src/features/editor';
 import { toast } from 'sonner';
 import { Post } from '@/src/entities/post/model/types';
-import { savePost } from '../api/post-actions';
+import { savePost, savePostReview, savePostInquiry, getPostReview, getPostInquiry } from '../api/post-actions';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user/model/types';
 import { FileUploader, type UploadedFile } from '@/src/shared/ui';
 import { getPostFiles, savePostFiles, deletePostFile, type PostFile } from '../api/post-file-actions';
+import { getBoardLinkedRecordsUsingAdmin, type LinkedRecord } from '@/src/features/board/api/board-actions';
 
 interface PostFormProps {
   boardId: string;
@@ -119,6 +120,9 @@ export default function PostForm({
   const [fileToDelete, setFileToDelete] = useState<{ id: string; name: string } | null>(null);
   const [deletingFile, setDeletingFile] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [linkedProducts, setLinkedProducts] = useState<LinkedRecord[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
   // allow_guest가 false일 때 로그인 확인 및 사용자 정보 자동 채우기
   useEffect(() => {
@@ -208,6 +212,51 @@ export default function PostForm({
 
     loadExistingFiles();
   }, [postId, allowFile]);
+
+  // 연결된 제품 목록 로드 (reviews, quotes 게시판일 때만)
+  useEffect(() => {
+    const loadLinkedProducts = async () => {
+      if (boardCode === 'reviews' || boardCode === 'quotes') {
+        setLoadingProducts(true);
+        try {
+          const products = await getBoardLinkedRecordsUsingAdmin(boardCode);
+          setLinkedProducts(products);
+        } catch (error) {
+          console.error('연결된 제품 목록 로드 오류:', error);
+          toast.error('제품 목록을 불러오는 중 오류가 발생했습니다.');
+        } finally {
+          setLoadingProducts(false);
+        }
+      }
+    };
+
+    loadLinkedProducts();
+  }, [boardCode]);
+
+  // 수정 모드일 때 기존 제품 정보 로드
+  useEffect(() => {
+    const loadExistingProduct = async () => {
+      if (postId && (boardCode === 'reviews' || boardCode === 'quotes')) {
+        try {
+          if (boardCode === 'reviews') {
+            const review = await getPostReview(postId);
+            if (review?.product_id) {
+              setSelectedProductId(review.product_id);
+            }
+          } else if (boardCode === 'quotes') {
+            const inquiry = await getPostInquiry(postId);
+            if (inquiry?.product_id) {
+              setSelectedProductId(inquiry.product_id);
+            }
+          }
+        } catch (error) {
+          console.error('기존 제품 정보 로드 오류:', error);
+        }
+      }
+    };
+
+    loadExistingProduct();
+  }, [postId, boardCode]);
 
   /**
    * 파일을 Supabase Storage에 업로드
@@ -359,6 +408,31 @@ export default function PostForm({
         }
       }
 
+      // 리뷰 또는 견적문의 게시판인 경우 추가 정보 저장
+      if (boardCode === 'reviews' || boardCode === 'quotes') {
+        const selectedProduct = linkedProducts.find(p => p.id === selectedProductId);
+        
+        if (boardCode === 'reviews') {
+          const reviewResult = await savePostReview(result.id, {
+            product_id: selectedProductId,
+            product_name: selectedProduct?.title || null,
+          });
+          if (!reviewResult.success) {
+            console.error('리뷰 정보 저장 오류:', reviewResult.error);
+            toast.warning('게시물은 저장되었지만 리뷰 정보 저장에 실패했습니다.');
+          }
+        } else if (boardCode === 'quotes') {
+          const inquiryResult = await savePostInquiry(result.id, {
+            product_id: selectedProductId,
+            product_name: selectedProduct?.title || null,
+          });
+          if (!inquiryResult.success) {
+            console.error('문의 정보 저장 오류:', inquiryResult.error);
+            toast.warning('게시물은 저장되었지만 문의 정보 저장에 실패했습니다.');
+          }
+        }
+      }
+
       toast.success('게시글이 저장되었습니다.');
       const redirectPath = `/admin/boards/${boardCode}`;
       router.push(redirectPath);
@@ -426,6 +500,30 @@ export default function PostForm({
               </Select>
             </div>
           </div>
+
+          {/* 연결된 제품 선택 (reviews, quotes 게시판일 때만) */}
+          {(boardCode === 'reviews' || boardCode === 'quotes') && (
+            <div className="space-y-2">
+              <Label htmlFor="product">연결된 제품 {boardCode === 'reviews' ? '(리뷰 대상)' : '(견적 문의 대상)'}</Label>
+              <Select
+                value={selectedProductId || ''}
+                onValueChange={(value) => setSelectedProductId(value || null)}
+                disabled={loadingProducts}
+              >
+                <SelectTrigger id="product">
+                  <SelectValue placeholder={loadingProducts ? '제품 목록 로딩 중...' : '제품 선택 (선택사항)'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">선택 안함</SelectItem>
+                  {linkedProducts.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {allowGuest && (
             <>

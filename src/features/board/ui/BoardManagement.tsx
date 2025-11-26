@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner';
 import { DataTable, DataTableColumn, DataTableAction, DataTablePagination, DataTableSearchBar } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { createBoard, updateBoard, deleteBoard } from '../api/board-actions';
 
 interface BoardManagementProps {
@@ -61,6 +62,7 @@ export default function BoardManagement({
     allow_guest: false,
     allow_secret: false,
     display_order: 0,
+    linked_table_name: null as string | null,
   });
 
   const refreshPage = () => {
@@ -93,6 +95,7 @@ export default function BoardManagement({
         allow_guest: false,
         allow_secret: false,
         display_order: 0,
+        linked_table_name: null,
       });
       setShowCreateDialog(false);
       refreshPage();
@@ -125,6 +128,7 @@ export default function BoardManagement({
       allow_guest: editingBoard.allow_guest,
       allow_secret: editingBoard.allow_secret,
       display_order: editingBoard.display_order,
+      linked_table_name: editingBoard.linked_table_name,
     });
 
     if (result.success) {
@@ -217,7 +221,24 @@ export default function BoardManagement({
         </div>
       ),
       sortable: false,
-      width: '25%'
+      width: '20%'
+    },
+    {
+      id: 'linked_table',
+      header: '연결 테이블',
+      accessor: (row) => (
+        <div>
+          {row.linked_table_name ? (
+            <Badge variant="default" className="text-xs">
+              {row.linked_table_name}
+            </Badge>
+          ) : (
+            <span className="text-xs text-gray-400">없음</span>
+          )}
+        </div>
+      ),
+      sortable: false,
+      width: '15%'
     },
     {
       id: 'display_order',
@@ -344,6 +365,23 @@ export default function BoardManagement({
                 placeholder="0"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="create-linked-table">연결 테이블</Label>
+              <Select
+                value={createForm.linked_table_name || ''}
+                onValueChange={(value) => setCreateForm({ ...createForm, linked_table_name: value || null })}
+              >
+                <SelectTrigger id="create-linked-table">
+                  <SelectValue placeholder="연결할 테이블 선택 (선택사항)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">없음</SelectItem>
+                  <SelectItem value="products">products (제품)</SelectItem>
+                  <SelectItem value="business_achievements">business_achievements (사업 실적)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">게시판에서 연결할 테이블을 선택합니다. (예: 리뷰 게시판 → products)</p>
+            </div>
             <div className="space-y-3 pt-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -466,6 +504,23 @@ export default function BoardManagement({
                   onChange={(e) => setEditingBoard({ ...editingBoard, display_order: parseInt(e.target.value) || 0 })}
                   placeholder="0"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-linked-table">연결 테이블</Label>
+                <Select
+                  value={editingBoard.linked_table_name || ''}
+                  onValueChange={(value) => setEditingBoard({ ...editingBoard, linked_table_name: value || null })}
+                >
+                  <SelectTrigger id="edit-linked-table">
+                    <SelectValue placeholder="연결할 테이블 선택 (선택사항)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">없음</SelectItem>
+                    <SelectItem value="products">products (제품)</SelectItem>
+                    <SelectItem value="business_achievements">business_achievements (사업 실적)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">게시판에서 연결할 테이블을 선택합니다. (예: 리뷰 게시판 → products)</p>
               </div>
               <div className="space-y-3 pt-2">
                 <div className="flex items-center space-x-2">

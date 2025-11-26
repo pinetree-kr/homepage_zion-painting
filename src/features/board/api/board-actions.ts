@@ -212,6 +212,7 @@ export async function createBoard(
         allow_guest: board.allow_guest,
         allow_secret: board.allow_secret,
         display_order: board.display_order || 0,
+        linked_table_name: board.linked_table_name || null,
       })
       .select()
       .single();
@@ -283,6 +284,7 @@ export async function updateBoard(
     if (board.allow_guest !== undefined) updateData.allow_guest = board.allow_guest;
     if (board.allow_secret !== undefined) updateData.allow_secret = board.allow_secret;
     if (board.display_order !== undefined) updateData.display_order = board.display_order;
+    if (board.linked_table_name !== undefined) updateData.linked_table_name = board.linked_table_name || null;
 
     const { error } = await supabase
       .from('boards')
@@ -342,5 +344,64 @@ export async function deleteBoard(id: string): Promise<{ success: boolean; error
   } catch (error: any) {
     console.error('게시판 삭제 중 예외 발생:', error);
     return { success: false, error: error.message || '알 수 없는 오류' };
+  }
+}
+
+/**
+ * 연결된 레코드 타입
+ */
+export interface LinkedRecord {
+  id: string;
+  title: string;
+}
+
+/**
+ * 특정 게시판의 연결된 테이블 레코드 조회 (관리자용)
+ */
+export async function getBoardLinkedRecordsUsingAdmin(
+  boardCode: string,
+  limit: number = 100
+): Promise<LinkedRecord[]> {
+  const supabase = await createServerClient();
+  return getBoardLinkedRecords(supabase, boardCode, limit);
+}
+
+/**
+ * 특정 게시판의 연결된 테이블 레코드 조회 (익명 클라이언트 사용)
+ */
+export async function getBoardLinkedRecordsUsingAnonymous(
+  boardCode: string,
+  limit: number = 100
+): Promise<LinkedRecord[]> {
+  const supabase = createAnonymousServerClient();
+  return getBoardLinkedRecords(supabase, boardCode, limit);
+}
+
+/**
+ * 특정 게시판의 연결된 테이블 레코드 조회 (supabase 클라이언트 전달)
+ */
+export async function getBoardLinkedRecords(
+  supabase: SupabaseClient<Database>,
+  boardCode: string,
+  limit: number = 100
+): Promise<LinkedRecord[]> {
+  try {
+    const { data, error } = await supabase.rpc('get_board_linked_records', {
+      board_code_param: boardCode,
+      limit_count: limit
+    });
+
+    if (error) {
+      console.error('연결된 레코드 조회 오류:', error);
+      return [];
+    }
+
+    return (data || []).map((item: any) => ({
+      id: item.id,
+      title: item.title
+    }));
+  } catch (error) {
+    console.error('연결된 레코드 조회 중 예외 발생:', error);
+    return [];
   }
 }

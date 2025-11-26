@@ -334,3 +334,246 @@ export async function deletePost(id: string, boardCode: 'notices' | 'qna' | 'quo
   }
 }
 
+/**
+ * 리뷰 정보 저장/업데이트
+ */
+export async function savePostReview(
+  postId: string,
+  reviewData: {
+    product_id?: string | null;
+    product_name?: string | null;
+    rating?: number;
+    pros?: string;
+    cons?: string;
+    purchase_date?: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createServerClient();
+
+    // 기존 리뷰 확인
+    const { data: existingReview } = await supabase
+      .from('post_reviews')
+      .select('post_id')
+      .eq('post_id', postId)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    const reviewDataToSave: any = {
+      post_id: postId,
+      product_id: reviewData.product_id || null,
+      product_name: reviewData.product_name || null,
+      rating: reviewData.rating || 0,
+      pros: reviewData.pros || '',
+      cons: reviewData.cons || '',
+      purchase_date: reviewData.purchase_date || new Date().toISOString().split('T')[0],
+    };
+
+    if (existingReview) {
+      // 업데이트
+      const { error } = await supabase
+        .from('post_reviews')
+        .update(reviewDataToSave)
+        .eq('post_id', postId);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } else {
+      // 새로 생성
+      const { error } = await supabase
+        .from('post_reviews')
+        .insert(reviewDataToSave);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || '알 수 없는 오류' };
+  }
+}
+
+/**
+ * 문의 정보 저장/업데이트
+ */
+export async function savePostInquiry(
+  postId: string,
+  inquiryData: {
+    type?: 'general' | 'quote';
+    product_id?: string | null;
+    product_name?: string | null;
+    company_name?: string | null;
+    subject?: string | null;
+    budget_min?: number;
+    budget_max?: number;
+    expected_start_at?: string | null;
+    expected_end_at?: string | null;
+    priority?: 'low' | 'medium' | 'high';
+    inquiry_status?: 'pending' | 'approved' | 'answered' | 'rejected';
+    internal_notes?: string | null;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createServerClient();
+
+    // 사용자 정보 가져오기
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: '인증되지 않은 사용자입니다.' };
+    }
+
+    // 프로필 정보 가져오기
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, email, phone')
+      .eq('id', user.id)
+      .single();
+
+    // 기존 문의 확인
+    const { data: existingInquiry } = await supabase
+      .from('post_inquiries')
+      .select('post_id')
+      .eq('post_id', postId)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    const inquiryDataToSave: any = {
+      post_id: postId,
+      type: inquiryData.type || 'general',
+      author_id: user.id,
+      author_name: profile?.name || null,
+      author_email: profile?.email || null,
+      author_phone: profile?.phone || null,
+      product_id: inquiryData.product_id || null,
+      product_name: inquiryData.product_name || null,
+      company_name: inquiryData.company_name || null,
+      subject: inquiryData.subject || null,
+      budget_min: inquiryData.budget_min || 0,
+      budget_max: inquiryData.budget_max || 0,
+      expected_start_at: inquiryData.expected_start_at || null,
+      expected_end_at: inquiryData.expected_end_at || null,
+      priority: inquiryData.priority || 'medium',
+      inquiry_status: inquiryData.inquiry_status || 'pending',
+      internal_notes: inquiryData.internal_notes || null,
+    };
+
+    if (existingInquiry) {
+      // 업데이트
+      const { error } = await supabase
+        .from('post_inquiries')
+        .update(inquiryDataToSave)
+        .eq('post_id', postId);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } else {
+      // 새로 생성
+      const { error } = await supabase
+        .from('post_inquiries')
+        .insert(inquiryDataToSave);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || '알 수 없는 오류' };
+  }
+}
+
+/**
+ * 리뷰 정보 조회
+ */
+export async function getPostReview(postId: string): Promise<{
+  product_id: string | null;
+  product_name: string | null;
+  rating: number;
+  pros: string;
+  cons: string;
+  purchase_date: string;
+} | null> {
+  try {
+    const supabase = await createServerClient();
+
+    const { data, error } = await supabase
+      .from('post_reviews')
+      .select('product_id, product_name, rating, pros, cons, purchase_date')
+      .eq('post_id', postId)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return {
+      product_id: data.product_id,
+      product_name: data.product_name,
+      rating: data.rating,
+      pros: data.pros,
+      cons: data.cons,
+      purchase_date: data.purchase_date,
+    };
+  } catch (error) {
+    console.error('리뷰 정보 조회 오류:', error);
+    return null;
+  }
+}
+
+/**
+ * 문의 정보 조회
+ */
+export async function getPostInquiry(postId: string): Promise<{
+  type: 'general' | 'quote';
+  product_id: string | null;
+  product_name: string | null;
+  company_name: string | null;
+  subject: string | null;
+  budget_min: number;
+  budget_max: number;
+  expected_start_at: string | null;
+  expected_end_at: string | null;
+  priority: 'low' | 'medium' | 'high';
+  inquiry_status: 'pending' | 'approved' | 'answered' | 'rejected';
+  internal_notes: string | null;
+} | null> {
+  try {
+    const supabase = await createServerClient();
+
+    const { data, error } = await supabase
+      .from('post_inquiries')
+      .select('type, product_id, product_name, company_name, subject, budget_min, budget_max, expected_start_at, expected_end_at, priority, inquiry_status, internal_notes')
+      .eq('post_id', postId)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return {
+      type: data.type,
+      product_id: data.product_id,
+      product_name: data.product_name,
+      company_name: data.company_name,
+      subject: data.subject,
+      budget_min: data.budget_min,
+      budget_max: data.budget_max,
+      expected_start_at: data.expected_start_at,
+      expected_end_at: data.expected_end_at,
+      priority: data.priority,
+      inquiry_status: data.inquiry_status,
+      internal_notes: data.internal_notes,
+    };
+  } catch (error) {
+    console.error('문의 정보 조회 오류:', error);
+    return null;
+  }
+}
+
