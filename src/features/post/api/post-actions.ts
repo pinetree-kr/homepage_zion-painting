@@ -29,7 +29,9 @@ export async function searchPostsByBoardCode(
   boardCode: string,
   searchTerm: string = '',
   page: number = 1,
-  itemsPerPage: number = 10
+  itemsPerPage: number = 10,
+  sortColumn?: string | null,
+  sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<{ data: Post[]; total: number; totalPages: number }> {
   try {
     // 먼저 board_id를 가져옵니다
