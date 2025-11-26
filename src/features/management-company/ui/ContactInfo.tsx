@@ -9,6 +9,7 @@ import { Card } from '@/src/shared/ui';
 import { Textarea } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { getContactInfo, saveContactInfo } from '../api/company-actions';
+import { formatPhoneForStorage, formatPhoneOnInput } from '@/src/shared/lib/utils';
 
 export default function ContactInfo() {
   const [contactInfo, setContactInfo] = useState({
@@ -31,6 +32,7 @@ export default function ContactInfo() {
     try {
       setLoading(true);
       const data = await getContactInfo();
+      console.log(data)
       if (data) {
         setContactInfo({
           email: data.email || '',
@@ -57,14 +59,16 @@ export default function ContactInfo() {
         email: contactInfo.email,
         address: contactInfo.address,
         business_hours: contactInfo.businessHours,
-        phone_primary: contactInfo.phonePrimary,
-        phone_secondary: contactInfo.phoneSecondary,
-        fax: contactInfo.fax,
+        phone_primary: formatPhoneForStorage(contactInfo.phonePrimary),
+        phone_secondary: formatPhoneForStorage(contactInfo.phoneSecondary),
+        fax: formatPhoneForStorage(contactInfo.fax),
         map_url: contactInfo.mapUrl,
       });
 
       if (result.success) {
         toast.success('회사 정보가 저장되었습니다.');
+        // 저장 후 다시 로드하여 DB에 저장된 형식으로 표시
+        await loadData();
       } else {
         toast.error(`저장 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
       }
@@ -117,8 +121,11 @@ export default function ContactInfo() {
               <Input
                 type="tel"
                 value={contactInfo.phonePrimary}
-                onChange={(e) => setContactInfo({ ...contactInfo, phonePrimary: e.target.value })}
-                placeholder="031-123-4567"
+                onChange={(e) => {
+                  const formatted = formatPhoneOnInput(e.target.value, contactInfo.phonePrimary);
+                  setContactInfo({ ...contactInfo, phonePrimary: formatted });
+                }}
+                placeholder="031-123-4567 또는 +82-31-123-4567"
               />
             </div>
             <div>
@@ -126,8 +133,11 @@ export default function ContactInfo() {
               <Input
                 type="tel"
                 value={contactInfo.phoneSecondary}
-                onChange={(e) => setContactInfo({ ...contactInfo, phoneSecondary: e.target.value })}
-                placeholder="010-1234-5678"
+                onChange={(e) => {
+                  const formatted = formatPhoneOnInput(e.target.value, contactInfo.phoneSecondary);
+                  setContactInfo({ ...contactInfo, phoneSecondary: formatted });
+                }}
+                placeholder="010-1234-5678 또는 +82-10-1234-5678"
               />
             </div>
           </div>
@@ -137,8 +147,11 @@ export default function ContactInfo() {
             <Input
               type="tel"
               value={contactInfo.fax}
-              onChange={(e) => setContactInfo({ ...contactInfo, fax: e.target.value })}
-              placeholder="031-123-4568"
+              onChange={(e) => {
+                const formatted = formatPhoneOnInput(e.target.value, contactInfo.fax);
+                setContactInfo({ ...contactInfo, fax: formatted });
+              }}
+              placeholder="031-123-4568 또는 +82-31-123-4568"
             />
           </div>
 

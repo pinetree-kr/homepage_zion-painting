@@ -5,6 +5,7 @@ import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous
 // import type { CompanyInfo, CompanyHistory } from '@/src/shared/lib/supabase-types';
 import type { CompanyInfo, CompanyHistory, CompanyHistoryType, OrganizationMember, CompanyAbout, CompanyStrength, CompanyValue } from '@/src/entities/company/model/types';
 import type { ContactInfo } from '@/src/entities/contact/model/types';
+import { formatPhoneForDisplay } from '@/src/shared/lib/utils';
 
 // /**
 //  * 회사 소개 로드 (기존 텍스트 방식 - 하위 호환성)
@@ -64,13 +65,24 @@ export async function getCompanyAboutInfo(): Promise<CompanyAbout | null> {
       };
     }
 
+    if (!data) {
+      return {
+        introduction: '',
+        strengths: [],
+        vision: '',
+        values: [],
+        greetings: '',
+        mission: '',
+      };
+    }
+
     return {
-      introduction: data?.introduction || '',
-      strengths: Array.isArray(data?.strengths) ? data.strengths : [],
-      vision: data?.vision || '',
-      values: Array.isArray(data?.values) ? data.values : [],
-      greetings: data?.greetings || '',
-      mission: data?.mission || '',
+      introduction: data.introduction || '',
+      strengths: Array.isArray(data.strengths) ? data.strengths : [],
+      vision: data.vision || '',
+      values: Array.isArray(data.values) ? data.values : [],
+      greetings: data.greetings || '',
+      mission: data.mission || '',
     };
   } catch (error) {
     console.error('회사소개 정보 로드 중 예외 발생:', error);
@@ -410,15 +422,15 @@ export async function getContactInfo(): Promise<ContactInfo | null> {
     if (!data) {
       return null;
     }
-
+    console.log({ data })
     return {
       id: data.id,
       email: data.email || '',
       address: data.address || '',
       business_hours: data.business_hours || null,
-      phone_primary: data.phone_primary || null,
-      phone_secondary: data.phone_secondary || null,
-      fax: data.fax || null,
+      phone_primary: formatPhoneForDisplay(data.phone_primary),
+      phone_secondary: formatPhoneForDisplay(data.phone_secondary),
+      fax: formatPhoneForDisplay(data.fax),
       map_url: data.map_url || null,
       created_at: data.created_at || null,
       updated_at: data.updated_at || null,

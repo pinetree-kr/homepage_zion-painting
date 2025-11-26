@@ -143,6 +143,7 @@ function SortableMemberItem({
                 src={member.image_url}
                 alt={member.name || '프로필 이미지'}
                 className="w-full h-full object-cover"
+                fill
                 onError={handleImageError}
                 onLoad={() => setImageError(false)}
               />
