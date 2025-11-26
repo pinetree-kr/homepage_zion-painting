@@ -98,8 +98,10 @@ export type Database = {
           allow_anonymous: boolean
           allow_comment: boolean
           allow_file: boolean
+          allow_guest: boolean | null
           code: string
           created_at: string | null
+          deleted_at: string | null
           description: string | null
           display_order: number
           id: string
@@ -111,8 +113,10 @@ export type Database = {
           allow_anonymous?: boolean
           allow_comment?: boolean
           allow_file?: boolean
+          allow_guest?: boolean | null
           code: string
           created_at?: string | null
+          deleted_at?: string | null
           description?: string | null
           display_order?: number
           id?: string
@@ -124,8 +128,10 @@ export type Database = {
           allow_anonymous?: boolean
           allow_comment?: boolean
           allow_file?: boolean
+          allow_guest?: boolean | null
           code?: string
           created_at?: string | null
+          deleted_at?: string | null
           description?: string | null
           display_order?: number
           id?: string

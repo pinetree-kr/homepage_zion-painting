@@ -193,10 +193,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return 'members';
     }
     if (pathname?.startsWith('/admin/boards')) {
-      if (pathname === '/admin/boards/notices') return 'notices';
-      if (pathname === '/admin/boards/qna') return 'qna';
-      if (pathname === '/admin/boards/quotes') return 'quotes';
-      if (pathname === '/admin/boards/reviews') return 'reviews';
+      if (pathname.startsWith('/admin/boards/notices')) return 'notices';
+      if (pathname.startsWith('/admin/boards/qna')) return 'qna';
+      if (pathname.startsWith('/admin/boards/quotes')) return 'quotes';
+      if (pathname.startsWith('/admin/boards/reviews')) return 'reviews';
       return 'notices';
     }
     if (pathname?.startsWith('/admin/system')) {
@@ -406,7 +406,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-8 overflow-y-auto h-full ml-0 lg:ml-0">
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto h-full ml-0 lg:ml-0">
           {/* <div className="max-w-7xl mx-auto"> */}
           {children}
           {/* </div> */}

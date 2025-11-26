@@ -39,8 +39,6 @@ export async function getBoardInfo(supabase: SupabaseClient<Database>, boardCode
         error: any;
       };
 
-    console.log({ data, boardCode })
-
     if (error) {
       console.error('게시판 조회 오류:', error);
       return null;

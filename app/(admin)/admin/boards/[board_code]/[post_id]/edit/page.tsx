@@ -1,22 +1,23 @@
-import PostDetail from '@/src/features/post/ui/PostDetail';
 import { getBoardInfoUsingAdmin } from '@/src/features/board/api/board-actions';
+import PostForm from '@/src/features/post/ui/PostForm';
 import { getPostUsingAdmin } from '@/src/features/post/api/post-actions';
 import { notFound, redirect } from 'next/navigation';
 
-interface PostDetailPageProps {
+interface PostEditPageProps {
   params: Promise<{
     post_id: string;
     board_code: string;
   }>;
 }
 
-export default async function PostDetailPage({ params }: PostDetailPageProps) {
+export default async function PostEditPage({ params }: PostEditPageProps) {
   const { post_id, board_code } = await params;
   const boardInfo = await getBoardInfoUsingAdmin(board_code as 'notices' | 'qna' | 'quotes' | 'reviews');
 
   if (!boardInfo) {
     return notFound();
   }
+
   const post = await getPostUsingAdmin(post_id);
 
   if (!post) {
@@ -24,11 +25,13 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   }
 
   return (
-    <PostDetail 
-      post={post} 
-      boardCode={board_code as 'notices' | 'qna' | 'quotes' | 'reviews'} 
+    <PostForm
+      boardCode={board_code as 'notices' | 'qna' | 'quotes' | 'reviews'}
+      boardId={boardInfo.id}
       boardName={boardInfo.name}
-      allowComment={boardInfo.allow_comment}
+      allowGuest={boardInfo.allow_guest}
+      postId={post_id}
+      data={post}
     />
   );
 }

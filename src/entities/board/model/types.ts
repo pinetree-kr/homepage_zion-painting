@@ -7,6 +7,7 @@ export interface Board {
   allow_anonymous: boolean;
   allow_comment: boolean;
   allow_file: boolean;
+  allow_guest: boolean;
   display_order: number;
   created_at: string | null;
   updated_at: string | null;

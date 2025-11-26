@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
@@ -13,11 +13,14 @@ import { DynamicCustomEditor } from '@/src/features/editor';
 import { toast } from 'sonner';
 import { Post } from '@/src/entities/post/model/types';
 import { savePost } from '../api/post-actions';
+import { supabaseClient } from '@/src/shared/lib/supabase/client';
+import type { Profile } from '@/src/entities/user/model/types';
 
 interface PostFormProps {
   boardId: string;
   boardCode: 'notices' | 'qna' | 'quotes' | 'reviews';
   boardName: string;
+  allowGuest: boolean;
   postId?: string;
   data?: Post | null;
 }
@@ -61,6 +64,7 @@ export default function PostForm({
   boardId,
   boardCode,
   boardName,
+  allowGuest,
   postId,
   data = null,
 }: PostFormProps) {
@@ -101,6 +105,62 @@ export default function PostForm({
     };
   });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // allow_guest가 false일 때 로그인 확인 및 사용자 정보 자동 채우기
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      if (allowGuest) {
+        // allow_guest가 true이면 로그인 확인 불필요
+        setLoading(false);
+        return;
+      }
+
+      // allow_guest가 false이면 로그인 확인 필요
+      try {
+        const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+
+        if (userError || !user) {
+          toast.error('로그인이 필요합니다.');
+          router.push('/auth/sign-in');
+          return;
+        }
+
+        // 수정 모드가 아니고 (data가 없을 때) 사용자 정보로 자동 채우기
+        if (!data) {
+          // 사용자 프로필 정보 가져오기
+          const { data: profile, error: profileError } = await supabaseClient
+            .from('profiles')
+            .select('id, name, email, phone')
+            .eq('id', user.id)
+            .single<Profile>();
+
+          if (profileError || !profile) {
+            toast.error('사용자 정보를 가져올 수 없습니다.');
+            router.push('/auth/sign-in');
+            return;
+          }
+
+          // 사용자 정보로 자동 채우기
+          setPost((prev) => ({
+            ...prev,
+            author_id: profile.id,
+            author_name: profile.name || '',
+            author_email: profile.email || '',
+            author_phone: profile.phone || '',
+          }));
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error('사용자 정보 로드 오류:', error);
+        toast.error('사용자 정보를 불러오는 중 오류가 발생했습니다.');
+        router.push('/auth/sign-in');
+      }
+    };
+
+    loadUserInfo();
+  }, [allowGuest, router, data]);
 
   const handleSave = async () => {
     if (!post.title?.trim()) {
@@ -142,9 +202,17 @@ export default function PostForm({
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-[#1A2C6D] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center">
         <Button
           variant="ghost"
           onClick={() => {
@@ -156,40 +224,24 @@ export default function PostForm({
           <ArrowLeft className="h-4 w-4" />
           목록으로
         </Button>
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="gap-2"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
       </div>
 
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-6">{boardName} {postId ? '수정' : '작성'}</h2>
 
         <div className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="title">제목 *</Label>
-            <Input
-              id="title"
-              value={post.title}
-              onChange={(e) => setPost({ ...post, title: e.target.value })}
-              placeholder="제목을 입력하세요"
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 md:gap-4">
+            <div className="space-y-2 col-span-3">
+              <Label htmlFor="title">제목 *</Label>
+              <Input
+                id="title"
+                value={post.title}
+                onChange={(e) => setPost({ ...post, title: e.target.value })}
+                placeholder="제목을 입력하세요"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="content">내용 *</Label>
-            <DynamicCustomEditor
-              text={post.content}
-              onChange={(content) => setPost({ ...post, content })}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-1">
               <Label htmlFor="status">상태</Label>
               <Select
                 value={post.status}
@@ -204,37 +256,49 @@ export default function PostForm({
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="author_name">작성자 이름</Label>
-              <Input
-                id="author_name"
-                value={post.author_name || ''}
-                onChange={(e) => setPost({ ...post, author_name: e.target.value })}
-                placeholder="작성자 이름 (선택사항)"
-              />
-            </div>
+          {allowGuest && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="author_name">이름</Label>
+                <Input
+                  id="author_name"
+                  value={post.author_name || ''}
+                  onChange={(e) => setPost({ ...post, author_name: e.target.value })}
+                  placeholder="이름"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="author_email">작성자 이메일</Label>
-              <Input
-                id="author_email"
-                type="email"
-                value={post.author_email || ''}
-                onChange={(e) => setPost({ ...post, author_email: e.target.value })}
-                placeholder="작성자 이메일 (선택사항)"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="author_email">이메일</Label>
+                <Input
+                  id="author_email"
+                  type="email"
+                  value={post.author_email || ''}
+                  onChange={(e) => setPost({ ...post, author_email: e.target.value })}
+                  placeholder="이메일"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="author_phone">작성자 전화번호</Label>
-              <Input
-                id="author_phone"
-                value={post.author_phone || ''}
-                onChange={(e) => setPost({ ...post, author_phone: e.target.value })}
-                placeholder="작성자 전화번호 (선택사항)"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="author_phone">전화번호</Label>
+                <Input
+                  id="author_phone"
+                  value={post.author_phone || ''}
+                  onChange={(e) => setPost({ ...post, author_phone: e.target.value })}
+                  placeholder="전화번호 (선택사항)"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="content">내용 *</Label>
+            <DynamicCustomEditor
+              text={post.content}
+              onChange={(content) => setPost({ ...post, content })}
+            />
           </div>
 
           <div className="flex gap-4">
@@ -262,6 +326,17 @@ export default function PostForm({
           </div>
         </div>
       </Card>
+
+      <div className="flex items-center justify-end">
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="gap-2"
+        >
+          <Save className="h-4 w-4" />
+          {saving ? '저장 중...' : '저장'}
+        </Button>
+      </div>
     </div>
   );
 }

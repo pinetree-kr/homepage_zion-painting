@@ -45,3 +45,6 @@ next-env.d.ts
 !.env.example
 
 .mcp.json
+
+supabase/.env*
+supabase/functions/.env*
