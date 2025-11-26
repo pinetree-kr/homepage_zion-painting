@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 import { Input } from './Input';
@@ -22,8 +22,15 @@ export function DataTableSearchBar({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams?.get(searchParamKey) || '');
+  const isUpdatingRef = useRef(false); // URL 업데이트 중인지 추적
 
+  // URL 업데이트 (debounce)
   useEffect(() => {
+    // URL 업데이트 중이면 스킵
+    if (isUpdatingRef.current) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       const currentUrlSearchTerm = searchParams?.get(searchParamKey) || '';
       const trimmedSearchTerm = searchTerm.trim();
@@ -32,6 +39,8 @@ export function DataTableSearchBar({
       if (currentUrlSearchTerm === trimmedSearchTerm) {
         return;
       }
+
+      isUpdatingRef.current = true;
 
       const params = new URLSearchParams(searchParams?.toString() || '');
       
@@ -44,19 +53,29 @@ export function DataTableSearchBar({
       }
 
       router.push(`?${params.toString()}`, { scroll: false });
+      
+      // URL 업데이트 완료 후 플래그 리셋
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 100);
     }, debounceMs);
 
     return () => clearTimeout(timer);
   }, [searchTerm, debounceMs, router, searchParams, searchParamKey]);
 
-  // URL의 searchParam이 변경되면 동기화 (외부에서 URL이 변경된 경우)
+  // URL의 searchParam이 변경되면 동기화 (외부에서 URL이 변경된 경우만)
   useEffect(() => {
+    // URL 업데이트 중이면 스킵 (자기 자신이 업데이트한 경우)
+    if (isUpdatingRef.current) {
+      return;
+    }
+
     const urlSearchTerm = searchParams?.get(searchParamKey) || '';
     // URL이 변경되었고, 현재 입력값과 다를 때만 동기화
     if (urlSearchTerm !== searchTerm) {
       setSearchTerm(urlSearchTerm);
     }
-  }, [searchParams, searchTerm, searchParamKey]); // searchTerm을 의존성에서 제거하여 무한 루프 방지
+  }, [searchParams, searchParamKey]); // searchTerm을 의존성에서 제거하여 무한 루프 방지
 
   const handleClear = () => {
     setSearchTerm('');

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ArrowLeft, Calendar, CircleUser, Eye, Mail, Trash2, Pin, Edit, UserCircle, Search } from 'lucide-react';
+import { ArrowLeft, Calendar, CircleUser, Eye, Mail, Trash2, Pin, Edit, UserCircle, Search, Download, File, Image as ImageIcon, FileText } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Card, CardContent } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
@@ -15,21 +15,24 @@ import { deletePost } from '../api/post-actions';
 import Comments from '@/src/features/comment/ui/Comments';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user/model/types';
+import { type PostFile } from '../api/post-file-actions';
 
 interface PostDetailProps {
   post: Post;
   boardCode: 'notices' | 'qna' | 'quotes' | 'reviews';
   boardName: string;
   allowComment: boolean;
+  attachedFiles?: PostFile[];
 }
 
-export default function PostDetail({ post, boardCode, boardName, allowComment }: PostDetailProps) {
+export default function PostDetail({ post, boardCode, boardName, allowComment, attachedFiles: initialAttachedFiles = [] }: PostDetailProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [attachedFiles, setAttachedFiles] = useState<PostFile[]>(initialAttachedFiles);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -110,6 +113,62 @@ export default function PostDetail({ post, boardCode, boardName, allowComment }:
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  /**
+   * 파일 크기를 읽기 쉬운 형식으로 변환
+   */
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  /**
+   * 파일 타입에 따른 아이콘 반환
+   */
+  const getFileIcon = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) {
+      return ImageIcon;
+    }
+    if (mimeType.includes('pdf') || mimeType.includes('document') || mimeType.includes('text')) {
+      return FileText;
+    }
+    return File;
+  };
+
+  /**
+   * 파일 다운로드 핸들러
+   */
+  const handleDownload = async (file: PostFile) => {
+    try {
+      // 파일을 fetch로 가져와서 Blob으로 변환
+      const response = await fetch(file.file_url);
+      if (!response.ok) {
+        throw new Error('파일 다운로드에 실패했습니다.');
+      }
+      
+      const blob = await response.blob();
+      
+      // Blob URL 생성
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // 다운로드 링크 생성
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = file.file_name; // 원본 파일명으로 다운로드
+      document.body.appendChild(link);
+      link.click();
+      
+      // 정리
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('파일 다운로드 오류:', error);
+      toast.error('파일 다운로드에 실패했습니다.');
+    }
   };
 
   return (
@@ -225,6 +284,63 @@ export default function PostDetail({ post, boardCode, boardName, allowComment }:
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
             </div>
+
+            {/* 첨부 파일 목록 */}
+            {attachedFiles.length > 0 && (
+              <div className="pt-6 mt-6">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">첨부 파일 ({attachedFiles.length})</h3>
+                <div className="space-y-2">
+                  {attachedFiles.map((file) => {
+                    const FileIconComponent = getFileIcon(file.mime_type);
+                    const isImage = file.mime_type.startsWith('image/');
+
+                    return (
+                      <div
+                        key={file.id}
+                        className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        {/* 이미지 미리보기 또는 아이콘 */}
+                        {isImage ? (
+                          <div className="flex-shrink-0 w-12 h-12 rounded overflow-hidden bg-gray-100">
+                            <img
+                              src={file.file_url}
+                              alt={file.file_name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex-shrink-0 w-12 h-12 rounded bg-gray-100 flex items-center justify-center">
+                            <FileIconComponent className="h-6 w-6 text-gray-500" />
+                          </div>
+                        )}
+
+                        {/* 파일 정보 */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {file.file_name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatFileSize(file.file_size)}
+                          </p>
+                        </div>
+
+                        {/* 다운로드 버튼 */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownload(file)}
+                          className="flex-shrink-0 gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          다운로드
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

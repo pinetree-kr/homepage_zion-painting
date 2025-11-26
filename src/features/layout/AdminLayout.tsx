@@ -201,6 +201,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     if (pathname?.startsWith('/admin/system')) {
       if (pathname === '/admin/system/administrators') return 'admin-management';
+      if (pathname === '/admin/system/boards') return 'boards-management';
       if (pathname === '/admin/system/logs') return 'logs';
       if (pathname === '/admin/system/resources') return 'resources';
       return 'admin-management';
@@ -221,6 +222,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       'quotes': '/admin/boards/quotes',
       'reviews': '/admin/boards/reviews',
       'admin-management': '/admin/system/administrators',
+      'boards-management': '/admin/system/boards',
       'logs': '/admin/system/logs',
       'resources': '/admin/system/resources',
     };
@@ -269,6 +271,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       icon: ServerIcon,
       items: [
         { id: 'admin-management', label: '관리자', icon: ShieldIcon, route: '/admin/system/administrators' },
+        { id: 'boards-management', label: '게시판 관리', icon: FileTextIcon, route: '/admin/system/boards' },
         { id: 'logs', label: '로그', icon: ActivityIcon, route: '/admin/system/logs' },
         { id: 'resources', label: '리소스', icon: ServerIcon, route: '/admin/system/resources' },
       ],

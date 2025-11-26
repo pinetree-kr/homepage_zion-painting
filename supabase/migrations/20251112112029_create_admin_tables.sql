@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS boards (
   allow_comment BOOLEAN NOT NULL DEFAULT FALSE, -- 댓글 허용 여부
   allow_file BOOLEAN NOT NULL DEFAULT FALSE, -- 파일 첨부 허용 여부
   allow_guest BOOLEAN NOT NULL DEFAULT FALSE, -- 비로그인 게시 허용 여부
+  allow_secret BOOLEAN NOT NULL DEFAULT FALSE, -- 비밀글 허용 여부
   display_order INTEGER NOT NULL DEFAULT 0, -- 게시판 순서
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Member } from '@/src/entities';
 import {
   Shield,
@@ -10,7 +11,7 @@ import {
   Edit,
   Calendar
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/shared/ui';
+import { Card } from '@/src/shared/ui';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
@@ -24,27 +25,35 @@ import {
   DialogTitle,
 } from '@/src/shared/ui';
 import { toast } from 'sonner';
-import { DataTable, DataTableColumn, DataTableAction } from '@/src/shared/ui';
+import { DataTable, DataTableColumn, DataTableAction, DataTablePagination, DataTableSearchBar } from '@/src/shared/ui';
 
-const mockAdmins: Member[] = [
-  {
-    id: 'admin1',
-    email: 'admin@zion.com',
-    name: '시온관리자',
-    created_at: '2024-01-01T00:00:00Z',
-    last_login: '2024-11-10T08:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-    phone: null,
-  },
-];
+interface AdminManagementProps {
+  items: Member[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  searchTerm: string;
+}
 
-export default function AdminManagement() {
-  const [admins, setAdmins] = useState<Member[]>(mockAdmins);
+const ITEMS_PER_PAGE = 10;
+
+export default function AdminManagement({
+  items,
+  totalItems,
+  totalPages,
+  currentPage,
+  searchTerm,
+}: AdminManagementProps) {
+  const router = useRouter();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState<Member | null>(null);
   const [editingAdmin, setEditingAdmin] = useState<Member | null>(null);
   const [inviteForm, setInviteForm] = useState({ name: '', email: '' });
+
+  const refreshPage = () => {
+    router.refresh();
+  };
 
   const handleInvite = () => {
     if (!inviteForm.name || !inviteForm.email) {
@@ -52,38 +61,29 @@ export default function AdminManagement() {
       return;
     }
 
-    const newAdmin: Member = {
-      id: `admin${Date.now()}`,
-      email: inviteForm.email,
-      name: inviteForm.name,
-      created_at: new Date().toISOString(),
-      updated_at: null,
-      phone: null,
-      last_login: null,
-    };
-
-    setAdmins([...admins, newAdmin]);
+    // TODO: 실제 API 호출로 변경 필요
     setInviteForm({ name: '', email: '' });
     setShowInviteDialog(false);
     toast.success('관리자 초대장이 발송되었습니다');
+    refreshPage();
   };
 
   const handleEdit = () => {
     if (!editingAdmin) return;
 
-    setAdmins(admins.map(admin =>
-      admin.id === editingAdmin.id ? editingAdmin : admin
-    ));
+    // TODO: 실제 API 호출로 변경 필요
     setEditingAdmin(null);
     setShowEditDialog(false);
     toast.success('관리자 정보가 수정되었습니다');
+    refreshPage();
   };
 
   const handleDelete = () => {
     if (adminToDelete) {
-      setAdmins(admins.filter(a => a.id !== adminToDelete.id));
+      // TODO: 실제 API 호출로 변경 필요
       toast.success('관리자가 삭제되었습니다');
       setAdminToDelete(null);
+      refreshPage();
     }
   };
 
@@ -186,74 +186,39 @@ export default function AdminManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-gray-900 text-2xl font-semibold mb-2">관리자 관리</h1>
-          <p className="text-gray-500 text-sm">시스템 관리자를 추가, 수정, 삭제합니다</p>
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-gray-900 text-lg font-semibold">관리자 목록</h3>
+          <Button onClick={() => setShowInviteDialog(true)} className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            관리자 초대
+          </Button>
         </div>
-        <Button
-          onClick={() => setShowInviteDialog(true)}
-          className="bg-gradient-to-r from-[#1A2C6D] to-[#2CA7DB] hover:opacity-90"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          관리자 초대
-        </Button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">전체 관리자</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-[#1A2C6D]" />
-              <span className="text-2xl">{admins.length}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">활성 관리자</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-green-600" />
-              {/* <span className="text-2xl">{admins.filter(a => a.status === 'active').length}</span> */}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">비활성 관리자</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-orange-600" />
-              {/* <span className="text-2xl">{admins.filter(a => a.status === 'inactive').length}</span> */}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>관리자 목록</CardTitle>
-          <CardDescription>
-            현재 등록된 모든 관리자 계정입니다
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            data={admins}
-            columns={adminColumns}
-            actions={adminActions}
-            getRowId={(row) => row.id}
-            emptyMessage="등록된 관리자가 없습니다"
+        <div className="mb-4">
+          <DataTableSearchBar
+            placeholder="이름, 이메일로 검색..."
+            className="max-w-md"
           />
-        </CardContent>
+        </div>
+
+        <DataTable
+          data={items}
+          columns={adminColumns}
+          actions={adminActions}
+          getRowId={(row) => row.id}
+          emptyMessage="등록된 관리자가 없습니다"
+          useUrlSort={true}
+        />
+
+        {totalPages > 0 && (
+          <DataTablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
+        )}
       </Card>
 
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>

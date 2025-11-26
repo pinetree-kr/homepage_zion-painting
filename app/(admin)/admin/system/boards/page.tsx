@@ -1,7 +1,7 @@
-import { AdminManagement } from '@/src/features/admin/user';
-import { searchAdminsUsingAdmin } from '@/src/features/admin/user/api/admin-actions';
+import { BoardManagement } from '@/src/features/board/ui';
+import { getBoardsUsingAdmin } from '@/src/features/board/api/board-actions';
 
-interface AdministratorsPageProps {
+interface BoardsPageProps {
   searchParams: Promise<{
     search?: string;
     page?: string;
@@ -12,17 +12,17 @@ interface AdministratorsPageProps {
 
 const ITEMS_PER_PAGE = 10;
 
-export default async function ManagementSystemAdministratorsPage({ searchParams }: AdministratorsPageProps) {
+export default async function ManagementSystemBoardsPage({ searchParams }: BoardsPageProps) {
   const searchParamsData = await searchParams;
   const searchTerm = searchParamsData?.search || '';
   const page = parseInt(searchParamsData?.page || '1', 10);
   const sortColumn = searchParamsData?.sort || null;
   const sortDirection = (searchParamsData?.order === 'desc' ? 'desc' : 'asc') as 'asc' | 'desc';
 
-  const result = await searchAdminsUsingAdmin(searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection);
+  const result = await getBoardsUsingAdmin(searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection);
 
   return (
-    <AdminManagement
+    <BoardManagement
       items={result.data}
       totalItems={result.total}
       totalPages={result.totalPages}

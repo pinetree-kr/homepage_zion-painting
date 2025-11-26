@@ -9,6 +9,7 @@ export { DataTableSearchBar, type DataTableSearchBarProps } from './DataTableSea
 export { DataTablePagination, type DataTablePaginationProps } from './DataTablePagination';
 export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './Dialog';
 export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './DropdownMenu';
+export { FileUploader, type UploadedFile } from './FileUploader';
 export { Input } from './Input';
 export { Label } from './Label';
 export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './Select';
