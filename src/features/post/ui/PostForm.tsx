@@ -13,12 +13,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { DynamicCustomEditor } from '@/src/features/editor';
 import { toast } from 'sonner';
 import { Post } from '@/src/entities/post/model/types';
-import { savePost, savePostReview, savePostInquiry, getPostReview, getPostInquiry } from '../api/post-actions';
+import { savePost, saveProductReview, saveProductInquiry, getProductReview, getProductInquiry } from '../api/post-actions';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user/model/types';
 import { FileUploader, type UploadedFile } from '@/src/shared/ui';
 import { getPostFiles, savePostFiles, deletePostFile, type PostFile } from '../api/post-file-actions';
-import { getBoardLinkedRecordsUsingAdmin, type LinkedRecord } from '@/src/features/board/api/board-actions';
+import { getProductsUsingAdmin } from '@/src/features/board/api/board-actions';
 
 interface PostFormProps {
   boardId: string;
@@ -27,6 +27,7 @@ interface PostFormProps {
   allowGuest: boolean;
   allowFile: boolean;
   allowSecret: boolean;
+  allowProductLink: boolean;
   postId?: string;
   data?: Post | null;
 }
@@ -73,6 +74,7 @@ export default function PostForm({
   allowGuest,
   allowFile,
   allowSecret,
+  allowProductLink,
   postId,
   data = null,
 }: PostFormProps) {
@@ -120,7 +122,7 @@ export default function PostForm({
   const [fileToDelete, setFileToDelete] = useState<{ id: string; name: string } | null>(null);
   const [deletingFile, setDeletingFile] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [linkedProducts, setLinkedProducts] = useState<LinkedRecord[]>([]);
+  const [linkedProducts, setLinkedProducts] = useState<Array<{ id: string; title: string }>>([]);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [loadingProducts, setLoadingProducts] = useState(false);
 
@@ -213,16 +215,16 @@ export default function PostForm({
     loadExistingFiles();
   }, [postId, allowFile]);
 
-  // 연결된 제품 목록 로드 (reviews, quotes 게시판일 때만)
+  // 제품 목록 로드 (allow_product_link가 true일 때만)
   useEffect(() => {
-    const loadLinkedProducts = async () => {
-      if (boardCode === 'reviews' || boardCode === 'quotes') {
+    const loadProducts = async () => {
+      if (allowProductLink) {
         setLoadingProducts(true);
         try {
-          const products = await getBoardLinkedRecordsUsingAdmin(boardCode);
+          const products = await getProductsUsingAdmin();
           setLinkedProducts(products);
         } catch (error) {
-          console.error('연결된 제품 목록 로드 오류:', error);
+          console.error('제품 목록 로드 오류:', error);
           toast.error('제품 목록을 불러오는 중 오류가 발생했습니다.');
         } finally {
           setLoadingProducts(false);
@@ -230,21 +232,21 @@ export default function PostForm({
       }
     };
 
-    loadLinkedProducts();
-  }, [boardCode]);
+    loadProducts();
+  }, [allowProductLink]);
 
   // 수정 모드일 때 기존 제품 정보 로드
   useEffect(() => {
     const loadExistingProduct = async () => {
-      if (postId && (boardCode === 'reviews' || boardCode === 'quotes')) {
+      if (postId && allowProductLink) {
         try {
           if (boardCode === 'reviews') {
-            const review = await getPostReview(postId);
+            const review = await getProductReview(postId);
             if (review?.product_id) {
               setSelectedProductId(review.product_id);
             }
           } else if (boardCode === 'quotes') {
-            const inquiry = await getPostInquiry(postId);
+            const inquiry = await getProductInquiry(postId);
             if (inquiry?.product_id) {
               setSelectedProductId(inquiry.product_id);
             }
@@ -256,7 +258,7 @@ export default function PostForm({
     };
 
     loadExistingProduct();
-  }, [postId, boardCode]);
+  }, [postId, allowProductLink, boardCode]);
 
   /**
    * 파일을 Supabase Storage에 업로드
@@ -408,23 +410,23 @@ export default function PostForm({
         }
       }
 
-      // 리뷰 또는 견적문의 게시판인 경우 추가 정보 저장
-      if (boardCode === 'reviews' || boardCode === 'quotes') {
-        const selectedProduct = linkedProducts.find(p => p.id === selectedProductId);
-        
+      // 제품 연결이 허용된 경우 추가 정보 저장
+      // posts를 먼저 저장한 후, post_id와 product_id를 함께 전달하여 product_reviews/product_inquiries 저장
+      if (allowProductLink && selectedProductId) {
         if (boardCode === 'reviews') {
-          const reviewResult = await savePostReview(result.id, {
-            product_id: selectedProductId,
-            product_name: selectedProduct?.title || null,
+          const reviewResult = await saveProductReview(result.id, selectedProductId, {
+            rating: 0,
+            pros: '',
+            cons: '',
+            purchase_date: new Date().toISOString().split('T')[0],
           });
           if (!reviewResult.success) {
             console.error('리뷰 정보 저장 오류:', reviewResult.error);
             toast.warning('게시물은 저장되었지만 리뷰 정보 저장에 실패했습니다.');
           }
         } else if (boardCode === 'quotes') {
-          const inquiryResult = await savePostInquiry(result.id, {
-            product_id: selectedProductId,
-            product_name: selectedProduct?.title || null,
+          const inquiryResult = await saveProductInquiry(result.id, selectedProductId, {
+            type: 'quote',
           });
           if (!inquiryResult.success) {
             console.error('문의 정보 저장 오류:', inquiryResult.error);
@@ -501,10 +503,10 @@ export default function PostForm({
             </div>
           </div>
 
-          {/* 연결된 제품 선택 (reviews, quotes 게시판일 때만) */}
-          {(boardCode === 'reviews' || boardCode === 'quotes') && (
+          {/* 제품 선택 (allow_product_link가 true일 때만) */}
+          {allowProductLink && (
             <div className="space-y-2">
-              <Label htmlFor="product">연결된 제품 {boardCode === 'reviews' ? '(리뷰 대상)' : '(견적 문의 대상)'}</Label>
+              <Label htmlFor="product">연결된 제품 {boardCode === 'reviews' ? '(리뷰 대상)' : boardCode === 'quotes' ? '(견적 문의 대상)' : ''}</Label>
               <Select
                 value={selectedProductId || ''}
                 onValueChange={(value) => setSelectedProductId(value || null)}

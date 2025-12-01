@@ -212,7 +212,7 @@ export async function createBoard(
         allow_guest: board.allow_guest,
         allow_secret: board.allow_secret,
         display_order: board.display_order || 0,
-        linked_table_name: board.linked_table_name || null,
+        allow_product_link: board.allow_product_link || false,
       })
       .select()
       .single();
@@ -284,7 +284,7 @@ export async function updateBoard(
     if (board.allow_guest !== undefined) updateData.allow_guest = board.allow_guest;
     if (board.allow_secret !== undefined) updateData.allow_secret = board.allow_secret;
     if (board.display_order !== undefined) updateData.display_order = board.display_order;
-    if (board.linked_table_name !== undefined) updateData.linked_table_name = board.linked_table_name || null;
+    if (board.allow_product_link !== undefined) updateData.allow_product_link = board.allow_product_link;
 
     const { error } = await supabase
       .from('boards')
@@ -297,6 +297,10 @@ export async function updateBoard(
     }
 
     revalidatePath('/admin/system/boards');
+    // 게시판 연결 설정 페이지도 revalidate (allow_product_link 변경 시)
+    if (board.allow_product_link !== undefined) {
+      revalidatePath('/admin/info/products/board-settings');
+    }
     return { success: true };
   } catch (error: any) {
     console.error('게시판 수정 중 예외 발생:', error);
@@ -348,51 +352,23 @@ export async function deleteBoard(id: string): Promise<{ success: boolean; error
 }
 
 /**
- * 연결된 레코드 타입
+ * 제품 목록 조회 (관리자용)
  */
-export interface LinkedRecord {
-  id: string;
-  title: string;
-}
-
-/**
- * 특정 게시판의 연결된 테이블 레코드 조회 (관리자용)
- */
-export async function getBoardLinkedRecordsUsingAdmin(
-  boardCode: string,
+export async function getProductsUsingAdmin(
   limit: number = 100
-): Promise<LinkedRecord[]> {
-  const supabase = await createServerClient();
-  return getBoardLinkedRecords(supabase, boardCode, limit);
-}
-
-/**
- * 특정 게시판의 연결된 테이블 레코드 조회 (익명 클라이언트 사용)
- */
-export async function getBoardLinkedRecordsUsingAnonymous(
-  boardCode: string,
-  limit: number = 100
-): Promise<LinkedRecord[]> {
-  const supabase = createAnonymousServerClient();
-  return getBoardLinkedRecords(supabase, boardCode, limit);
-}
-
-/**
- * 특정 게시판의 연결된 테이블 레코드 조회 (supabase 클라이언트 전달)
- */
-export async function getBoardLinkedRecords(
-  supabase: SupabaseClient<Database>,
-  boardCode: string,
-  limit: number = 100
-): Promise<LinkedRecord[]> {
+): Promise<Array<{ id: string; title: string }>> {
   try {
-    const { data, error } = await supabase.rpc('get_board_linked_records', {
-      board_code_param: boardCode,
-      limit_count: limit
-    });
+    const supabase = await createServerClient();
+    
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, title')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
     if (error) {
-      console.error('연결된 레코드 조회 오류:', error);
+      console.error('제품 목록 조회 오류:', error);
       return [];
     }
 
@@ -401,7 +377,38 @@ export async function getBoardLinkedRecords(
       title: item.title
     }));
   } catch (error) {
-    console.error('연결된 레코드 조회 중 예외 발생:', error);
+    console.error('제품 목록 조회 중 예외 발생:', error);
+    return [];
+  }
+}
+
+/**
+ * 제품 목록 조회 (익명 클라이언트 사용)
+ */
+export async function getProductsUsingAnonymous(
+  limit: number = 100
+): Promise<Array<{ id: string; title: string }>> {
+  try {
+    const supabase = createAnonymousServerClient();
+    
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, title')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('제품 목록 조회 오류:', error);
+      return [];
+    }
+
+    return (data || []).map((item: any) => ({
+      id: item.id,
+      title: item.title
+    }));
+  } catch (error) {
+    console.error('제품 목록 조회 중 예외 발생:', error);
     return [];
   }
 }

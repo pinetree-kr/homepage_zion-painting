@@ -11,14 +11,15 @@ export async function getCarouselData() {
   const supabase = createAnonymousServerClient();
 
   try {
-    // prologue_settings 로드
+    // site_settings에서 prologue 설정 로드
     const { data: settingsData, error: settingsError } = await supabase
-      .from('prologue_settings')
-      .select('default_title, default_description')
-      .single() as {
+      .from('site_settings')
+      .select('prologue_default_title, prologue_default_description')
+      .is('deleted_at', null)
+      .maybeSingle() as {
         data: {
-          default_title: string | null;
-          default_description: string | null;
+          prologue_default_title: string | null;
+          prologue_default_description: string | null;
         } | null; error: any
       };
 
@@ -27,10 +28,10 @@ export async function getCarouselData() {
 
     if (settingsError && settingsError.code !== 'PGRST116') {
       // PGRST116은 레코드가 없을 때 발생하는 에러 (무시)
-      console.error('프롤로그 설정 로드 오류:', settingsError);
+      console.error('사이트 설정 로드 오류:', settingsError);
     } else if (settingsData) {
-      settingsDefaultTitle = settingsData.default_title;
-      settingsDefaultDescription = settingsData.default_description;
+      settingsDefaultTitle = settingsData.prologue_default_title;
+      settingsDefaultDescription = settingsData.prologue_default_description;
     }
 
     // 타이틀 우선순위 결정 함수

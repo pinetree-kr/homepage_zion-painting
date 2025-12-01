@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import Image from 'next/image';
 // import { supabase } from '@/src/shared/lib/supabase/client';
 import { resizeImage } from '@/src/shared/lib';
-import { PrologueCarouselItem, PrologueSettings } from '@/src/entities';
+import { PrologueCarouselItem } from '@/src/entities';
 import {
   DndContext,
   closestCenter,
@@ -204,19 +204,19 @@ export default function ManagementProloguePage() {
     try {
       setIsLoading(true);
 
-      // 프롤로그 설정 로드
+      // 사이트 설정에서 프롤로그 설정 로드
       const { data: settingsData, error: settingsError } = await supabaseClient
-        .from('prologue_settings')
-        .select('default_title, default_description')
-        .single()
-        .overrideTypes<PrologueSettings>();
+        .from('site_settings')
+        .select('prologue_default_title, prologue_default_description')
+        .is('deleted_at', null)
+        .maybeSingle() as { data: { prologue_default_title: string | null; prologue_default_description: string | null } | null; error: any };
 
       if (settingsError && settingsError.code !== 'PGRST116') {
         // PGRST116은 레코드가 없을 때 발생하는 에러 (무시)
-        console.error('설정 로드 오류:', settingsError);
+        console.error('사이트 설정 로드 오류:', settingsError);
       } else if (settingsData) {
-        setDefaultTitle(settingsData.default_title || '');
-        setDefaultDescription(settingsData.default_description || '');
+        setDefaultTitle(settingsData.prologue_default_title || '');
+        setDefaultDescription(settingsData.prologue_default_description || '');
       }
 
       // 캐러셀 아이템 로드
@@ -465,20 +465,20 @@ export default function ManagementProloguePage() {
     try {
       setIsSavingSettings(true);
 
-      // 프롤로그 설정 저장 또는 업데이트 (단일 레코드만 유지)
+      // 사이트 설정에서 프롤로그 설정 저장 또는 업데이트
       const { data: existingSettings } = await supabaseClient
-        .from('prologue_settings')
+        .from('site_settings')
         .select('id')
-        .limit(1)
-        .single() as { data: { id: string } | null; error: any };
+        .is('deleted_at', null)
+        .maybeSingle() as { data: { id: string } | null; error: any };
 
       if (existingSettings?.id) {
         // 기존 레코드 업데이트
         const { error: updateError } = await supabaseClient
-          .from('prologue_settings')
+          .from('site_settings')
           .update({
-            default_title: defaultTitle,
-            default_description: defaultDescription
+            prologue_default_title: defaultTitle,
+            prologue_default_description: defaultDescription
           })
           .eq('id', existingSettings.id);
 
@@ -490,10 +490,10 @@ export default function ManagementProloguePage() {
       } else {
         // 새 레코드 삽입
         const { error: insertError } = await supabaseClient
-          .from('prologue_settings')
+          .from('site_settings')
           .insert({
-            default_title: defaultTitle,
-            default_description: defaultDescription
+            prologue_default_title: defaultTitle,
+            prologue_default_description: defaultDescription
           });
 
         if (insertError) {

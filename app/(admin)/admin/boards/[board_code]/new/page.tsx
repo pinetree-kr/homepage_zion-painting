@@ -15,6 +15,6 @@ export default async function NewPostPage({ params }: NewPostPageProps) {
   if (!boardInfo) {
     return notFound();
   }
-  return <PostForm boardCode={board_code as 'notices' | 'qna' | 'quotes' | 'reviews'} boardId={boardInfo.id} boardName={boardInfo.name} allowGuest={boardInfo.allow_guest} allowFile={boardInfo.allow_file} allowSecret={boardInfo.allow_secret} />;
+  return <PostForm boardCode={board_code as 'notices' | 'qna' | 'quotes' | 'reviews'} boardId={boardInfo.id} boardName={boardInfo.name} allowGuest={boardInfo.allow_guest} allowFile={boardInfo.allow_file} allowSecret={boardInfo.allow_secret} allowProductLink={boardInfo.allow_product_link} />;
 }
 

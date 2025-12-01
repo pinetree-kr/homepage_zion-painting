@@ -32,6 +32,7 @@ export default async function PostEditPage({ params }: PostEditPageProps) {
       allowGuest={boardInfo.allow_guest}
       allowFile={boardInfo.allow_file}
       allowSecret={boardInfo.allow_secret}
+      allowProductLink={boardInfo.allow_product_link}
       postId={post_id}
       data={post}
     />

@@ -26,7 +26,6 @@ import {
 import { toast } from 'sonner';
 import { DataTable, DataTableColumn, DataTableAction, DataTablePagination, DataTableSearchBar } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { createBoard, updateBoard, deleteBoard } from '../api/board-actions';
 
 interface BoardManagementProps {
@@ -62,7 +61,7 @@ export default function BoardManagement({
     allow_guest: false,
     allow_secret: false,
     display_order: 0,
-    linked_table_name: null as string | null,
+    allow_product_link: false,
   });
 
   const refreshPage = () => {
@@ -95,7 +94,7 @@ export default function BoardManagement({
         allow_guest: false,
         allow_secret: false,
         display_order: 0,
-        linked_table_name: null,
+        allow_product_link: false,
       });
       setShowCreateDialog(false);
       refreshPage();
@@ -128,7 +127,7 @@ export default function BoardManagement({
       allow_guest: editingBoard.allow_guest,
       allow_secret: editingBoard.allow_secret,
       display_order: editingBoard.display_order,
-      linked_table_name: editingBoard.linked_table_name,
+      allow_product_link: editingBoard.allow_product_link,
     });
 
     if (result.success) {
@@ -224,16 +223,16 @@ export default function BoardManagement({
       width: '20%'
     },
     {
-      id: 'linked_table',
-      header: '연결 테이블',
+      id: 'product_link',
+      header: '제품 연결',
       accessor: (row) => (
         <div>
-          {row.linked_table_name ? (
+          {row.allow_product_link ? (
             <Badge variant="default" className="text-xs">
-              {row.linked_table_name}
+              허용
             </Badge>
           ) : (
-            <span className="text-xs text-gray-400">없음</span>
+            <span className="text-xs text-gray-400">비허용</span>
           )}
         </div>
       ),
@@ -365,22 +364,15 @@ export default function BoardManagement({
                 placeholder="0"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-linked-table">연결 테이블</Label>
-              <Select
-                value={createForm.linked_table_name || ''}
-                onValueChange={(value) => setCreateForm({ ...createForm, linked_table_name: value || null })}
-              >
-                <SelectTrigger id="create-linked-table">
-                  <SelectValue placeholder="연결할 테이블 선택 (선택사항)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">없음</SelectItem>
-                  <SelectItem value="products">products (제품)</SelectItem>
-                  <SelectItem value="business_achievements">business_achievements (사업 실적)</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">게시판에서 연결할 테이블을 선택합니다. (예: 리뷰 게시판 → products)</p>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="create-allow-product-link"
+                checked={createForm.allow_product_link}
+                onCheckedChange={(checked) => setCreateForm({ ...createForm, allow_product_link: checked === true })}
+              />
+              <Label htmlFor="create-allow-product-link" className="cursor-pointer">
+                제품 연결 허용
+              </Label>
             </div>
             <div className="space-y-3 pt-2">
               <div className="flex items-center space-x-2">
@@ -505,22 +497,15 @@ export default function BoardManagement({
                   placeholder="0"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-linked-table">연결 테이블</Label>
-                <Select
-                  value={editingBoard.linked_table_name || ''}
-                  onValueChange={(value) => setEditingBoard({ ...editingBoard, linked_table_name: value || null })}
-                >
-                  <SelectTrigger id="edit-linked-table">
-                    <SelectValue placeholder="연결할 테이블 선택 (선택사항)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">없음</SelectItem>
-                    <SelectItem value="products">products (제품)</SelectItem>
-                    <SelectItem value="business_achievements">business_achievements (사업 실적)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500">게시판에서 연결할 테이블을 선택합니다. (예: 리뷰 게시판 → products)</p>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="edit-allow-product-link"
+                  checked={editingBoard.allow_product_link}
+                  onCheckedChange={(checked) => setEditingBoard({ ...editingBoard, allow_product_link: checked === true })}
+                />
+                <Label htmlFor="edit-allow-product-link" className="cursor-pointer">
+                  제품 연결 허용
+                </Label>
               </div>
               <div className="space-y-3 pt-2">
                 <div className="flex items-center space-x-2">

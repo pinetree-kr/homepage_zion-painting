@@ -5,4 +5,3 @@ export default async function ProductCategoriesPage() {
   const productCategories = await getProductCategories();
   return <ProductCategories items={productCategories} />;
 }
-

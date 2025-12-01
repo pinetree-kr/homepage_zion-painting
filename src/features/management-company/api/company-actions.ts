@@ -409,9 +409,9 @@ export async function getContactInfo(): Promise<ContactInfo | null> {
   try {
     const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
-      .from('contact_info')
-      .select('*')
-      .limit(1)
+      .from('site_settings')
+      .select('id, contact_email, contact_address, contact_business_hours, contact_phone_primary, contact_phone_secondary, contact_fax, contact_map_url, created_at, updated_at')
+      .is('deleted_at', null)
       .maybeSingle();
 
     if (error) {
@@ -422,16 +422,16 @@ export async function getContactInfo(): Promise<ContactInfo | null> {
     if (!data) {
       return null;
     }
-    console.log({ data })
+    
     return {
       id: data.id,
-      email: data.email || '',
-      address: data.address || '',
-      business_hours: data.business_hours || null,
-      phone_primary: formatPhoneForDisplay(data.phone_primary),
-      phone_secondary: formatPhoneForDisplay(data.phone_secondary),
-      fax: formatPhoneForDisplay(data.fax),
-      map_url: data.map_url || null,
+      email: data.contact_email || '',
+      address: data.contact_address || '',
+      business_hours: data.contact_business_hours || null,
+      phone_primary: formatPhoneForDisplay(data.contact_phone_primary),
+      phone_secondary: formatPhoneForDisplay(data.contact_phone_secondary),
+      fax: formatPhoneForDisplay(data.contact_fax),
+      map_url: data.contact_map_url || null,
       created_at: data.created_at || null,
       updated_at: data.updated_at || null,
     };
@@ -450,25 +450,25 @@ export async function saveContactInfo(contactInfo: Partial<Omit<ContactInfo, 'id
 
     // 기존 정보 확인
     const { data: existingInfo } = await supabase
-      .from('contact_info')
+      .from('site_settings')
       .select('id')
-      .limit(1)
+      .is('deleted_at', null)
       .maybeSingle();
 
     const updateData = {
-      email: contactInfo.email || '',
-      address: contactInfo.address || '',
-      business_hours: contactInfo.business_hours || null,
-      phone_primary: contactInfo.phone_primary || null,
-      phone_secondary: contactInfo.phone_secondary || null,
-      fax: contactInfo.fax || null,
-      map_url: contactInfo.map_url || null,
+      contact_email: contactInfo.email || '',
+      contact_address: contactInfo.address || '',
+      contact_business_hours: contactInfo.business_hours || null,
+      contact_phone_primary: contactInfo.phone_primary || null,
+      contact_phone_secondary: contactInfo.phone_secondary || null,
+      contact_fax: contactInfo.fax || null,
+      contact_map_url: contactInfo.map_url || null,
     };
 
     if (existingInfo) {
       // 업데이트
       const { error } = await supabase
-        .from('contact_info')
+        .from('site_settings')
         .update(updateData)
         .eq('id', existingInfo.id);
 
@@ -478,7 +478,7 @@ export async function saveContactInfo(contactInfo: Partial<Omit<ContactInfo, 'id
     } else {
       // 새로 생성
       const { error } = await supabase
-        .from('contact_info')
+        .from('site_settings')
         .insert(updateData);
 
       if (error) {

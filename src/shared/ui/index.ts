@@ -13,6 +13,7 @@ export { FileUploader, type UploadedFile } from './FileUploader';
 export { Input } from './Input';
 export { Label } from './Label';
 export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './Select';
+export { Switch } from './Switch';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export { Textarea } from './Textarea';
 export { Toaster } from './Toaster';
