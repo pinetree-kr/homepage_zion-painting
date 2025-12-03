@@ -16,16 +16,12 @@ export default function ProductsLayout({
     if (pathname?.endsWith('/board-settings')) return 'board-settings';
     if (pathname?.endsWith('/categories')) return 'categories';
     if (pathname?.endsWith('/introduction')) return 'introduction';
-    if (pathname?.endsWith('/products') || pathname === '/admin/sections/products') return 'products';
-    return 'products'; // 기본값
+    if (pathname?.endsWith('/list') || pathname?.includes('/product/list')) return 'list';
+    return 'introduction'; // 기본값
   };
 
   const handleTabChange = (value: string) => {
-    if (value === 'products') {
-      router.push('/admin/sections/products');
-    } else {
-      router.push(`/admin/sections/products/${value}`);
-    }
+    router.push(`/admin/sections/product/${value}`);
   };
 
   return (
@@ -40,7 +36,7 @@ export default function ProductsLayout({
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="introduction">소개글</TabsTrigger>
-          <TabsTrigger value="products">제품 목록</TabsTrigger>
+          <TabsTrigger value="list">제품 목록</TabsTrigger>
           <TabsTrigger value="categories">제품 카테고리</TabsTrigger>
           <TabsTrigger value="board-settings">게시판 연결 설정</TabsTrigger>
         </TabsList>

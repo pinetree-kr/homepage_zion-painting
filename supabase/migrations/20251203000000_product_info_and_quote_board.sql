@@ -20,19 +20,11 @@ CREATE INDEX IF NOT EXISTS idx_product_info_review_board_id ON product_info(revi
 CREATE INDEX IF NOT EXISTS idx_product_info_quote_board_id ON product_info(quote_board_id) WHERE quote_board_id IS NOT NULL;
 
 -- 2. 새 레코드 생성
+-- 기존 데이터 있으면 삭제
+DELETE FROM product_info WHERE id is not null;
+
 INSERT INTO product_info (id, introduction, review_board_id, quote_board_id, created_at, updated_at)
 VALUES (gen_random_uuid(), '', NULL, NULL, NOW(), NOW());
-
--- 3. 기존 site_settings 테이블 데이터를 product_info 테이블의 레코드로 업데이트
-UPDATE product_info
-SET review_board_id = site_settings.review_board_id,
-    quote_board_id = site_settings.inquiry_board_id
-FROM site_settings
-WHERE product_info.id is not null;
-
--- 4. site_settings 테이블의 review_board_id와 inquiry_board_id 컬럼 삭제
-ALTER TABLE site_settings DROP COLUMN review_board_id;
-ALTER TABLE site_settings DROP COLUMN inquiry_board_id;
 
 -- 5. product_info updated_at 트리거 추가
 DROP TRIGGER IF EXISTS update_product_info_updated_at ON product_info;

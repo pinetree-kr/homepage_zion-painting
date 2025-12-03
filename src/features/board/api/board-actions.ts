@@ -299,7 +299,7 @@ export async function updateBoard(
     revalidatePath('/admin/system/boards');
     // 게시판 연결 설정 페이지도 revalidate (allow_product_link 변경 시)
     if (board.allow_product_link !== undefined) {
-      revalidatePath('/admin/sections/products/board-settings');
+      revalidatePath('/admin/sections/product/board-settings');
     }
     return { success: true };
   } catch (error: any) {

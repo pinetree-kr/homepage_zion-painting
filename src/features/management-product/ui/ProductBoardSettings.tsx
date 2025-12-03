@@ -63,35 +63,25 @@ export default function ProductBoardSettings({
   return (
     <div className="space-y-6">
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-gray-900 text-lg font-semibold">게시판 연결 설정</h3>
-            <p className="text-gray-500 text-sm mt-1">
-              제품과 연결할 리뷰게시판과 견적문의게시판을 선택하세요.
-            </p>
-          </div>
-          <Button 
-            onClick={handleSave}
-            disabled={saving || !hasChanges}
-            className="gap-2"
-          >
-            <Save className="h-4 w-4" />
-            {saving ? '저장 중...' : '저장'}
-          </Button>
+        <div className="mb-6">
+          <h3 className="text-gray-900 text-lg font-semibold">게시판 연결 설정</h3>
+          <p className="text-gray-500 text-sm mt-1">
+            제품과 연결할 <span className="font-bold text-blue-500">고객 후기</span> 게시판과 <span className="font-bold text-blue-500">견적 문의</span> 게시판을 선택하세요.
+          </p>
         </div>
 
         <div className="space-y-6">
           {/* 리뷰게시판 선택 */}
           <div className="space-y-2">
             <Label htmlFor="review-board" className="text-gray-900 font-medium">
-              리뷰게시판
+              고객 후기
             </Label>
             <Select
               value={reviewBoardId}
               onValueChange={setReviewBoardId}
             >
               <SelectTrigger id="review-board" className="w-full">
-                <SelectValue placeholder="리뷰게시판을 선택하세요" />
+                <SelectValue placeholder="고객후기 게시판을 선택하세요" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">선택 안 함</SelectItem>
@@ -112,14 +102,14 @@ export default function ProductBoardSettings({
           {/* 견적문의게시판 선택 */}
           <div className="space-y-2">
             <Label htmlFor="quote-board" className="text-gray-900 font-medium">
-              견적문의게시판
+              견적 문의
             </Label>
             <Select
               value={quoteBoardId}
               onValueChange={setQuoteBoardId}
             >
               <SelectTrigger id="quote-board" className="w-full">
-                <SelectValue placeholder="견적문의게시판을 선택하세요" />
+                <SelectValue placeholder="견적문의 게시판을 선택하세요" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">선택 안 함</SelectItem>
@@ -138,6 +128,16 @@ export default function ProductBoardSettings({
           </div>
         </div>
       </Card>
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleSave}
+          disabled={saving || !hasChanges}
+          className="gap-2"
+        >
+          <Save className="h-4 w-4" />
+          {saving ? '저장 중...' : '저장'}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -59,7 +59,7 @@ export async function saveProductCategory(category: Partial<ProductCategory>): P
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/sections/products/categories');
+      revalidatePath('/admin/sections/product/categories');
 
       return { success: true, id: data.id };
     } else {
@@ -89,7 +89,7 @@ export async function saveProductCategory(category: Partial<ProductCategory>): P
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/sections/products/categories');
+      revalidatePath('/admin/sections/product/categories');
 
       return { success: true, id: data.id };
     }
@@ -122,7 +122,7 @@ export async function updateProductCategoriesOrder(categories: { id: string; dis
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/sections/products/categories');
+    revalidatePath('/admin/sections/product/categories');
 
     return { success: true };
   } catch (error: any) {
@@ -147,7 +147,7 @@ export async function deleteProductCategory(id: string): Promise<{ success: bool
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/sections/products/categories');
+    revalidatePath('/admin/sections/product/categories');
 
     return { success: true };
   } catch (error: any) {
@@ -400,8 +400,8 @@ export async function saveProduct(product: Omit<Product, 'id'> & { id?: string |
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/sections/products');
-      revalidatePath(`/admin/sections/products/${product.id}`);
+      revalidatePath('/admin/sections/product');
+      revalidatePath(`/admin/sections/product/${product.id}`);
 
       return { success: true, id: data.id };
     } else {
@@ -418,7 +418,7 @@ export async function saveProduct(product: Omit<Product, 'id'> & { id?: string |
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/sections/products');
+      revalidatePath('/admin/sections/product');
 
       return { success: true, id: data.id };
     }
@@ -445,7 +445,7 @@ export async function deleteProduct(id: string): Promise<{ success: boolean; err
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/sections/products');
+    revalidatePath('/admin/sections/product');
 
     return { success: true };
   } catch (error: any) {
@@ -555,8 +555,8 @@ export async function saveProductInfo(productInfo: Partial<ProductInfo>): Promis
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/sections/products');
-    revalidatePath('/admin/sections/products/board-settings');
+    revalidatePath('/admin/sections/product');
+    revalidatePath('/admin/sections/product/board-settings');
 
     return { success: true };
   } catch (error: any) {

@@ -772,13 +772,16 @@ export async function getSiteSettings(): Promise<{
   contact_fax: string | null;
   contact_map_url: string | null;
   contact_extra_json: string | null;
+  notice_board_id: string | null;
+  inquire_board_id: string | null;
+  pds_board_id: string | null;
 } | null> {
   try {
     const supabase = await createServerClient();
 
     const { data, error } = await supabase
       .from('site_settings')
-      .select('id, prologue_default_title, prologue_default_description, contact_email, contact_address, contact_business_hours, contact_phone_primary, contact_phone_secondary, contact_fax, contact_map_url, contact_extra_json').is('deleted_at', null)
+      .select('id, prologue_default_title, prologue_default_description, contact_email, contact_address, contact_business_hours, contact_phone_primary, contact_phone_secondary, contact_fax, contact_map_url, contact_extra_json, notice_board_id, inquire_board_id, pds_board_id').is('deleted_at', null)
       .maybeSingle();
 
     if (error || !data) {
@@ -797,6 +800,9 @@ export async function getSiteSettings(): Promise<{
       contact_fax: data.contact_fax,
       contact_map_url: data.contact_map_url,
       contact_extra_json: data.contact_extra_json,
+      notice_board_id: data.notice_board_id,
+      inquire_board_id: data.inquire_board_id,
+      pds_board_id: data.pds_board_id,
     };
   } catch (error) {
     console.error('사이트 설정 조회 오류:', error);
@@ -819,6 +825,9 @@ export async function saveSiteSettings(
     contact_fax?: string | null;
     contact_map_url?: string | null;
     contact_extra_json?: string | null;
+    notice_board_id?: string | null;
+    inquire_board_id?: string | null;
+    pds_board_id?: string | null;
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -881,6 +890,15 @@ export async function saveSiteSettings(
     if (settings.contact_extra_json !== undefined) {
       settingsData.contact_extra_json = settings.contact_extra_json || null;
     }
+    if (settings.notice_board_id !== undefined) {
+      settingsData.notice_board_id = settings.notice_board_id || null;
+    }
+    if (settings.inquire_board_id !== undefined) {
+      settingsData.inquire_board_id = settings.inquire_board_id || null;
+    }
+    if (settings.pds_board_id !== undefined) {
+      settingsData.pds_board_id = settings.pds_board_id || null;
+    }
 
     if (existingSettings) {
       // 업데이트
@@ -902,6 +920,9 @@ export async function saveSiteSettings(
         return { success: false, error: error.message };
       }
     }
+
+    // 화면 업데이트를 위한 캐시 무효화
+    revalidatePath('/admin/system/boards/board-settings');
 
     return { success: true };
   } catch (error: any) {
