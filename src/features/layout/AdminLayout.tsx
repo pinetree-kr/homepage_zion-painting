@@ -227,7 +227,6 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
 
   const handleTabChange = useCallback((tab: string) => {
     const getBoardRoute = (boardCode: string | null, defaultRoute: string) => {
-      console.log('boardCode', boardCode);
       if (boardCode) {
         return `/admin/boards/${boardCode}`;
       }
