@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronUp, ChevronDown, ChevronsUpDown, MoreVertical } from 'lucide-react';
 import { Checkbox } from './Checkbox';
@@ -54,18 +54,18 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
-  
+
   // URL 기반 정렬 상태
   const urlSortColumn = useUrlSort ? searchParams?.get(sortParamKey) || null : null;
   const urlSortDirection = useUrlSort ? (searchParams?.get(orderParamKey) as 'asc' | 'desc' | null) || 'asc' : 'asc';
-  
+
   // 클라이언트 사이드 정렬 상태 (useUrlSort가 false일 때만 사용)
   const [clientSortColumn, setClientSortColumn] = useState<string | null>(null);
   const [clientSortDirection, setClientSortDirection] = useState<'asc' | 'desc'>('asc');
-  
+
   // 정렬 상태 결정
   const sortColumn = useUrlSort ? urlSortColumn : clientSortColumn;
   const sortDirection = useUrlSort ? urlSortDirection : clientSortDirection;
@@ -100,7 +100,7 @@ export function DataTable<T>({
     if (useUrlSort) {
       // URL 기반 정렬
       const params = new URLSearchParams(searchParams?.toString() || '');
-      
+
       if (sortColumn === columnId) {
         if (sortDirection === 'asc') {
           params.set(orderParamKey, 'desc');
@@ -113,10 +113,10 @@ export function DataTable<T>({
         params.set(sortParamKey, columnId);
         params.set(orderParamKey, 'asc');
       }
-      
+
       // 페이지를 1로 리셋 (정렬 변경 시)
       params.delete('page');
-      
+
       router.push(`?${params.toString()}`, { scroll: false });
     } else {
       // 클라이언트 사이드 정렬
