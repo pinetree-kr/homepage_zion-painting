@@ -17,7 +17,7 @@ const eslintConfig = [
       "@typescript-eslint/no-unused-vars": "off",
       "prefer-const": "warn",
     },
-    ignores: ["publish/**/*"],
+    ignores: ["publish/**/*", "supabase/functions/**/*"],
   },
 ];
 

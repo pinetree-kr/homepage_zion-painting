@@ -8,37 +8,37 @@ import { Label } from '@/src/shared/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { Board } from '@/src/entities/board/model/types';
-import { saveSiteSettings } from '@/src/features/post/api/post-actions';
+import { saveProductInfo } from '@/src/features/management-product/api/product-actions';
 import { useRouter } from 'next/navigation';
 
 interface ProductBoardSettingsProps {
   boards: Board[];
   reviewBoardId: string | null;
-  inquiryBoardId: string | null;
+  quoteBoardId: string | null;
 }
 
 export default function ProductBoardSettings({ 
   boards, 
   reviewBoardId: initialReviewBoardId,
-  inquiryBoardId: initialInquiryBoardId 
+  quoteBoardId: initialQuoteBoardId 
 }: ProductBoardSettingsProps) {
   const [reviewBoardId, setReviewBoardId] = useState<string>(initialReviewBoardId || '');
-  const [inquiryBoardId, setInquiryBoardId] = useState<string>(initialInquiryBoardId || '');
+  const [quoteBoardId, setQuoteBoardId] = useState<string>(initialQuoteBoardId || '');
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     setReviewBoardId(initialReviewBoardId || '');
-    setInquiryBoardId(initialInquiryBoardId || '');
-  }, [initialReviewBoardId, initialInquiryBoardId]);
+    setQuoteBoardId(initialQuoteBoardId || '');
+  }, [initialReviewBoardId, initialQuoteBoardId]);
 
   const handleSave = async () => {
     try {
       setSaving(true);
 
-      const result = await saveSiteSettings({
+      const result = await saveProductInfo({
         review_board_id: reviewBoardId || null,
-        inquiry_board_id: inquiryBoardId || null,
+        quote_board_id: quoteBoardId || null,
       });
 
       if (!result.success) {
@@ -58,7 +58,7 @@ export default function ProductBoardSettings({
 
   const hasChanges = 
     reviewBoardId !== (initialReviewBoardId || '') ||
-    inquiryBoardId !== (initialInquiryBoardId || '');
+    quoteBoardId !== (initialQuoteBoardId || '');
 
   return (
     <div className="space-y-6">
@@ -111,14 +111,14 @@ export default function ProductBoardSettings({
 
           {/* 견적문의게시판 선택 */}
           <div className="space-y-2">
-            <Label htmlFor="inquiry-board" className="text-gray-900 font-medium">
+            <Label htmlFor="quote-board" className="text-gray-900 font-medium">
               견적문의게시판
             </Label>
             <Select
-              value={inquiryBoardId}
-              onValueChange={setInquiryBoardId}
+              value={quoteBoardId}
+              onValueChange={setQuoteBoardId}
             >
-              <SelectTrigger id="inquiry-board" className="w-full">
+              <SelectTrigger id="quote-board" className="w-full">
                 <SelectValue placeholder="견적문의게시판을 선택하세요" />
               </SelectTrigger>
               <SelectContent>
@@ -130,9 +130,9 @@ export default function ProductBoardSettings({
                 ))}
               </SelectContent>
             </Select>
-            {inquiryBoardId && (
+            {quoteBoardId && (
               <p className="text-sm text-gray-500">
-                선택된 게시판: {boards.find(b => b.id === inquiryBoardId)?.name}
+                선택된 게시판: {boards.find(b => b.id === quoteBoardId)?.name}
               </p>
             )}
           </div>

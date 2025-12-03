@@ -302,9 +302,10 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
                         {/* 이미지 미리보기 또는 아이콘 */}
                         {isImage ? (
                           <div className="flex-shrink-0 w-12 h-12 rounded overflow-hidden bg-gray-100">
-                            <img
+                            <Image
                               src={file.file_url}
                               alt={file.file_name}
+                              fill
                               className="w-full h-full object-cover"
                             />
                           </div>

@@ -287,7 +287,7 @@ export default function ProductForm({
         if (product.id || productId) {
           router.refresh();
         } else {
-          router.push('/admin/info/products');
+          router.push('/admin/sections/products');
         }
       } else {
         toast.error(`저장 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
@@ -311,7 +311,7 @@ export default function ProductForm({
       const result = await deleteProduct(productId);
       if (result.success) {
         toast.success('제품이 삭제되었습니다.');
-        router.push('/admin/info/products');
+        router.push('/admin/sections/products');
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
       }
@@ -330,7 +330,7 @@ export default function ProductForm({
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => router.push('/admin/info/products')}
+            onClick={() => router.push('/admin/sections/products')}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

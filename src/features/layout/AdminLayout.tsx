@@ -181,11 +181,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // 현재 경로에 따라 activeTab 결정
   const getActiveTab = useCallback(() => {
     if (pathname === '/admin/dashboard') return 'dashboard';
-    if (pathname?.startsWith('/admin/info')) {
-      if (pathname === '/admin/info/prologue') return 'prologue';
-      if (pathname.startsWith('/admin/info/company')) return 'company-info';
-      if (pathname.startsWith('/admin/info/business')) return 'business-info';
-      if (pathname.startsWith('/admin/info/products')) return 'products-admin';
+    if (pathname?.startsWith('/admin/sections')) {
+      if (pathname === '/admin/sections/prologue') return 'prologue';
+      if (pathname.startsWith('/admin/sections/company')) return 'company-info';
+      if (pathname.startsWith('/admin/sections/business')) return 'business-info';
+      if (pathname.startsWith('/admin/sections/products')) return 'products-admin';
       return 'prologue';
     }
     if (pathname?.startsWith('/admin/customer')) {
@@ -212,10 +212,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const handleTabChange = useCallback((tab: string) => {
     const routeMap: Record<string, string> = {
       'dashboard': '/admin/dashboard',
-      'prologue': '/admin/info/prologue',
-      'company-info': '/admin/info/company/about',
-      'business-info': '/admin/info/business/introduction',
-      'products-admin': '/admin/info/products',
+      'prologue': '/admin/sections/prologue',
+      'company-info': '/admin/sections/company/about',
+      'business-info': '/admin/sections/business/introduction',
+      'products-admin': '/admin/sections/products',
       'members': '/admin/customer/members',
       'notices': '/admin/boards/notices',
       'qna': '/admin/boards/qna',
@@ -247,10 +247,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       label: '기본정보',
       icon: Building2Icon,
       items: [
-        { id: 'prologue', label: '프롤로그', icon: ImageIcon, route: '/admin/info/prologue' },
-        { id: 'company-info', label: '회사정보', icon: Building2Icon, route: '/admin/info/company' },
-        { id: 'business-info', label: '사업정보', icon: BriefcaseIcon, route: '/admin/info/business' },
-        { id: 'products-admin', label: '제품정보', icon: PackageIcon, route: '/admin/info/products' },
+        { id: 'prologue', label: '프롤로그', icon: ImageIcon, route: '/admin/sections/prologue' },
+        { id: 'company-info', label: '회사정보', icon: Building2Icon, route: '/admin/sections/company' },
+        { id: 'business-info', label: '사업정보', icon: BriefcaseIcon, route: '/admin/sections/business' },
+        { id: 'products-admin', label: '제품정보', icon: PackageIcon, route: '/admin/sections/products' },
       ],
     },
     {

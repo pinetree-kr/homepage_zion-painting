@@ -132,7 +132,7 @@ export async function searchAdmins(
     const profileMap = new Map((profiles || []).map(p => [p.id, p]));
 
     // 데이터 변환: 관리자와 프로필 데이터 결합
-    let members: Member[] = admins.map((admin: any) => {
+    const members: Member[] = admins.map((admin: any) => {
       const profile = profileMap.get(admin.id);
       return {
         id: admin.id,
@@ -158,8 +158,8 @@ export async function searchAdmins(
           aValue = a.email;
           bValue = b.email;
         } else if (sortColumn === 'last_login') {
-          aValue = a.last_login;
-          bValue = b.last_login;
+          aValue = a.last_login || null;
+          bValue = b.last_login || null;
         }
 
         const aStr = aValue || '';

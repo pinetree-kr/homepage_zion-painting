@@ -167,7 +167,7 @@ export async function saveBusinessCategory(category: Partial<BusinessCategory>):
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/info/business/categories');
+      revalidatePath('/admin/sections/business/categories');
 
       return { success: true, id: data.id };
     } else {
@@ -197,7 +197,7 @@ export async function saveBusinessCategory(category: Partial<BusinessCategory>):
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/info/business/categories');
+      revalidatePath('/admin/sections/business/categories');
 
       return { success: true, id: data.id };
     }
@@ -230,7 +230,7 @@ export async function updateBusinessCategoriesOrder(categories: { id: string; di
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/info/business/categories');
+    revalidatePath('/admin/sections/business/categories');
 
     return { success: true };
   } catch (error: any) {
@@ -255,7 +255,7 @@ export async function deleteBusinessCategory(id: string): Promise<{ success: boo
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/info/business/categories');
+    revalidatePath('/admin/sections/business/categories');
 
     return { success: true };
   } catch (error: any) {
@@ -580,7 +580,7 @@ export async function deleteBusinessAchievement(id: string): Promise<{ success: 
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/info/business/achievements');
+    revalidatePath('/admin/sections/business/achievements');
 
     return { success: true };
   } catch (error: any) {

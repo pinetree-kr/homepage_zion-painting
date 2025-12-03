@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { CircleUser } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
@@ -28,10 +28,6 @@ export default function Comments({ postId }: CommentsProps) {
     const [showWarning, setShowWarning] = useState(false);
     const [submittingComment, setSubmittingComment] = useState(false);
 
-    useEffect(() => {
-        loadComments();
-    }, [postId]);
-
     const formatCommentDate = (dateString: string | null | undefined) => {
         if (!dateString) return '-';
         const date = new Date(dateString);
@@ -45,7 +41,7 @@ export default function Comments({ postId }: CommentsProps) {
         }).replace(/\./g, '-').replace(/,/g, '');
     };
 
-    const loadComments = async () => {
+    const loadComments = useCallback(async (postId: string) => {
         setLoadingComments(true);
         try {
             const data = await getCommentsByPostId(postId);
@@ -56,9 +52,14 @@ export default function Comments({ postId }: CommentsProps) {
         } finally {
             setLoadingComments(false);
         }
-    };
+    }, []);
 
-    const handleSubmitComment = async () => {
+    useEffect(() => {
+        loadComments(postId);
+    }, [postId, loadComments]);
+
+
+    const submitComment = useCallback(async (postId: string, commentContent: string, commentAuthorName: string | undefined) => {
         // HTML 태그를 제거하고 텍스트만 추출하여 확인
         const textContent = commentContent.replace(/<[^>]*>/g, '').trim();
         if (!textContent) {
@@ -74,7 +75,7 @@ export default function Comments({ postId }: CommentsProps) {
                 setCommentContent('');
                 setCommentAuthorName('');
                 setShowWarning(false);
-                loadComments();
+                loadComments(postId);
             } else {
                 toast.error(result.error || '댓글 등록에 실패했습니다.');
             }
@@ -84,7 +85,12 @@ export default function Comments({ postId }: CommentsProps) {
         } finally {
             setSubmittingComment(false);
         }
-    };
+
+    }, [loadComments]);
+
+    const handleSubmitComment = useCallback(() => {
+        submitComment(postId, commentContent, commentAuthorName);
+    }, [postId, commentContent, commentAuthorName, submitComment]);
 
     return (
         <div className="space-y-6">

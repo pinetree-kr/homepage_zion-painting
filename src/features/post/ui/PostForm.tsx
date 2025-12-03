@@ -19,6 +19,7 @@ import type { Profile } from '@/src/entities/user/model/types';
 import { FileUploader, type UploadedFile } from '@/src/shared/ui';
 import { getPostFiles, savePostFiles, deletePostFile, type PostFile } from '../api/post-file-actions';
 import { getProductsUsingAdmin } from '@/src/features/board/api/board-actions';
+import Image from 'next/image';
 
 interface PostFormProps {
   boardId: string;
@@ -581,7 +582,7 @@ export default function PostForm({
                 accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
                 disabled={saving || uploading}
               />
-              
+
               {/* 기존 파일 목록 (수정 모드) */}
               {existingFiles.length > 0 && (
                 <div className="mt-4 space-y-2">
@@ -596,9 +597,10 @@ export default function PostForm({
                         >
                           {isImage ? (
                             <div className="flex-shrink-0 w-12 h-12 rounded overflow-hidden bg-gray-100">
-                              <img
+                              <Image
                                 src={file.file_url}
                                 alt={file.file_name}
+                                fill
                                 className="w-full h-full object-cover"
                               />
                             </div>
@@ -680,7 +682,7 @@ export default function PostForm({
           <DialogHeader>
             <DialogTitle>파일 삭제</DialogTitle>
             <DialogDescription>
-              정말로 "{fileToDelete?.name}" 파일을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              정말로 &ldquo;{fileToDelete?.name}&ldquo; 파일을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -226,7 +226,7 @@ export default function BusinessAchievementForm({
         if (achievement.id || achievementId) {
           router.refresh();
         } else {
-          router.push('/admin/info/business/achievements');
+          router.push('/admin/sections/business/achievements');
         }
       } else {
         toast.error(`저장 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
@@ -250,7 +250,7 @@ export default function BusinessAchievementForm({
       const result = await deleteBusinessAchievement(achievementId);
       if (result.success) {
         toast.success('사업실적이 삭제되었습니다.');
-        router.push('/admin/info/business/achievements');
+        router.push('/admin/sections/business/achievements');
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
       }
@@ -269,7 +269,7 @@ export default function BusinessAchievementForm({
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => router.push('/admin/info/business/achievements')}
+            onClick={() => router.push('/admin/sections/business/achievements')}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

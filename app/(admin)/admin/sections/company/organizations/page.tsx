@@ -4,7 +4,7 @@ import { getCompanyOrganizationMembers } from '@/src/features/management-company
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ManagementCompanyOrganizationPage() {
+export default async function ManagementCompanyOrganizationsPage() {
   const members = await getCompanyOrganizationMembers();
   return <CompanyOrganization items={members} />;
 }
