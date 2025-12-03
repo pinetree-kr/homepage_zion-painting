@@ -175,6 +175,7 @@ const ImageIcon = ({ className }: { className?: string }) => (
 interface BoardConnections {
   noticeBoardCode: string | null;
   inquireBoardCode: string | null;
+  pdsBoardCode: string | null;
   quoteBoardCode: string | null;
   reviewBoardCode: string | null;
 }
@@ -212,17 +213,18 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
       if (boardCode === boardConnections?.inquireBoardCode) return 'qna';
       if (boardCode === boardConnections?.quoteBoardCode) return 'quotes';
       if (boardCode === boardConnections?.reviewBoardCode) return 'reviews';
+      if (boardCode === boardConnections?.pdsBoardCode) return 'pds';
 
       return boardCode || 'notices';
     }
     if (pathname?.startsWith('/admin/system')) {
       if (pathname === '/admin/system/administrators') return 'admin-management';
-      if (pathname === '/admin/system/boards') return 'boards-management';
-      if (pathname === '/admin/system/logs') return 'logs';
-      if (pathname === '/admin/system/resources') return 'resources';
+      if (pathname.includes('boards')) return 'boards-management';
+      if (pathname.startsWith('/admin/system/logs')) return 'logs';
+      if (pathname.startsWith('/admin/system/resources')) return 'resources';
       return 'admin-management';
     }
-    return 'dashboard';
+    return null;
   }, [pathname, boardConnections]);
 
   const handleTabChange = useCallback((tab: string) => {
@@ -244,6 +246,7 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
       'qna': getBoardRoute(boardConnections?.inquireBoardCode || null, '/admin/boards/qna'),
       'quotes': getBoardRoute(boardConnections?.quoteBoardCode || null, '/admin/boards/quotes'),
       'reviews': getBoardRoute(boardConnections?.reviewBoardCode || null, '/admin/boards/reviews'),
+      'pds': getBoardRoute(boardConnections?.pdsBoardCode || null, '/admin/boards/pds'),
       'admin-management': '/admin/system/administrators',
       'boards-management': '/admin/system/boards',
       'logs': '/admin/system/logs',

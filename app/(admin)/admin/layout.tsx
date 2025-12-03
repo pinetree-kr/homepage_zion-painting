@@ -35,6 +35,7 @@ export default async function AdminLayoutWrapper({
   const boardConnections = {
     noticeBoardCode: siteSettings?.notice_board_id ? boardIdToCode.get(siteSettings.notice_board_id) || null : null,
     inquireBoardCode: siteSettings?.inquire_board_id ? boardIdToCode.get(siteSettings.inquire_board_id) || null : null,
+    pdsBoardCode: siteSettings?.pds_board_id ? boardIdToCode.get(siteSettings.pds_board_id) || null : null,
     quoteBoardCode: productInfo?.quote_board_id ? boardIdToCode.get(productInfo.quote_board_id) || null : null,
     reviewBoardCode: productInfo?.review_board_id ? boardIdToCode.get(productInfo.review_board_id) || null : null,
   };
