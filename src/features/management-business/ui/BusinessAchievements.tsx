@@ -35,11 +35,11 @@ export default function BusinessAchievements({
   const router = useRouter();
 
   const addAchievement = () => {
-    router.push('/admin/info/business/achievements/new');
+    router.push('/admin/sections/business/achievements/new');
   };
 
   const editAchievement = (achievement: Achievement & { category?: BusinessCategory | null }) => {
-    router.push(`/admin/info/business/achievements/${achievement.id}`);
+    router.push(`/admin/sections/business/achievements/${achievement.id}`);
   };
 
   const removeAchievement = async (id: string) => {
@@ -75,7 +75,7 @@ export default function BusinessAchievements({
             {row.thumbnail_url && (
               <ImageIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
             )}
-            <Link href={`/admin/info/business/achievements/${row.id}`} className="text-blue-500 hover:text-blue-700">
+            <Link href={`/admin/sections/business/achievements/${row.id}`} className="text-blue-500 hover:text-blue-700">
               {row.title}
             </Link>
           </div>

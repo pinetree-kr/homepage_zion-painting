@@ -5,6 +5,7 @@ import { Upload, X, File, Image as ImageIcon, FileText, FileIcon } from 'lucide-
 import { Button } from './Button';
 import { cn } from './utils';
 import { toast } from 'sonner';
+import Image from 'next/image';
 
 export interface UploadedFile {
   id: string;
@@ -63,7 +64,7 @@ export function FileUploader({
   /**
    * 파일 유효성 검사
    */
-  const validateFile = (file: File): string | null => {
+  const validateFile = useCallback((file: File, maxSizeMB: number, accept: string): string | null => {
     // 파일 크기 확인
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
@@ -75,7 +76,7 @@ export function FileUploader({
       const acceptedTypes = accept.split(',').map((type) => type.trim());
       const fileType = file.type;
       const fileName = file.name.toLowerCase();
-      
+
       const isAccepted = acceptedTypes.some((acceptedType) => {
         if (acceptedType.startsWith('.')) {
           // 확장자로 확인
@@ -96,14 +97,14 @@ export function FileUploader({
     }
 
     return null;
-  };
+  }, []);
 
   /**
    * 파일을 UploadedFile 형식으로 변환
    */
-  const processFile = async (file: File): Promise<UploadedFile> => {
+  const processFile = useCallback(async (file: File): Promise<UploadedFile> => {
     const id = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    
+
     // 이미지 파일인 경우 미리보기 생성
     let preview: string | undefined;
     if (file.type.startsWith('image/')) {
@@ -118,7 +119,7 @@ export function FileUploader({
       type: file.type,
       preview,
     };
-  };
+  }, []);
 
   /**
    * 파일 추가 처리
@@ -137,7 +138,7 @@ export function FileUploader({
 
       for (const file of fileArray) {
         // 유효성 검사
-        const error = validateFile(file);
+        const error = validateFile(file, maxSizeMB, accept || 'image/*');
         if (error) {
           toast.error(`${file.name}: ${error}`);
           continue;
@@ -165,7 +166,7 @@ export function FileUploader({
         onFilesChange([...files, ...newFiles]);
       }
     },
-    [files, maxFiles, onFilesChange]
+    [files, maxFiles, onFilesChange, validateFile, processFile, maxSizeMB, accept]
   );
 
   /**
@@ -229,7 +230,7 @@ export function FileUploader({
   const handleRemoveFile = useCallback(
     (id: string) => {
       const fileToRemove = files.find((f) => f.id === id);
-      
+
       // 미리보기 URL 정리
       if (fileToRemove?.preview) {
         URL.revokeObjectURL(fileToRemove.preview);
@@ -321,10 +322,11 @@ export function FileUploader({
                   {/* 이미지 미리보기 또는 아이콘 */}
                   {isImage && uploadedFile.preview ? (
                     <div className="flex-shrink-0 w-12 h-12 rounded overflow-hidden bg-gray-100">
-                      <img
+                      <Image
                         src={uploadedFile.preview}
                         alt={uploadedFile.name}
                         className="w-full h-full object-cover"
+                        fill
                       />
                     </div>
                   ) : (

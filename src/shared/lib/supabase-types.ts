@@ -99,7 +99,8 @@ export type Database = {
           allow_comment: boolean
           allow_file: boolean
           allow_guest: boolean
-          allow_secret: boolean | null
+          allow_product_link: boolean
+          allow_secret: boolean
           code: string
           created_at: string | null
           deleted_at: string | null
@@ -115,7 +116,8 @@ export type Database = {
           allow_comment?: boolean
           allow_file?: boolean
           allow_guest?: boolean
-          allow_secret?: boolean | null
+          allow_product_link?: boolean
+          allow_secret?: boolean
           code: string
           created_at?: string | null
           deleted_at?: string | null
@@ -131,7 +133,8 @@ export type Database = {
           allow_comment?: boolean
           allow_file?: boolean
           allow_guest?: boolean
-          allow_secret?: boolean | null
+          allow_product_link?: boolean
+          allow_secret?: boolean
           code?: string
           created_at?: string | null
           deleted_at?: string | null
@@ -348,48 +351,6 @@ export type Database = {
         }
         Relationships: []
       }
-      contact_info: {
-        Row: {
-          address: string
-          business_hours: string | null
-          created_at: string | null
-          email: string
-          extra_json: string | null
-          fax: string | null
-          id: string
-          map_url: string | null
-          phone_primary: string | null
-          phone_secondary: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          address: string
-          business_hours?: string | null
-          created_at?: string | null
-          email: string
-          extra_json?: string | null
-          fax?: string | null
-          id?: string
-          map_url?: string | null
-          phone_primary?: string | null
-          phone_secondary?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          address?: string
-          business_hours?: string | null
-          created_at?: string | null
-          email?: string
-          extra_json?: string | null
-          fax?: string | null
-          id?: string
-          map_url?: string | null
-          phone_primary?: string | null
-          phone_secondary?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       post_files: {
         Row: {
           created_at: string | null
@@ -427,154 +388,6 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      post_inquiries: {
-        Row: {
-          author_email: string | null
-          author_id: string | null
-          author_ip: string | null
-          author_name: string | null
-          author_phone: string | null
-          budget_max: number
-          budget_min: number
-          company_name: string | null
-          created_at: string | null
-          deleted_at: string | null
-          expected_end_at: string | null
-          expected_start_at: string | null
-          inquiry_status: Database["public"]["Enums"]["inquiry_status"]
-          internal_notes: string | null
-          post_id: string
-          priority: Database["public"]["Enums"]["inquiry_priority"]
-          product_id: string | null
-          product_name: string | null
-          subject: string | null
-          type: Database["public"]["Enums"]["inquiry_type"]
-          updated_at: string | null
-        }
-        Insert: {
-          author_email?: string | null
-          author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
-          author_phone?: string | null
-          budget_max?: number
-          budget_min?: number
-          company_name?: string | null
-          created_at?: string | null
-          deleted_at?: string | null
-          expected_end_at?: string | null
-          expected_start_at?: string | null
-          inquiry_status?: Database["public"]["Enums"]["inquiry_status"]
-          internal_notes?: string | null
-          post_id: string
-          priority?: Database["public"]["Enums"]["inquiry_priority"]
-          product_id?: string | null
-          product_name?: string | null
-          subject?: string | null
-          type?: Database["public"]["Enums"]["inquiry_type"]
-          updated_at?: string | null
-        }
-        Update: {
-          author_email?: string | null
-          author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
-          author_phone?: string | null
-          budget_max?: number
-          budget_min?: number
-          company_name?: string | null
-          created_at?: string | null
-          deleted_at?: string | null
-          expected_end_at?: string | null
-          expected_start_at?: string | null
-          inquiry_status?: Database["public"]["Enums"]["inquiry_status"]
-          internal_notes?: string | null
-          post_id?: string
-          priority?: Database["public"]["Enums"]["inquiry_priority"]
-          product_id?: string | null
-          product_name?: string | null
-          subject?: string | null
-          type?: Database["public"]["Enums"]["inquiry_type"]
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "post_inquiries_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_inquiries_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_inquiries_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      post_reviews: {
-        Row: {
-          cons: string
-          created_at: string | null
-          deleted_at: string | null
-          post_id: string
-          product_id: string | null
-          product_name: string | null
-          pros: string
-          purchase_date: string
-          rating: number
-          updated_at: string | null
-        }
-        Insert: {
-          cons?: string
-          created_at?: string | null
-          deleted_at?: string | null
-          post_id: string
-          product_id?: string | null
-          product_name?: string | null
-          pros?: string
-          purchase_date: string
-          rating?: number
-          updated_at?: string | null
-        }
-        Update: {
-          cons?: string
-          created_at?: string | null
-          deleted_at?: string | null
-          post_id?: string
-          product_id?: string | null
-          product_name?: string | null
-          pros?: string
-          purchase_date?: string
-          rating?: number
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "post_reviews_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_reviews_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -700,6 +513,171 @@ export type Database = {
         }
         Relationships: []
       }
+      product_info: {
+        Row: {
+          created_at: string | null
+          id: string
+          introduction: string | null
+          quote_board_id: string | null
+          review_board_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          introduction?: string | null
+          quote_board_id?: string | null
+          review_board_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          introduction?: string | null
+          quote_board_id?: string | null
+          review_board_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_info_quote_board_id_fkey"
+            columns: ["quote_board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_info_review_board_id_fkey"
+            columns: ["review_board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_inquiries: {
+        Row: {
+          budget_max: number
+          budget_min: number
+          company_name: string | null
+          created_at: string | null
+          deleted_at: string | null
+          expected_end_at: string | null
+          expected_start_at: string | null
+          id: string
+          inquiry_status: Database["public"]["Enums"]["inquiry_status"]
+          internal_notes: string | null
+          post_id: string
+          priority: Database["public"]["Enums"]["inquiry_priority"]
+          product_id: string
+          type: Database["public"]["Enums"]["inquiry_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          budget_max?: number
+          budget_min?: number
+          company_name?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          expected_end_at?: string | null
+          expected_start_at?: string | null
+          id?: string
+          inquiry_status?: Database["public"]["Enums"]["inquiry_status"]
+          internal_notes?: string | null
+          post_id: string
+          priority?: Database["public"]["Enums"]["inquiry_priority"]
+          product_id: string
+          type?: Database["public"]["Enums"]["inquiry_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          budget_max?: number
+          budget_min?: number
+          company_name?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          expected_end_at?: string | null
+          expected_start_at?: string | null
+          id?: string
+          inquiry_status?: Database["public"]["Enums"]["inquiry_status"]
+          internal_notes?: string | null
+          post_id?: string
+          priority?: Database["public"]["Enums"]["inquiry_priority"]
+          product_id?: string
+          type?: Database["public"]["Enums"]["inquiry_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_inquiries_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_inquiries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_reviews: {
+        Row: {
+          cons: string
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          post_id: string
+          product_id: string
+          pros: string
+          purchase_date: string
+          rating: number
+          updated_at: string | null
+        }
+        Insert: {
+          cons?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          post_id: string
+          product_id: string
+          pros?: string
+          purchase_date: string
+          rating?: number
+          updated_at?: string | null
+        }
+        Update: {
+          cons?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          post_id?: string
+          product_id?: string
+          pros?: string
+          purchase_date?: string
+          rating?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category_id: string | null
@@ -816,29 +794,87 @@ export type Database = {
         }
         Relationships: []
       }
-      prologue_settings: {
+      site_settings: {
         Row: {
+          contact_address: string | null
+          contact_business_hours: string | null
+          contact_email: string | null
+          contact_extra_json: string | null
+          contact_fax: string | null
+          contact_map_url: string | null
+          contact_phone_primary: string | null
+          contact_phone_secondary: string | null
           created_at: string | null
-          default_description: string | null
-          default_title: string | null
+          deleted_at: string | null
           id: string
+          inquire_board_id: string | null
+          notice_board_id: string | null
+          pds_board_id: string | null
+          prologue_default_description: string | null
+          prologue_default_title: string | null
           updated_at: string | null
         }
         Insert: {
+          contact_address?: string | null
+          contact_business_hours?: string | null
+          contact_email?: string | null
+          contact_extra_json?: string | null
+          contact_fax?: string | null
+          contact_map_url?: string | null
+          contact_phone_primary?: string | null
+          contact_phone_secondary?: string | null
           created_at?: string | null
-          default_description?: string | null
-          default_title?: string | null
+          deleted_at?: string | null
           id?: string
+          inquire_board_id?: string | null
+          notice_board_id?: string | null
+          pds_board_id?: string | null
+          prologue_default_description?: string | null
+          prologue_default_title?: string | null
           updated_at?: string | null
         }
         Update: {
+          contact_address?: string | null
+          contact_business_hours?: string | null
+          contact_email?: string | null
+          contact_extra_json?: string | null
+          contact_fax?: string | null
+          contact_map_url?: string | null
+          contact_phone_primary?: string | null
+          contact_phone_secondary?: string | null
           created_at?: string | null
-          default_description?: string | null
-          default_title?: string | null
+          deleted_at?: string | null
           id?: string
+          inquire_board_id?: string | null
+          notice_board_id?: string | null
+          pds_board_id?: string | null
+          prologue_default_description?: string | null
+          prologue_default_title?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "site_settings_inquire_board_id_fkey"
+            columns: ["inquire_board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_settings_notice_board_id_fkey"
+            columns: ["notice_board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_settings_pds_board_id_fkey"
+            columns: ["pds_board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

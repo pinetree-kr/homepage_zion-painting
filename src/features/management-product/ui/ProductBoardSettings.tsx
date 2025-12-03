@@ -8,37 +8,37 @@ import { Label } from '@/src/shared/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { Board } from '@/src/entities/board/model/types';
-import { saveSiteSettings } from '@/src/features/post/api/post-actions';
+import { saveProductInfo } from '@/src/features/management-product/api/product-actions';
 import { useRouter } from 'next/navigation';
 
 interface ProductBoardSettingsProps {
   boards: Board[];
   reviewBoardId: string | null;
-  inquiryBoardId: string | null;
+  quoteBoardId: string | null;
 }
 
 export default function ProductBoardSettings({ 
   boards, 
   reviewBoardId: initialReviewBoardId,
-  inquiryBoardId: initialInquiryBoardId 
+  quoteBoardId: initialQuoteBoardId 
 }: ProductBoardSettingsProps) {
   const [reviewBoardId, setReviewBoardId] = useState<string>(initialReviewBoardId || '');
-  const [inquiryBoardId, setInquiryBoardId] = useState<string>(initialInquiryBoardId || '');
+  const [quoteBoardId, setQuoteBoardId] = useState<string>(initialQuoteBoardId || '');
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     setReviewBoardId(initialReviewBoardId || '');
-    setInquiryBoardId(initialInquiryBoardId || '');
-  }, [initialReviewBoardId, initialInquiryBoardId]);
+    setQuoteBoardId(initialQuoteBoardId || '');
+  }, [initialReviewBoardId, initialQuoteBoardId]);
 
   const handleSave = async () => {
     try {
       setSaving(true);
 
-      const result = await saveSiteSettings({
+      const result = await saveProductInfo({
         review_board_id: reviewBoardId || null,
-        inquiry_board_id: inquiryBoardId || null,
+        quote_board_id: quoteBoardId || null,
       });
 
       if (!result.success) {
@@ -58,40 +58,30 @@ export default function ProductBoardSettings({
 
   const hasChanges = 
     reviewBoardId !== (initialReviewBoardId || '') ||
-    inquiryBoardId !== (initialInquiryBoardId || '');
+    quoteBoardId !== (initialQuoteBoardId || '');
 
   return (
     <div className="space-y-6">
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-gray-900 text-lg font-semibold">게시판 연결 설정</h3>
-            <p className="text-gray-500 text-sm mt-1">
-              제품과 연결할 리뷰게시판과 견적문의게시판을 선택하세요.
-            </p>
-          </div>
-          <Button 
-            onClick={handleSave}
-            disabled={saving || !hasChanges}
-            className="gap-2"
-          >
-            <Save className="h-4 w-4" />
-            {saving ? '저장 중...' : '저장'}
-          </Button>
+        <div className="mb-6">
+          <h3 className="text-gray-900 text-lg font-semibold">게시판 연결 설정</h3>
+          <p className="text-gray-500 text-sm mt-1">
+            제품과 연결할 <span className="font-bold text-blue-500">고객 후기</span> 게시판과 <span className="font-bold text-blue-500">견적 문의</span> 게시판을 선택하세요.
+          </p>
         </div>
 
         <div className="space-y-6">
           {/* 리뷰게시판 선택 */}
           <div className="space-y-2">
             <Label htmlFor="review-board" className="text-gray-900 font-medium">
-              리뷰게시판
+              고객 후기
             </Label>
             <Select
               value={reviewBoardId}
               onValueChange={setReviewBoardId}
             >
               <SelectTrigger id="review-board" className="w-full">
-                <SelectValue placeholder="리뷰게시판을 선택하세요" />
+                <SelectValue placeholder="고객후기 게시판을 선택하세요" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">선택 안 함</SelectItem>
@@ -111,15 +101,15 @@ export default function ProductBoardSettings({
 
           {/* 견적문의게시판 선택 */}
           <div className="space-y-2">
-            <Label htmlFor="inquiry-board" className="text-gray-900 font-medium">
-              견적문의게시판
+            <Label htmlFor="quote-board" className="text-gray-900 font-medium">
+              견적 문의
             </Label>
             <Select
-              value={inquiryBoardId}
-              onValueChange={setInquiryBoardId}
+              value={quoteBoardId}
+              onValueChange={setQuoteBoardId}
             >
-              <SelectTrigger id="inquiry-board" className="w-full">
-                <SelectValue placeholder="견적문의게시판을 선택하세요" />
+              <SelectTrigger id="quote-board" className="w-full">
+                <SelectValue placeholder="견적문의 게시판을 선택하세요" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">선택 안 함</SelectItem>
@@ -130,14 +120,24 @@ export default function ProductBoardSettings({
                 ))}
               </SelectContent>
             </Select>
-            {inquiryBoardId && (
+            {quoteBoardId && (
               <p className="text-sm text-gray-500">
-                선택된 게시판: {boards.find(b => b.id === inquiryBoardId)?.name}
+                선택된 게시판: {boards.find(b => b.id === quoteBoardId)?.name}
               </p>
             )}
           </div>
         </div>
       </Card>
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleSave}
+          disabled={saving || !hasChanges}
+          className="gap-2"
+        >
+          <Save className="h-4 w-4" />
+          {saving ? '저장 중...' : '저장'}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -21,3 +21,12 @@ export interface ProductCategory {
   updated_at?: string | null;
 }
 
+export interface ProductInfo {
+  id: string;
+  introduction?: string | null;
+  review_board_id?: string | null;
+  quote_board_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+

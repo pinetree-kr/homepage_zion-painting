@@ -313,9 +313,6 @@ CREATE INDEX IF NOT EXISTS idx_product_inquiries_inquiry_status ON product_inqui
 
 CREATE TABLE IF NOT EXISTS site_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  -- 게시판 연결 설정
-  review_board_id UUID REFERENCES boards(id) ON DELETE SET NULL, -- 리뷰 게시판 연결
-  inquiry_board_id UUID REFERENCES boards(id) ON DELETE SET NULL, -- 문의 게시판 연결
   -- prologue_settings 통합 필드
   prologue_default_title TEXT, -- 프롤로그 기본 제목
   prologue_default_description TEXT, -- 프롤로그 기본 설명
@@ -328,14 +325,21 @@ CREATE TABLE IF NOT EXISTS site_settings (
   contact_fax VARCHAR(50), -- 팩스
   contact_map_url VARCHAR(255), -- 지도 URL
   contact_extra_json TEXT, -- 추가 정보 (JSON)
+
+  notice_board_id UUID REFERENCES boards(id) ON DELETE SET NULL,
+  inquire_board_id UUID REFERENCES boards(id) ON DELETE SET NULL,
+  pds_board_id UUID REFERENCES boards(id) ON DELETE SET NULL,
+
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ -- soft delete
 );
 
-CREATE INDEX IF NOT EXISTS idx_site_settings_review_board_id ON site_settings(review_board_id) WHERE review_board_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_site_settings_inquiry_board_id ON site_settings(inquiry_board_id) WHERE inquiry_board_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_site_settings_deleted_at ON site_settings(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_site_settings_notice_board_id ON site_settings(notice_board_id) WHERE notice_board_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_site_settings_inquire_board_id ON site_settings(inquire_board_id) WHERE inquire_board_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_site_settings_pds_board_id ON site_settings(pds_board_id) WHERE pds_board_id IS NOT NULL;
+
 
 -- site_settings 단일 레코드 제약조건 (deleted_at이 NULL인 레코드는 하나만 허용)
 CREATE UNIQUE INDEX IF NOT EXISTS site_settings_single_row ON site_settings ((1)) WHERE deleted_at IS NULL;
@@ -343,14 +347,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS site_settings_single_row ON site_settings ((1)
 -- site_settings 초기 레코드 생성
 INSERT INTO site_settings (
   id, 
-  review_board_id, 
-  inquiry_board_id, 
   prologue_default_title, 
   prologue_default_description,
   contact_email,
-  contact_address
+  contact_address,
+  notice_board_id,
+  inquire_board_id,
+  pds_board_id
 )
-SELECT gen_random_uuid(), NULL, NULL, '환영합니다', '', '', ''
+SELECT gen_random_uuid(), '환영합니다', '', '', '', NULL, NULL, NULL
 WHERE NOT EXISTS (SELECT 1 FROM site_settings WHERE deleted_at IS NULL);
 
 -- ============================================================================

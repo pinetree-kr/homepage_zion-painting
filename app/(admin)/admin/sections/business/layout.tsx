@@ -21,7 +21,7 @@ export default function BusinessLayout({
   };
 
   const handleTabChange = (value: string) => {
-    router.push(`/admin/info/business/${value}`);
+    router.push(`/admin/sections/business/${value}`);
   };
 
   return (
@@ -35,10 +35,10 @@ export default function BusinessLayout({
 
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="introduction">사업소개</TabsTrigger>
+          <TabsTrigger value="introduction">소개글</TabsTrigger>
           <TabsTrigger value="areas">사업분야</TabsTrigger>
-          <TabsTrigger value="categories">적용산업</TabsTrigger>
           <TabsTrigger value="achievements">사업실적</TabsTrigger>
+          <TabsTrigger value="categories">적용산업</TabsTrigger>
         </TabsList>
         <div className="mt-6">
           {children}

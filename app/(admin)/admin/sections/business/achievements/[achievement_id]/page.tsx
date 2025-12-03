@@ -19,7 +19,7 @@ export default async function BusinessAchievementEditPage({ params }: BusinessAc
   ]);
 
   if (!achievement) {
-    redirect('/admin/info/business/achievements');
+    redirect('/admin/sections/business/achievements');
   }
 
   return (
