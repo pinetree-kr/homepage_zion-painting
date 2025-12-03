@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import UserMenu from '@/src/widgets/user/ui/UserMenu';
+import { FileIcon } from 'lucide-react';
 
 // Icon Components
 const Building2Icon = ({ className }: { className?: string }) => (
@@ -317,6 +318,12 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
             label: '고객후기',
             icon: StarIcon,
             route: getBoardRoute(boardConnections?.reviewBoardCode || null)
+          },
+          {
+            id: 'pds',
+            label: '자료실',
+            icon: FileIcon,
+            route: getBoardRoute(boardConnections?.pdsBoardCode || null)
           },
         ],
       },

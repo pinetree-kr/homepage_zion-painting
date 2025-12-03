@@ -99,7 +99,6 @@ export type Database = {
           allow_comment: boolean
           allow_file: boolean
           allow_guest: boolean
-          allow_product_link: boolean
           allow_secret: boolean
           code: string
           created_at: string | null
@@ -116,7 +115,6 @@ export type Database = {
           allow_comment?: boolean
           allow_file?: boolean
           allow_guest?: boolean
-          allow_product_link?: boolean
           allow_secret?: boolean
           code: string
           created_at?: string | null
@@ -133,7 +131,6 @@ export type Database = {
           allow_comment?: boolean
           allow_file?: boolean
           allow_guest?: boolean
-          allow_product_link?: boolean
           allow_secret?: boolean
           code?: string
           created_at?: string | null

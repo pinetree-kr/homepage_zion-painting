@@ -52,6 +52,53 @@ export async function getBoardInfo(supabase: SupabaseClient<Database>, boardCode
 }
 
 /**
+ * 게시판 정보 조회 (ID로 조회, 관리자용)
+ */
+export async function getBoardByIdUsingAdmin(boardId: string): Promise<Board | null> {
+  try {
+    const supabase = await createServerClient();
+
+    // 사용자 인증 상태 확인
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error('인증되지 않은 사용자입니다.');
+    }
+
+    // 관리자 여부 확인
+    const { data: adminData, error: adminError } = await supabase
+      .from('administrators')
+      .select('id')
+      .eq('id', user.id)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (adminError || !adminData) {
+      throw new Error('관리자 권한이 필요합니다.');
+    }
+
+    const { data, error } = await supabase
+      .from('boards')
+      .select('*')
+      .eq('id', boardId)
+      .is('deleted_at', null)
+      .maybeSingle() as {
+        data: Board | null;
+        error: any;
+      };
+
+    if (error) {
+      console.error('게시판 조회 오류:', error);
+      return null;
+    }
+
+    return data || null;
+  } catch (error) {
+    console.error('게시판 조회 중 예외 발생:', error);
+    return null;
+  }
+}
+
+/**
  * 게시판 목록 조회 (관리자용, 검색, 페이징 및 정렬 지원)
  */
 export async function getBoardsUsingAdmin(
@@ -123,7 +170,6 @@ export async function getBoardsUsingAdmin(
       const columnMapping: Record<string, string> = {
         'code': 'code',
         'name': 'name',
-        'display_order': 'display_order',
         'created_at': 'created_at',
       };
 
@@ -132,11 +178,11 @@ export async function getBoardsUsingAdmin(
         query = query.order(dbColumn, { ascending: sortDirection === 'asc' });
       } else {
         // 기본 정렬
-        query = query.order('display_order', { ascending: true }).order('created_at', { ascending: false });
+        query = query.order('created_at', { ascending: false });
       }
     } else {
       // 기본 정렬
-      query = query.order('display_order', { ascending: true }).order('created_at', { ascending: false });
+      query = query.order('created_at', { ascending: false });
     }
 
     const { data, error } = await query as {
@@ -211,8 +257,6 @@ export async function createBoard(
         allow_file: board.allow_file,
         allow_guest: board.allow_guest,
         allow_secret: board.allow_secret,
-        display_order: board.display_order || 0,
-        allow_product_link: board.allow_product_link || false,
       })
       .select()
       .single();
@@ -283,8 +327,6 @@ export async function updateBoard(
     if (board.allow_file !== undefined) updateData.allow_file = board.allow_file;
     if (board.allow_guest !== undefined) updateData.allow_guest = board.allow_guest;
     if (board.allow_secret !== undefined) updateData.allow_secret = board.allow_secret;
-    if (board.display_order !== undefined) updateData.display_order = board.display_order;
-    if (board.allow_product_link !== undefined) updateData.allow_product_link = board.allow_product_link;
 
     const { error } = await supabase
       .from('boards')
@@ -297,10 +339,6 @@ export async function updateBoard(
     }
 
     revalidatePath('/admin/system/boards');
-    // 게시판 연결 설정 페이지도 revalidate (allow_product_link 변경 시)
-    if (board.allow_product_link !== undefined) {
-      revalidatePath('/admin/sections/product/board-settings');
-    }
     return { success: true };
   } catch (error: any) {
     console.error('게시판 수정 중 예외 발생:', error);
