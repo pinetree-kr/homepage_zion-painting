@@ -93,6 +93,68 @@ export type Database = {
           },
         ]
       }
+      board_policies: {
+        Row: {
+          board_id: string
+          cmt_create: boolean
+          cmt_delete: boolean
+          cmt_edit: boolean
+          cmt_read: boolean
+          created_at: string | null
+          file_download: boolean
+          file_upload: boolean
+          post_create: boolean
+          post_delete: boolean
+          post_edit: boolean
+          post_list: boolean
+          post_read: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          board_id: string
+          cmt_create?: boolean
+          cmt_delete?: boolean
+          cmt_edit?: boolean
+          cmt_read?: boolean
+          created_at?: string | null
+          file_download?: boolean
+          file_upload?: boolean
+          post_create?: boolean
+          post_delete?: boolean
+          post_edit?: boolean
+          post_list?: boolean
+          post_read?: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          board_id?: string
+          cmt_create?: boolean
+          cmt_delete?: boolean
+          cmt_edit?: boolean
+          cmt_read?: boolean
+          created_at?: string | null
+          file_download?: boolean
+          file_upload?: boolean
+          post_create?: boolean
+          post_delete?: boolean
+          post_edit?: boolean
+          post_list?: boolean
+          post_read?: boolean
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_policies_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boards: {
         Row: {
           allow_anonymous: boolean
@@ -109,6 +171,7 @@ export type Database = {
           is_public: boolean
           name: string
           updated_at: string | null
+          visibility: Database["public"]["Enums"]["visible_type"]
         }
         Insert: {
           allow_anonymous?: boolean
@@ -125,6 +188,7 @@ export type Database = {
           is_public?: boolean
           name: string
           updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["visible_type"]
         }
         Update: {
           allow_anonymous?: boolean
@@ -141,6 +205,7 @@ export type Database = {
           is_public?: boolean
           name?: string
           updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["visible_type"]
         }
         Relationships: []
       }
@@ -878,14 +943,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_board_permission: {
+        Args: { p_board_id: string; p_permission: string; p_user_id: string }
+        Returns: boolean
+      }
       is_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
       admin_role: "system" | "contents"
+      app_role: "member" | "admin"
       document_status: "draft" | "published"
       inquiry_priority: "low" | "medium" | "high"
       inquiry_status: "pending" | "approved" | "answered" | "rejected"
       inquiry_type: "general" | "quote"
+      visible_type: "public" | "member" | "owner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1017,10 +1088,12 @@ export const Constants = {
   public: {
     Enums: {
       admin_role: ["system", "contents"],
+      app_role: ["member", "admin"],
       document_status: ["draft", "published"],
       inquiry_priority: ["low", "medium", "high"],
       inquiry_status: ["pending", "approved", "answered", "rejected"],
       inquiry_type: ["general", "quote"],
+      visible_type: ["public", "member", "owner"],
     },
   },
 } as const

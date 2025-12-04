@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/src/shared/lib/supabase-types';
 import type { Post } from '@/src/entities/post/model/types';
-import type { Board } from '@/src/entities/board/model/types';
+import type { Board, BoardPolicy, VisibleType, AppRole } from '@/src/entities/board/model/types';
 
 /**
  * 게시판 정보 조회 (관리자용)
@@ -207,10 +207,107 @@ export async function getBoardsUsingAdmin(
 }
 
 /**
+ * 게시판 권한 정책 조회 (관리자용)
+ */
+export async function getBoardPolicies(boardId: string): Promise<BoardPolicy[]> {
+  try {
+    const supabase = await createServerClient();
+
+    const { data, error } = await supabase
+      .from('board_policies')
+      .select('*')
+      .eq('board_id', boardId);
+
+    if (error) {
+      console.error('권한 정책 조회 오류:', error);
+      return [];
+    }
+
+    return (data || []) as BoardPolicy[];
+  } catch (error) {
+    console.error('권한 정책 조회 중 예외 발생:', error);
+    return [];
+  }
+}
+
+/**
+ * 게시판 권한 정책 저장 (관리자용)
+ */
+export async function saveBoardPolicies(
+  boardId: string,
+  policies: Omit<BoardPolicy, 'board_id' | 'created_at' | 'updated_at'>[]
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createServerClient();
+
+    // 사용자 인증 상태 확인
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: '인증되지 않은 사용자입니다.' };
+    }
+
+    // 관리자 여부 확인
+    const { data: adminData, error: adminError } = await supabase
+      .from('administrators')
+      .select('id')
+      .eq('id', user.id)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (adminError || !adminData) {
+      return { success: false, error: '관리자 권한이 필요합니다.' };
+    }
+
+    // 기존 정책 삭제
+    const { error: deleteError } = await supabase
+      .from('board_policies')
+      .delete()
+      .eq('board_id', boardId);
+
+    if (deleteError) {
+      console.error('기존 정책 삭제 오류:', deleteError);
+      return { success: false, error: deleteError.message };
+    }
+
+    // 새 정책 삽입
+    const policiesToInsert = policies.map(policy => ({
+      board_id: boardId,
+      role: policy.role,
+      post_list: policy.post_list,
+      post_create: policy.post_create,
+      post_read: policy.post_read,
+      post_edit: policy.post_edit,
+      post_delete: policy.post_delete,
+      cmt_create: policy.cmt_create,
+      cmt_read: policy.cmt_read,
+      cmt_edit: policy.cmt_edit,
+      cmt_delete: policy.cmt_delete,
+      file_upload: policy.file_upload,
+      file_download: policy.file_download,
+    }));
+
+    const { error: insertError } = await supabase
+      .from('board_policies')
+      .insert(policiesToInsert);
+
+    if (insertError) {
+      console.error('권한 정책 저장 오류:', insertError);
+      return { success: false, error: insertError.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('권한 정책 저장 중 예외 발생:', error);
+    return { success: false, error: error.message || '알 수 없는 오류' };
+  }
+}
+
+/**
  * 게시판 생성 (관리자용)
  */
 export async function createBoard(
-  board: Omit<Board, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>
+  board: Omit<Board, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>,
+  policies?: Omit<BoardPolicy, 'board_id' | 'created_at' | 'updated_at'>[]
 ): Promise<{ success: boolean; error?: string; id?: string }> {
   try {
     const supabase = await createServerClient();
@@ -252,6 +349,7 @@ export async function createBoard(
         name: board.name,
         description: board.description || null,
         is_public: board.is_public,
+        visibility: board.visibility || (board.is_public ? 'public' : 'member'),
         allow_anonymous: board.allow_anonymous,
         allow_comment: board.allow_comment,
         allow_file: board.allow_file,
@@ -264,6 +362,48 @@ export async function createBoard(
     if (error) {
       console.error('게시판 생성 오류:', error);
       return { success: false, error: error.message };
+    }
+
+    // 권한 정책 저장
+    if (policies && policies.length > 0) {
+      const policyResult = await saveBoardPolicies(data.id, policies);
+      if (!policyResult.success) {
+        // 게시판은 생성되었지만 정책 저장 실패 - 롤백은 하지 않고 경고만
+        console.warn('게시판은 생성되었지만 권한 정책 저장에 실패했습니다:', policyResult.error);
+      }
+    } else {
+      // 기본 정책 생성 (admin과 member 모두 모든 권한 허용)
+      const defaultPolicies: Omit<BoardPolicy, 'board_id' | 'created_at' | 'updated_at'>[] = [
+        {
+          role: 'admin',
+          post_list: true,
+          post_create: true,
+          post_read: true,
+          post_edit: true,
+          post_delete: true,
+          cmt_create: true,
+          cmt_read: true,
+          cmt_edit: true,
+          cmt_delete: true,
+          file_upload: true,
+          file_download: true,
+        },
+        {
+          role: 'member',
+          post_list: true,
+          post_create: true,
+          post_read: true,
+          post_edit: true,
+          post_delete: true,
+          cmt_create: true,
+          cmt_read: true,
+          cmt_edit: true,
+          cmt_delete: true,
+          file_upload: true,
+          file_download: true,
+        },
+      ];
+      await saveBoardPolicies(data.id, defaultPolicies);
     }
 
     revalidatePath('/admin/system/boards');
@@ -279,7 +419,8 @@ export async function createBoard(
  */
 export async function updateBoard(
   id: string,
-  board: Partial<Omit<Board, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>>
+  board: Partial<Omit<Board, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>>,
+  policies?: Omit<BoardPolicy, 'board_id' | 'created_at' | 'updated_at'>[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createServerClient();
@@ -322,6 +463,7 @@ export async function updateBoard(
     if (board.name !== undefined) updateData.name = board.name;
     if (board.description !== undefined) updateData.description = board.description;
     if (board.is_public !== undefined) updateData.is_public = board.is_public;
+    if (board.visibility !== undefined) updateData.visibility = board.visibility;
     if (board.allow_anonymous !== undefined) updateData.allow_anonymous = board.allow_anonymous;
     if (board.allow_comment !== undefined) updateData.allow_comment = board.allow_comment;
     if (board.allow_file !== undefined) updateData.allow_file = board.allow_file;
@@ -336,6 +478,15 @@ export async function updateBoard(
     if (error) {
       console.error('게시판 수정 오류:', error);
       return { success: false, error: error.message };
+    }
+
+    // 권한 정책 저장
+    if (policies && policies.length > 0) {
+      const policyResult = await saveBoardPolicies(id, policies);
+      if (!policyResult.success) {
+        console.warn('게시판은 수정되었지만 권한 정책 저장에 실패했습니다:', policyResult.error);
+        return { success: false, error: policyResult.error };
+      }
     }
 
     revalidatePath('/admin/system/boards');
