@@ -222,7 +222,6 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
       if (pathname === '/admin/system/administrators') return 'admin-management';
       if (pathname.includes('boards')) return 'boards-management';
       if (pathname.startsWith('/admin/system/logs')) return 'logs';
-      if (pathname.startsWith('/admin/system/resources')) return 'resources';
       return 'admin-management';
     }
     return null;
@@ -251,7 +250,6 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
       'admin-management': '/admin/system/administrators',
       'boards-management': '/admin/system/boards',
       'logs': '/admin/system/logs',
-      'resources': '/admin/system/resources',
     };
 
     const route = routeMap[tab];
@@ -335,7 +333,6 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
           { id: 'admin-management', label: '관리자', icon: ShieldIcon, route: '/admin/system/administrators' },
           { id: 'boards-management', label: '게시판 관리', icon: FileTextIcon, route: '/admin/system/boards' },
           { id: 'logs', label: '로그', icon: ActivityIcon, route: '/admin/system/logs' },
-          { id: 'resources', label: '리소스', icon: ServerIcon, route: '/admin/system/resources' },
         ],
       },
     ];

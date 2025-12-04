@@ -8,6 +8,7 @@ import { Label } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
 import type { Profile } from '@/src/entities/user';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
+import { recordAdminLogin, recordLoginFailed } from '@/src/features/auth/api/auth-actions';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -32,6 +33,12 @@ export default function SignInPage() {
       if (authError) {
         if (authError.code === 'invalid_credentials') {
           setError('이메일 또는 비밀번호가 올바르지 않습니다');
+          // 로그인 실패 로그 기록
+          try {
+            await recordLoginFailed(email);
+          } catch (logError) {
+            console.error('로그인 실패 로그 기록 오류:', logError);
+          }
         }
         else {
           setError(authError.message);
@@ -65,6 +72,16 @@ export default function SignInPage() {
         .maybeSingle();
 
       const isAdmin = adminData !== null;
+
+      // 관리자인 경우 관리자 로그인 로그 기록
+      if (isAdmin) {
+        try {
+          await recordAdminLogin();
+        } catch (logError) {
+          console.error('관리자 로그인 로그 기록 오류:', logError);
+          // 로그 기록 실패해도 로그인은 계속 진행
+        }
+      }
 
       // 관리자인 경우 관리자 페이지로, 아니면 홈으로
       if (isAdmin) {

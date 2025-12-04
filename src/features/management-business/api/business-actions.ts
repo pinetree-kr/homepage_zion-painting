@@ -88,6 +88,13 @@ export async function saveBusinessInfo(businessInfo: Partial<BusinessInfo>): Pro
     }
 
     if (existingInfo) {
+      // 기존 데이터 가져오기 (변경 전 값 비교용)
+      const { data: oldData } = await supabase
+        .from('business_info')
+        .select('*')
+        .eq('id', existingInfo.id)
+        .single();
+
       // 업데이트
       const { error } = await supabase
         .from('business_info')
@@ -96,6 +103,32 @@ export async function saveBusinessInfo(businessInfo: Partial<BusinessInfo>): Pro
 
       if (error) {
         return { success: false, error: error.message };
+      }
+
+      // 활동 로그 기록
+      try {
+        const user = await getCurrentUserProfile();
+        if (user) {
+          // 변경된 필드 확인
+          const changedFields: string[] = [];
+          if (oldData) {
+            if (oldData.introduction !== updateData.introduction) changedFields.push('introduction');
+            if (JSON.stringify(oldData.areas) !== JSON.stringify(updateData.areas)) changedFields.push('areas');
+          }
+
+          if (changedFields.length > 0) {
+            await logSectionSettingChange(
+              user.id,
+              user.name || '알 수 없음',
+              '사업정보',
+              JSON.stringify(oldData || {}),
+              JSON.stringify(updateData)
+            );
+          }
+        }
+      } catch (logError) {
+        // 로그 기록 실패해도 업데이트는 성공으로 처리
+        console.error('활동 로그 기록 실패:', logError);
       }
     } else {
       // 새로 생성

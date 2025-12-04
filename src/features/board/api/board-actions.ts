@@ -7,6 +7,9 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/src/shared/lib/supabase-types';
 import type { Post } from '@/src/entities/post/model/types';
 import type { Board, BoardPolicy, VisibleType, AppRole } from '@/src/entities/board/model/types';
+import { logBoardPermissionChange, logBoardUpdate } from '@/src/entities/system';
+import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
+import { headers } from 'next/headers';
 
 /**
  * 게시판 정보 조회 (관리자용)
@@ -258,6 +261,21 @@ export async function saveBoardPolicies(
       return { success: false, error: '관리자 권한이 필요합니다.' };
     }
 
+    // 게시판 정보 가져오기 (로그용)
+    const { data: boardData } = await supabase
+      .from('boards')
+      .select('name')
+      .eq('id', boardId)
+      .single();
+
+    const boardName = boardData?.name || '알 수 없음';
+
+    // 기존 정책 가져오기 (변경 전후 비교용)
+    const { data: oldPolicies } = await supabase
+      .from('board_policies')
+      .select('*')
+      .eq('board_id', boardId);
+
     // 기존 정책 삭제
     const { error: deleteError } = await supabase
       .from('board_policies')
@@ -293,6 +311,101 @@ export async function saveBoardPolicies(
     if (insertError) {
       console.error('권한 정책 저장 오류:', insertError);
       return { success: false, error: insertError.message };
+    }
+
+    // 활동 로그 기록 (권한 변경)
+    try {
+      const userProfile = await getCurrentUserProfile();
+      if (userProfile) {
+        // IP 주소 가져오기
+        let ipAddress: string | null = null;
+        try {
+          const headersList = await headers();
+          const forwardedFor = headersList.get('x-forwarded-for');
+          const realIp = headersList.get('x-real-ip');
+          const cfConnectingIp = headersList.get('cf-connecting-ip');
+          
+          if (forwardedFor) {
+            ipAddress = forwardedFor.split(',')[0].trim();
+          } else if (realIp) {
+            ipAddress = realIp;
+          } else if (cfConnectingIp) {
+            ipAddress = cfConnectingIp;
+          }
+        } catch (ipError) {
+          console.error('IP 주소 가져오기 실패:', ipError);
+        }
+
+        // 변경된 권한 정보 비교
+        const changedRoles: string[] = [];
+        const permissionChanges: Record<string, { role: string; before: any; after: any }> = {};
+
+        // 기존 정책과 새 정책 비교
+        policies.forEach(newPolicy => {
+          const oldPolicy = oldPolicies?.find(p => p.role === newPolicy.role);
+          
+          if (!oldPolicy) {
+            // 새로 추가된 역할
+            changedRoles.push(newPolicy.role);
+            permissionChanges[newPolicy.role] = {
+              role: newPolicy.role,
+              before: null,
+              after: newPolicy
+            };
+          } else {
+            // 권한 변경 확인
+            const hasChanges = 
+              oldPolicy.post_list !== newPolicy.post_list ||
+              oldPolicy.post_create !== newPolicy.post_create ||
+              oldPolicy.post_read !== newPolicy.post_read ||
+              oldPolicy.post_edit !== newPolicy.post_edit ||
+              oldPolicy.post_delete !== newPolicy.post_delete ||
+              oldPolicy.cmt_create !== newPolicy.cmt_create ||
+              oldPolicy.cmt_read !== newPolicy.cmt_read ||
+              oldPolicy.cmt_edit !== newPolicy.cmt_edit ||
+              oldPolicy.cmt_delete !== newPolicy.cmt_delete ||
+              oldPolicy.file_upload !== newPolicy.file_upload ||
+              oldPolicy.file_download !== newPolicy.file_download;
+
+            if (hasChanges) {
+              changedRoles.push(newPolicy.role);
+              permissionChanges[newPolicy.role] = {
+                role: newPolicy.role,
+                before: oldPolicy,
+                after: newPolicy
+              };
+            }
+          }
+        });
+
+        // 삭제된 역할 확인
+        oldPolicies?.forEach(oldPolicy => {
+          const exists = policies.find(p => p.role === oldPolicy.role);
+          if (!exists) {
+            changedRoles.push(oldPolicy.role);
+            permissionChanges[oldPolicy.role] = {
+              role: oldPolicy.role,
+              before: oldPolicy,
+              after: null
+            };
+          }
+        });
+
+        // 변경사항이 있는 경우에만 로그 기록
+        if (changedRoles.length > 0) {
+          await logBoardPermissionChange(
+            userProfile.id,
+            userProfile.name || '알 수 없음',
+            boardName,
+            changedRoles,
+            permissionChanges,
+            ipAddress
+          );
+        }
+      }
+    } catch (logError) {
+      // 로그 기록 실패해도 권한 저장은 성공으로 처리
+      console.error('게시판 권한 변경 로그 기록 실패:', logError);
     }
 
     return { success: true };
@@ -458,34 +571,125 @@ export async function updateBoard(
       }
     }
 
-    const updateData: any = {};
-    if (board.code !== undefined) updateData.code = board.code;
-    if (board.name !== undefined) updateData.name = board.name;
-    if (board.description !== undefined) updateData.description = board.description;
-    if (board.is_public !== undefined) updateData.is_public = board.is_public;
-    if (board.visibility !== undefined) updateData.visibility = board.visibility;
-    if (board.allow_anonymous !== undefined) updateData.allow_anonymous = board.allow_anonymous;
-    if (board.allow_comment !== undefined) updateData.allow_comment = board.allow_comment;
-    if (board.allow_file !== undefined) updateData.allow_file = board.allow_file;
-    if (board.allow_guest !== undefined) updateData.allow_guest = board.allow_guest;
-    if (board.allow_secret !== undefined) updateData.allow_secret = board.allow_secret;
-
-    const { error } = await supabase
+    // 기존 게시판 정보 가져오기 (변경 전후 비교 및 로그용)
+    const { data: oldBoardData } = await supabase
       .from('boards')
-      .update(updateData)
-      .eq('id', id);
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (error) {
-      console.error('게시판 수정 오류:', error);
-      return { success: false, error: error.message };
+    if (!oldBoardData) {
+      return { success: false, error: '게시판을 찾을 수 없습니다.' };
     }
 
-    // 권한 정책 저장
+    const boardName = oldBoardData.name || '알 수 없음';
+
+    // 변경될 필드 확인 (실제로 변경된 필드만 업데이트)
+    const updateData: any = {};
+    const changedFields: string[] = [];
+    
+    if (board.code !== undefined && board.code !== oldBoardData.code) {
+      updateData.code = board.code;
+      changedFields.push('code');
+    }
+    if (board.name !== undefined && board.name !== oldBoardData.name) {
+      updateData.name = board.name;
+      changedFields.push('name');
+    }
+    if (board.description !== undefined && board.description !== oldBoardData.description) {
+      updateData.description = board.description;
+      changedFields.push('description');
+    }
+    if (board.is_public !== undefined && board.is_public !== oldBoardData.is_public) {
+      updateData.is_public = board.is_public;
+      changedFields.push('is_public');
+    }
+    if (board.visibility !== undefined && board.visibility !== oldBoardData.visibility) {
+      updateData.visibility = board.visibility;
+      changedFields.push('visibility');
+    }
+    if (board.allow_anonymous !== undefined && board.allow_anonymous !== oldBoardData.allow_anonymous) {
+      updateData.allow_anonymous = board.allow_anonymous;
+      changedFields.push('allow_anonymous');
+    }
+    if (board.allow_comment !== undefined && board.allow_comment !== oldBoardData.allow_comment) {
+      updateData.allow_comment = board.allow_comment;
+      changedFields.push('allow_comment');
+    }
+    if (board.allow_file !== undefined && board.allow_file !== oldBoardData.allow_file) {
+      updateData.allow_file = board.allow_file;
+      changedFields.push('allow_file');
+    }
+    if (board.allow_guest !== undefined && board.allow_guest !== oldBoardData.allow_guest) {
+      updateData.allow_guest = board.allow_guest;
+      changedFields.push('allow_guest');
+    }
+    if (board.allow_secret !== undefined && board.allow_secret !== oldBoardData.allow_secret) {
+      updateData.allow_secret = board.allow_secret;
+      changedFields.push('allow_secret');
+    }
+
+    // 게시판 정보 변경이 있는 경우에만 업데이트
+    let boardInfoChanged = false;
+    if (Object.keys(updateData).length > 0) {
+      const { error } = await supabase
+        .from('boards')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) {
+        console.error('게시판 수정 오류:', error);
+        return { success: false, error: error.message };
+      }
+      boardInfoChanged = true;
+    }
+
+    // 권한 정책 저장 (권한 변경 로그는 saveBoardPolicies에서 기록)
+    let permissionChanged = false;
     if (policies && policies.length > 0) {
       const policyResult = await saveBoardPolicies(id, policies);
       if (!policyResult.success) {
         console.warn('게시판은 수정되었지만 권한 정책 저장에 실패했습니다:', policyResult.error);
         return { success: false, error: policyResult.error };
+      }
+      permissionChanged = true;
+    }
+
+    // 게시판 정보 변경 로그 기록 (권한 변경과 별도로, 변경사항이 있을 때만)
+    if (boardInfoChanged) {
+      try {
+        const userProfile = await getCurrentUserProfile();
+        if (userProfile) {
+          // IP 주소 가져오기
+          let ipAddress: string | null = null;
+          try {
+            const headersList = await headers();
+            const forwardedFor = headersList.get('x-forwarded-for');
+            const realIp = headersList.get('x-real-ip');
+            const cfConnectingIp = headersList.get('cf-connecting-ip');
+            
+            if (forwardedFor) {
+              ipAddress = forwardedFor.split(',')[0].trim();
+            } else if (realIp) {
+              ipAddress = realIp;
+            } else if (cfConnectingIp) {
+              ipAddress = cfConnectingIp;
+            }
+          } catch (ipError) {
+            console.error('IP 주소 가져오기 실패:', ipError);
+          }
+
+          // 게시판 정보 변경 로그 기록
+          await logBoardUpdate(
+            userProfile.id,
+            userProfile.name || '알 수 없음',
+            boardName,
+            ipAddress
+          );
+        }
+      } catch (logError) {
+        // 로그 기록 실패해도 업데이트는 성공으로 처리
+        console.error('게시판 정보 변경 로그 기록 실패:', logError);
       }
     }
 

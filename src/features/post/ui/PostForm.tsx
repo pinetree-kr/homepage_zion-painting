@@ -475,7 +475,7 @@ export default function PostForm({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">{boardName} {postId ? '수정' : '작성'}</h2>
+            <span className="text-xl font-semibold">{boardName} {postId ? '수정' : '작성'}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">

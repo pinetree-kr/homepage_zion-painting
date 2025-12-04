@@ -57,7 +57,7 @@ function MissionSectionContent() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <h3 className="text-gray-900 text-lg font-semibold">경영철학</h3>
+            <span className="text-gray-900 text-lg font-semibold">경영철학</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

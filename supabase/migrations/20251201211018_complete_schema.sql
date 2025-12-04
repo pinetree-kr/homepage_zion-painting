@@ -149,7 +149,7 @@ CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
 CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_products_deleted_at ON products(deleted_at) WHERE deleted_at IS NULL;
 
--- 2-10. boards 테이블 (allow_product_link 포함)
+-- 2-10. boards 테이블
 CREATE TABLE IF NOT EXISTS boards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR(80) NOT NULL UNIQUE, -- 게시판 코드 (ex: notice, qna, quote, review)
@@ -162,7 +162,6 @@ CREATE TABLE IF NOT EXISTS boards (
   allow_guest BOOLEAN NOT NULL DEFAULT FALSE, -- 비로그인 게시 허용 여부
   allow_secret BOOLEAN NOT NULL DEFAULT FALSE, -- 비밀글 허용 여부
   display_order INTEGER NOT NULL DEFAULT 0, -- 게시판 순서
-  allow_product_link BOOLEAN NOT NULL DEFAULT FALSE, -- 제품 연결 허용 여부
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ -- soft delete
@@ -170,14 +169,6 @@ CREATE TABLE IF NOT EXISTS boards (
 
 CREATE INDEX IF NOT EXISTS idx_boards_code ON boards(code);
 CREATE INDEX IF NOT EXISTS idx_boards_deleted_at ON boards(deleted_at) WHERE deleted_at IS NULL;
-
--- 기본 게시판 데이터 삽입
-INSERT INTO boards (code, name, description, is_public, allow_anonymous, allow_comment, allow_file, allow_guest, display_order, allow_product_link) VALUES
-('notices', '공지사항', '공지사항 게시판', TRUE, FALSE, FALSE, FALSE, FALSE, 0, FALSE),
-('qna', 'Q&A', 'Q&A 게시판', TRUE, FALSE, TRUE, FALSE, FALSE, 1, FALSE),
-('quotes', '견적문의', '견적문의 게시판', TRUE, FALSE, TRUE, FALSE, FALSE, 2, TRUE),
-('reviews', '고객후기', '고객후기 게시판', TRUE, FALSE, TRUE, FALSE, FALSE, 3, TRUE)
-ON CONFLICT (code) DO NOTHING;
 
 -- 2-11. board_categories 테이블 생성 (게시판 전용 카테고리)
 CREATE TABLE IF NOT EXISTS board_categories (
@@ -343,20 +334,6 @@ CREATE INDEX IF NOT EXISTS idx_site_settings_pds_board_id ON site_settings(pds_b
 
 -- site_settings 단일 레코드 제약조건 (deleted_at이 NULL인 레코드는 하나만 허용)
 CREATE UNIQUE INDEX IF NOT EXISTS site_settings_single_row ON site_settings ((1)) WHERE deleted_at IS NULL;
-
--- site_settings 초기 레코드 생성
-INSERT INTO site_settings (
-  id, 
-  prologue_default_title, 
-  prologue_default_description,
-  contact_email,
-  contact_address,
-  notice_board_id,
-  inquire_board_id,
-  pds_board_id
-)
-SELECT gen_random_uuid(), '환영합니다', '', '', '', NULL, NULL, NULL
-WHERE NOT EXISTS (SELECT 1 FROM site_settings WHERE deleted_at IS NULL);
 
 -- ============================================================================
 -- 5. updated_at 자동 업데이트 함수 및 트리거

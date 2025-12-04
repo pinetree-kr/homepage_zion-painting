@@ -342,7 +342,7 @@ export default function ProductForm({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <h3 className="text-gray-900 text-lg font-semibold">제품 {productId ? '수정' : '추가'}</h3>
+            <span className="text-gray-900 text-lg font-semibold">제품 {productId ? '수정' : '추가'}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

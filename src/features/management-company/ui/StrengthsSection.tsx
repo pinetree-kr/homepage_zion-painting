@@ -125,7 +125,7 @@ function StrengthsSectionContent() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <h3 className="text-gray-900 text-lg font-semibold">강점</h3>
+            <span className="text-gray-900 text-lg font-semibold">강점</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

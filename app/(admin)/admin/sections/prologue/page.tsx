@@ -631,7 +631,7 @@ export default function ManagementProloguePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <h3 className="text-gray-900 text-lg font-semibold">프롤로그 설정</h3>
+              <span className="text-gray-900 text-lg font-semibold">프롤로그 설정</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -689,7 +689,7 @@ export default function ManagementProloguePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <h3 className="text-gray-900 text-lg font-semibold">캐러셀 이미지 관리</h3>
+              <span className="text-gray-900 text-lg font-semibold">캐러셀 이미지 관리</span>
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -281,7 +281,7 @@ export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <h3 className="text-gray-900 text-lg font-semibold">사업분야 목록</h3>
+            <span className="text-gray-900 text-lg font-semibold">사업분야 목록</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

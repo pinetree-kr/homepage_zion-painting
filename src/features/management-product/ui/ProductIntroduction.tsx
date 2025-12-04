@@ -62,7 +62,7 @@ export default function ProductIntroduction() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <h3 className="text-gray-900 text-lg font-semibold">소개글</h3>
+            <span className="text-gray-900 text-lg font-semibold">소개글</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

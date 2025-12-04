@@ -284,7 +284,7 @@ export default function BusinessAchievementForm({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <h3 className="text-gray-900 text-lg font-semibold">사업실적 {achievementId ? '수정' : '추가'}</h3>
+            <span className="text-gray-900 text-lg font-semibold">사업실적 {achievementId ? '수정' : '추가'}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

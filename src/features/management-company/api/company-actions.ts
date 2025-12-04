@@ -6,6 +6,8 @@ import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous
 import type { CompanyInfo, CompanyHistory, CompanyHistoryType, OrganizationMember, CompanyAbout, CompanyStrength, CompanyValue } from '@/src/entities/company/model/types';
 import type { ContactInfo } from '@/src/entities/contact/model/types';
 import { formatPhoneForDisplay } from '@/src/shared/lib/utils';
+import { logSectionSettingChange } from '@/src/entities/system';
+import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
 
 // /**
 //  * 회사 소개 로드 (기존 텍스트 방식 - 하위 호환성)

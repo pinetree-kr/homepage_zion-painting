@@ -93,7 +93,7 @@ export default function ContactInfo() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <h3 className="text-gray-900 text-lg font-semibold">오시는 길 · 연락처</h3>
+            <span className="text-gray-900 text-lg font-semibold">오시는 길 · 연락처</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">

@@ -72,26 +72,3 @@ BEFORE UPDATE ON board_policies
 FOR EACH ROW 
 EXECUTE FUNCTION update_updated_at_column();
 
--- ============================================================================
--- 5. 기본 권한 정책 데이터 삽입 (기존 게시판에 대해)
--- ============================================================================
-
--- 모든 게시판에 대해 admin과 member 역할의 기본 정책 생성
-INSERT INTO board_policies (board_id, role, post_list, post_create, post_read, post_edit, post_delete, cmt_create, cmt_read, cmt_edit, cmt_delete, file_upload, file_download)
-SELECT 
-  b.id,
-  'admin'::app_role,
-  TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE
-FROM boards b
-WHERE b.deleted_at IS NULL
-ON CONFLICT (board_id, role) DO NOTHING;
-
-INSERT INTO board_policies (board_id, role, post_list, post_create, post_read, post_edit, post_delete, cmt_create, cmt_read, cmt_edit, cmt_delete, file_upload, file_download)
-SELECT 
-  b.id,
-  'member'::app_role,
-  TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE
-FROM boards b
-WHERE b.deleted_at IS NULL
-ON CONFLICT (board_id, role) DO NOTHING;
-

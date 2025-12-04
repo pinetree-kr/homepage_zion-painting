@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { ActivityLog, BugReport } from '@/src/entities';
+import React, { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { ActivityLog, LogType } from '@/src/entities';
 import { 
   Activity, 
   AlertCircle, 
@@ -9,17 +10,22 @@ import {
   Clock, 
   Search,
   Download,
-  Bug,
   User,
   Calendar,
-  Globe,
-  XCircle
+  XCircle,
+  UserPlus,
+  Shield,
+  LogIn,
+  Settings,
+  FileText,
+  MessageSquare,
+  Calculator,
+  AlertTriangle
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/shared/ui';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Badge } from '@/src/shared/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/shared/ui';
 import {
   Select,
   SelectContent,
@@ -28,84 +34,144 @@ import {
   SelectValue,
 } from '@/src/shared/ui';
 import { toast } from 'sonner';
-import { DataTable, DataTableColumn, DataTableAction } from '@/src/shared/ui';
+import { DataTable, DataTableColumn, DataTablePagination } from '@/src/shared/ui';
 
-const mockActivityLogs: ActivityLog[] = [
-  {
-    id: '1',
-    userId: 'admin1',
-    userName: '시온관리자',
-    action: '로그인',
-    details: '관리자 페이지 로그인',
-    timestamp: '2024-11-10T09:00:00Z',
-    ipAddress: '192.168.1.100'
-  },
-  {
-    id: '2',
-    userId: 'user1',
-    userName: '김철수',
-    action: '문의 작성',
-    details: '견적 문의 작성 완료',
-    timestamp: '2024-11-10T08:45:00Z',
-    ipAddress: '192.168.1.101'
-  },
-];
 
-const mockBugReports: BugReport[] = [
-  {
-    id: '1',
-    title: '로그인 페이지 모바일 레이아웃 오류',
-    description: '모바일 환경에서 로그인 버튼이 화면 밖으로 벗어남',
-    status: 'resolved',
-    priority: 'high',
-    reportedBy: '김철수',
-    createdAt: '2024-11-08T10:00:00Z',
-    resolvedAt: '2024-11-09T14:00:00Z'
-  },
-  {
-    id: '2',
-    title: '이미지 업로드 실패',
-    description: '5MB 이상 이미지 업로드 시 오류 발생',
-    status: 'in-progress',
-    priority: 'critical',
-    reportedBy: '이영희',
-    createdAt: '2024-11-09T15:30:00Z'
-  },
-];
+const logTypeLabels: Record<LogType, string> = {
+  USER_SIGNUP: '사용자 가입',
+  ADMIN_SIGNUP: '관리자 가입',
+  LOGIN_FAILED: '로그인 실패',
+  ADMIN_LOGIN: '관리자 로그인',
+  SECTION_SETTING_CHANGE: '섹션 설정 변경',
+  BOARD_CREATE: '게시판 생성',
+  BOARD_UPDATE: '게시판 수정',
+  BOARD_DELETE: '게시판 삭제',
+  POST_CREATE: '게시글 작성',
+  POST_ANSWER: '관리자 답변',
+  ERROR: '오류 로그',
+};
 
-export default function LogManagement() {
-  const [activityLogs] = useState<ActivityLog[]>(mockActivityLogs);
-  const [bugReports, setBugReports] = useState<BugReport[]>(mockBugReports);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+const logTypeIcons: Record<LogType, typeof Activity> = {
+  USER_SIGNUP: UserPlus,
+  ADMIN_SIGNUP: Shield,
+  LOGIN_FAILED: XCircle,
+  ADMIN_LOGIN: LogIn,
+  SECTION_SETTING_CHANGE: Settings,
+  BOARD_CREATE: FileText,
+  BOARD_UPDATE: FileText,
+  BOARD_DELETE: FileText,
+  POST_CREATE: MessageSquare,
+  POST_ANSWER: MessageSquare,
+  ERROR: AlertTriangle,
+};
 
-  const filteredBugReports = bugReports.filter(bug => {
-    const matchesSearch = 
-      bug.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bug.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || bug.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || bug.priority === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
+const logTypeColors: Record<LogType, string> = {
+  USER_SIGNUP: 'bg-blue-100 text-blue-800 border-blue-200',
+  ADMIN_SIGNUP: 'bg-purple-100 text-purple-800 border-purple-200',
+  LOGIN_FAILED: 'bg-red-100 text-red-800 border-red-200',
+  ADMIN_LOGIN: 'bg-green-100 text-green-800 border-green-200',
+  SECTION_SETTING_CHANGE: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  BOARD_CREATE: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+  BOARD_UPDATE: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+  BOARD_DELETE: 'bg-gray-100 text-gray-800 border-gray-200',
+  POST_CREATE: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+  POST_ANSWER: 'bg-teal-100 text-teal-800 border-teal-200',
+  ERROR: 'bg-red-100 text-red-800 border-red-200',
+};
 
-  const handleExportLogs = () => {
-    toast.success('로그가 CSV 파일로 다운로드되었습니다');
+interface LogManagementProps {
+  initialLogs: ActivityLog[];
+  totalCount: number;
+  stats: Record<LogType, number>;
+  totalLogCount: number;
+  searchQuery: string;
+  logTypeFilter: string;
+  dateFilter: string;
+  currentPage: number;
+  itemsPerPage: number;
+}
+
+export default function LogManagement({
+  initialLogs,
+  totalCount,
+  stats: logTypeCounts,
+  totalLogCount,
+  searchQuery: initialSearchQuery,
+  logTypeFilter: initialLogTypeFilter,
+  dateFilter: initialDateFilter,
+  currentPage,
+  itemsPerPage,
+}: LogManagementProps) {
+  const router = useRouter();
+
+  const handleSearchChange = (value: string) => {
+    const params = new URLSearchParams();
+    if (value) params.set('search', value);
+    if (initialLogTypeFilter !== 'all') params.set('logType', initialLogTypeFilter);
+    if (initialDateFilter !== 'all') params.set('dateFilter', initialDateFilter);
+    router.push(`/admin/system/logs?${params.toString()}`);
   };
 
-  const handleUpdateBugStatus = (bugId: string, newStatus: BugReport['status']) => {
-    setBugReports(bugReports.map(bug => 
-      bug.id === bugId 
-        ? { 
-            ...bug, 
-            status: newStatus,
-            resolvedAt: newStatus === 'resolved' ? new Date().toISOString() : bug.resolvedAt
-          }
-        : bug
-    ));
-    toast.success('버그 상태가 업데이트되었습니다');
+  const handleLogTypeChange = (value: string) => {
+    const params = new URLSearchParams();
+    if (initialSearchQuery) params.set('search', initialSearchQuery);
+    if (value !== 'all') params.set('logType', value);
+    if (initialDateFilter !== 'all') params.set('dateFilter', initialDateFilter);
+    router.push(`/admin/system/logs?${params.toString()}`);
   };
+
+  const handleDateFilterChange = (value: string) => {
+    const params = new URLSearchParams();
+    if (initialSearchQuery) params.set('search', initialSearchQuery);
+    if (initialLogTypeFilter !== 'all') params.set('logType', initialLogTypeFilter);
+    if (value !== 'all') params.set('dateFilter', value);
+    router.push(`/admin/system/logs?${params.toString()}`);
+  };
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams();
+    if (initialSearchQuery) params.set('search', initialSearchQuery);
+    if (initialLogTypeFilter !== 'all') params.set('logType', initialLogTypeFilter);
+    if (initialDateFilter !== 'all') params.set('dateFilter', initialDateFilter);
+    if (page > 1) params.set('page', page.toString());
+    router.push(`/admin/system/logs?${params.toString()}`);
+  };
+
+  const filteredLogs = initialLogs; // 서버에서 이미 필터링된 데이터
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  // TODO: 로그가 많이 쌓일 경우 부하가 걸릴 수 있어 주석 처리
+  // 나중에 서버 사이드에서 처리하거나 페이지네이션된 내보내기로 구현 필요
+  // const handleExportLogs = () => {
+  //   // CSV 형식으로 내보내기
+  //   const headers = ['ID', '사용자', '로그 타입', '작업', '상세', '시간', '메타데이터'];
+  //   const rows = filteredLogs.map(log => [
+  //     log.id,
+  //     log.userName,
+  //     logTypeLabels[log.logType],
+  //     log.action,
+  //     log.details,
+  //     formatDate(log.timestamp),
+  //     log.metadata ? JSON.stringify(log.metadata) : '-'
+  //   ]);
+  //   
+  //   const csvContent = [
+  //     headers.join(','),
+  //     ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+  //   ].join('\n');
+  //   
+  //   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  //   const link = document.createElement('a');
+  //   const url = URL.createObjectURL(blob);
+  //   link.setAttribute('href', url);
+  //   link.setAttribute('download', `logs_${new Date().toISOString().split('T')[0]}.csv`);
+  //   link.style.visibility = 'hidden';
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+  //   
+  //   toast.success('로그가 CSV 파일로 다운로드되었습니다');
+  // };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -114,58 +180,86 @@ export default function LogManagement() {
       month: '2-digit', 
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  const renderMetadata = (log: ActivityLog) => {
+    if (!log.metadata) return null;
+    
+    const metadataItems: React.ReactElement[] = [];
+    
+    if (log.metadata.sectionName) {
+      metadataItems.push(
+        <div key="section" className="text-xs text-gray-500">
+          섹션: {log.metadata.sectionName}
+        </div>
+      );
     }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'resolved': return 'bg-green-100 text-green-800 border-green-200';
-      case 'in-progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'open': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'closed': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    
+    if (log.metadata.boardName) {
+      metadataItems.push(
+        <div key="board" className="text-xs text-gray-500">
+          게시판: {log.metadata.boardName}
+        </div>
+      );
     }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'open': return '접수';
-      case 'in-progress': return '처리중';
-      case 'resolved': return '해결';
-      case 'closed': return '종료';
-      default: return status;
+    
+    if (log.metadata.postId) {
+      metadataItems.push(
+        <div key="post" className="text-xs text-gray-500">
+          게시글 ID: {log.metadata.postId}
+        </div>
+      );
     }
-  };
-
-  const getPriorityLabel = (priority: string) => {
-    switch (priority) {
-      case 'critical': return '긴급';
-      case 'high': return '높음';
-      case 'medium': return '보통';
-      case 'low': return '낮음';
-      default: return priority;
+    
+    if (log.metadata.errorMessage) {
+      metadataItems.push(
+        <div key="error" className="text-xs text-red-600 font-medium">
+          오류: {log.metadata.errorMessage}
+        </div>
+      );
     }
+    
+    if (log.metadata.beforeValue && log.metadata.afterValue) {
+      metadataItems.push(
+        <div key="change" className="text-xs text-gray-500 mt-1">
+          <div>변경 전: {log.metadata.beforeValue}</div>
+          <div>변경 후: {log.metadata.afterValue}</div>
+        </div>
+      );
+    }
+    
+    return metadataItems.length > 0 ? (
+      <div className="mt-1 space-y-0.5">
+        {metadataItems}
+      </div>
+    ) : null;
   };
 
   const activityLogColumns: DataTableColumn<ActivityLog>[] = [
+    {
+      id: 'logType',
+      header: '로그 타입',
+      accessor: (row) => {
+        const IconComponent = logTypeIcons[row.logType];
+        return (
+          <Badge variant="outline" className={`text-xs ${logTypeColors[row.logType]}`}>
+            <IconComponent className="h-3 w-3 mr-1" />
+            {logTypeLabels[row.logType]}
+          </Badge>
+        );
+      },
+      sortable: true,
+      width: '15%'
+    },
     {
       id: 'action',
       header: '작업',
       accessor: (row) => (
         <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4 text-[#1A2C6D]" />
-          <span>{row.action}</span>
+          <span className="font-medium">{row.action}</span>
         </div>
       ),
       sortable: true,
@@ -181,15 +275,18 @@ export default function LogManagement() {
         </div>
       ),
       sortable: true,
-      width: '15%'
+      width: '12%'
     },
     {
       id: 'details',
       header: '상세',
       accessor: (row) => (
-        <span className="text-sm text-gray-600">{row.details}</span>
+        <div className="text-sm text-gray-600">
+          <div>{row.details}</div>
+          {renderMetadata(row)}
+        </div>
       ),
-      width: '35%'
+      width: '30%'
     },
     {
       id: 'timestamp',
@@ -201,108 +298,19 @@ export default function LogManagement() {
         </div>
       ),
       sortable: true,
-      width: '20%'
-    },
-    {
-      id: 'ipAddress',
-      header: 'IP 주소',
-      accessor: (row) => (
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Globe className="h-3 w-3" />
-          {row.ipAddress || '-'}
-        </div>
-      ),
-      width: '15%'
+      width: '18%'
     }
   ];
 
-  const bugReportColumns: DataTableColumn<BugReport>[] = [
-    {
-      id: 'title',
-      header: '제목',
-      accessor: (row) => row.title,
-      sortable: true,
-      width: '30%'
-    },
-    {
-      id: 'priority',
-      header: '우선순위',
-      accessor: (row) => (
-        <Badge variant="outline" className={`text-xs ${getPriorityColor(row.priority)}`}>
-          {row.priority === 'critical' && <AlertCircle className="h-3 w-3 mr-1" />}
-          {getPriorityLabel(row.priority)}
-        </Badge>
-      ),
-      sortable: true,
-      width: '12%'
-    },
-    {
-      id: 'status',
-      header: '상태',
-      accessor: (row) => (
-        <Badge variant="outline" className={`text-xs ${getStatusColor(row.status)}`}>
-          {row.status === 'resolved' && <CheckCircle className="h-3 w-3 mr-1" />}
-          {row.status === 'in-progress' && <Clock className="h-3 w-3 mr-1" />}
-          {row.status === 'open' && <AlertCircle className="h-3 w-3 mr-1" />}
-          {row.status === 'closed' && <XCircle className="h-3 w-3 mr-1" />}
-          {getStatusLabel(row.status)}
-        </Badge>
-      ),
-      sortable: true,
-      width: '13%'
-    },
-    {
-      id: 'reportedBy',
-      header: '보고자',
-      accessor: (row) => (
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <User className="h-3 w-3" />
-          {row.reportedBy}
-        </div>
-      ),
-      sortable: true,
-      width: '15%'
-    },
-    {
-      id: 'createdAt',
-      header: '보고일',
-      accessor: (row) => (
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Calendar className="h-3 w-3" />
-          {formatDate(row.createdAt)}
-        </div>
-      ),
-      sortable: true,
-      width: '15%'
-    },
-    {
-      id: 'resolvedAt',
-      header: '해결일',
-      accessor: (row) => (
-        <span className="text-sm text-gray-600">
-          {row.resolvedAt ? formatDate(row.resolvedAt) : '-'}
-        </span>
-      ),
-      sortable: true,
-      width: '15%'
-    }
-  ];
-
-  const bugReportActions: DataTableAction<BugReport>[] = [
-    {
-      label: (row) => row.status === 'resolved' ? '재개' : '해결 완료',
-      icon: <CheckCircle className="h-4 w-4" />,
-      onClick: (row) => handleUpdateBugStatus(row.id, row.status === 'resolved' ? 'open' : 'resolved')
-    }
-  ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-gray-900 text-2xl font-semibold mb-2">로그 관리</h1>
-          <p className="text-gray-500 text-sm">시스템 활동 로그와 버그 리포트를 관리합니다</p>
+          <p className="text-gray-500 text-sm">시스템의 모든 활동과 오류를 기록하고 관리합니다</p>
         </div>
+        {/* TODO: 로그가 많이 쌓일 경우 부하가 걸릴 수 있어 주석 처리
         <Button 
           onClick={handleExportLogs}
           variant="outline"
@@ -310,98 +318,166 @@ export default function LogManagement() {
           <Download className="h-4 w-4 mr-2" />
           로그 내보내기
         </Button>
+        */}
       </div>
 
-      <Tabs defaultValue="activity" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="activity" className="gap-2">
-            <Activity className="h-4 w-4" />
-            활동 로그
-          </TabsTrigger>
-          <TabsTrigger value="bugs" className="gap-2">
-            <Bug className="h-4 w-4" />
-            버그 리포트
-          </TabsTrigger>
-        </TabsList>
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">전체 로그</p>
+                <p className="text-2xl font-semibold">{totalLogCount}</p>
+              </div>
+              <Activity className="h-8 w-8 text-gray-400" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">사용자 가입</p>
+                <p className="text-2xl font-semibold">{logTypeCounts.USER_SIGNUP}</p>
+              </div>
+              <UserPlus className="h-8 w-8 text-blue-400" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">관리자 로그인</p>
+                <p className="text-2xl font-semibold">{logTypeCounts.ADMIN_LOGIN}</p>
+              </div>
+              <LogIn className="h-8 w-8 text-green-400" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">로그인 실패</p>
+                <p className="text-2xl font-semibold">{logTypeCounts.LOGIN_FAILED}</p>
+              </div>
+              <XCircle className="h-8 w-8 text-red-400" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">게시글 작성</p>
+                <p className="text-2xl font-semibold">{logTypeCounts.POST_CREATE}</p>
+              </div>
+              <MessageSquare className="h-8 w-8 text-cyan-400" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">오류 로그</p>
+                <p className="text-2xl font-semibold">{logTypeCounts.ERROR}</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-red-400" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="activity" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>활동 로그</CardTitle>
               <CardDescription>
-                시스템의 모든 사용자 활동을 기록합니다
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                data={activityLogs}
-                columns={activityLogColumns}
-                getRowId={(row) => row.id}
-                emptyMessage="활동 로그가 없습니다"
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="bugs" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>버그 리포트</CardTitle>
-              <CardDescription>
-                보고된 버그와 이슈를 관리합니다
+            시스템의 모든 사용자 활동과 오류를 기록합니다
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="제목 또는 설명으로 검색..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+                <div className="relative flex-1 flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="사용자, 작업, 상세 내용으로 검색..."
+                      defaultValue={initialSearchQuery}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearchChange(e.currentTarget.value);
+                        }
+                      }}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Button
+                    onClick={(e) => {
+                      const input = e.currentTarget.previousElementSibling?.querySelector('input') as HTMLInputElement;
+                      if (input) {
+                        handleSearchChange(input.value);
+                      }
+                    }}
+                    variant="outline"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
                 </div>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue placeholder="상태" />
+            <Select value={initialLogTypeFilter} onValueChange={handleLogTypeChange}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="로그 타입" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">모든 상태</SelectItem>
-                    <SelectItem value="open">접수</SelectItem>
-                    <SelectItem value="in-progress">처리중</SelectItem>
-                    <SelectItem value="resolved">해결</SelectItem>
-                    <SelectItem value="closed">종료</SelectItem>
+                <SelectItem value="all">모든 타입</SelectItem>
+                <SelectItem value="USER_SIGNUP">사용자 가입</SelectItem>
+                <SelectItem value="ADMIN_SIGNUP">관리자 가입</SelectItem>
+                <SelectItem value="LOGIN_FAILED">로그인 실패</SelectItem>
+                <SelectItem value="ADMIN_LOGIN">관리자 로그인</SelectItem>
+                <SelectItem value="SECTION_SETTING_CHANGE">섹션 설정 변경</SelectItem>
+                <SelectItem value="BOARD_CREATE">게시판 생성</SelectItem>
+                <SelectItem value="BOARD_UPDATE">게시판 수정</SelectItem>
+                <SelectItem value="BOARD_DELETE">게시판 삭제</SelectItem>
+                <SelectItem value="POST_CREATE">게시글 작성</SelectItem>
+                <SelectItem value="POST_ANSWER">관리자 답변</SelectItem>
+                <SelectItem value="ERROR">오류 로그</SelectItem>
                   </SelectContent>
                 </Select>
 
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <Select value={initialDateFilter} onValueChange={handleDateFilterChange}>
                   <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue placeholder="우선순위" />
+                <SelectValue placeholder="기간" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">모든 우선순위</SelectItem>
-                    <SelectItem value="critical">긴급</SelectItem>
-                    <SelectItem value="high">높음</SelectItem>
-                    <SelectItem value="medium">보통</SelectItem>
-                    <SelectItem value="low">낮음</SelectItem>
+                <SelectItem value="all">전체 기간</SelectItem>
+                <SelectItem value="today">오늘</SelectItem>
+                <SelectItem value="week">최근 7일</SelectItem>
+                <SelectItem value="month">최근 30일</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <DataTable
-                data={filteredBugReports}
-                columns={bugReportColumns}
-                actions={bugReportActions}
-                getRowId={(row) => row.id}
-                emptyMessage="버그 리포트가 없습니다"
-              />
+          <DataTable
+            data={filteredLogs}
+            columns={activityLogColumns}
+            getRowId={(row) => row.id}
+            emptyMessage="로그가 없습니다"
+          />
+          
+          {totalPages > 1 && (
+            <DataTablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalCount}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+            />
+          )}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
-

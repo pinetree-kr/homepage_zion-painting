@@ -1,2 +1,4 @@
-export type { ActivityLog, BugReport, ResourceUsage } from './model/types';
+export type { ActivityLog, BugReport, ResourceUsage, LogType } from './model/types';
+export * from './model/api';
+export * from './model/log-utils';
 

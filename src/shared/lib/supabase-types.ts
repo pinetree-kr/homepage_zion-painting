@@ -34,6 +34,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: string | null
+          id: string
+          ip_address: unknown
+          log_type: Database["public"]["Enums"]["log_type"]
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          ip_address?: unknown
+          log_type: Database["public"]["Enums"]["log_type"]
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          ip_address?: unknown
+          log_type?: Database["public"]["Enums"]["log_type"]
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: []
+      }
       administrators: {
         Row: {
           created_at: string | null
@@ -947,6 +986,7 @@ export type Database = {
         Args: { p_board_id: string; p_permission: string; p_user_id: string }
         Returns: boolean
       }
+      cleanup_old_activity_logs: { Args: never; Returns: number }
       is_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
@@ -956,6 +996,18 @@ export type Database = {
       inquiry_priority: "low" | "medium" | "high"
       inquiry_status: "pending" | "approved" | "answered" | "rejected"
       inquiry_type: "general" | "quote"
+      log_type:
+        | "USER_SIGNUP"
+        | "ADMIN_SIGNUP"
+        | "LOGIN_FAILED"
+        | "ADMIN_LOGIN"
+        | "SECTION_SETTING_CHANGE"
+        | "BOARD_CREATE"
+        | "BOARD_UPDATE"
+        | "BOARD_DELETE"
+        | "POST_CREATE"
+        | "POST_ANSWER"
+        | "ERROR"
       visible_type: "public" | "member" | "owner"
     }
     CompositeTypes: {
@@ -1093,6 +1145,19 @@ export const Constants = {
       inquiry_priority: ["low", "medium", "high"],
       inquiry_status: ["pending", "approved", "answered", "rejected"],
       inquiry_type: ["general", "quote"],
+      log_type: [
+        "USER_SIGNUP",
+        "ADMIN_SIGNUP",
+        "LOGIN_FAILED",
+        "ADMIN_LOGIN",
+        "SECTION_SETTING_CHANGE",
+        "BOARD_CREATE",
+        "BOARD_UPDATE",
+        "BOARD_DELETE",
+        "POST_CREATE",
+        "POST_ANSWER",
+        "ERROR",
+      ],
       visible_type: ["public", "member", "owner"],
     },
   },

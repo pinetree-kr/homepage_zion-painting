@@ -19,13 +19,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS product_info_single_row ON product_info ((1));
 CREATE INDEX IF NOT EXISTS idx_product_info_review_board_id ON product_info(review_board_id) WHERE review_board_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_product_info_quote_board_id ON product_info(quote_board_id) WHERE quote_board_id IS NOT NULL;
 
--- 2. 새 레코드 생성
--- 기존 데이터 있으면 삭제
-DELETE FROM product_info WHERE id is not null;
-
-INSERT INTO product_info (id, introduction, review_board_id, quote_board_id, created_at, updated_at)
-VALUES (gen_random_uuid(), '', NULL, NULL, NOW(), NOW());
-
 -- 5. product_info updated_at 트리거 추가
 DROP TRIGGER IF EXISTS update_product_info_updated_at ON product_info;
 

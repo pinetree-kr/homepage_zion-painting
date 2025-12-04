@@ -336,7 +336,7 @@ export default function CompanyOrganization({ items }: CompanyOrganizationProps)
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <h3 className="text-gray-900 text-lg font-semibold">조직도</h3>
+            <span className="text-gray-900 text-lg font-semibold">조직도</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

@@ -65,7 +65,7 @@ export default function ProductBoardSettings({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <h3 className="text-gray-900 text-lg font-semibold">게시판 연결 설정</h3>
+            <span className="text-gray-900 text-lg font-semibold">게시판 연결 설정</span>
           </CardTitle>
           <p className="text-gray-500 text-sm mt-1">
             제품과 연결할 <span className="font-bold text-blue-500">고객 후기</span> 게시판과 <span className="font-bold text-blue-500">견적 문의</span> 게시판을 선택하세요.
