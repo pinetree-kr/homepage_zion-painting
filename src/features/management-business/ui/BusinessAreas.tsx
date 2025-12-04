@@ -6,7 +6,7 @@ import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Textarea } from '@/src/shared/ui';
-import { Card } from '@/src/shared/ui';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/shared/ui';
 import { IconSelector } from '@/src/features/management-company/ui/IconSelector';
 import { toast } from 'sonner';
 import { BusinessArea } from '@/src/entities';
@@ -278,10 +278,13 @@ export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="mb-6">
-          <h3 className="text-gray-900 text-lg font-semibold">사업분야 목록</h3>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <h3 className="text-gray-900 text-lg font-semibold">사업분야 목록</h3>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
       {businessAreas.length > 0 ? (
         <DndContext
           sensors={sensors}
@@ -401,19 +404,19 @@ export default function BusinessAreas({ items }: { items: BusinessArea[] }) {
           </button>
         </div>
       )}
+        </CardContent>
+        <CardFooter className="justify-end">
+          <Button
+            onClick={handleSave}
+            className="h-[42px] gap-2"
+            disabled={saving}
+            size="lg"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? '저장 중...' : '저장'}
+          </Button>
+        </CardFooter>
       </Card>
-
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSave}
-          className="gap-2"
-          disabled={saving}
-          size="lg"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
-      </div>
     </div>
   );
 }

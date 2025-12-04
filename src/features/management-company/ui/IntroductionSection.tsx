@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { Save } from 'lucide-react';
-import { Button, Card } from '@/src/shared/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/shared/ui';
 import { DynamicCustomEditor } from '@/src/features/editor';
 import { fetchCompanyAboutField } from '../api/company-client';
 import { saveCompanyAboutField } from '../api/company-actions';
@@ -54,26 +54,30 @@ function IntroductionSectionContent() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="mb-4">
-          <h3 className="text-gray-900 text-lg font-semibold">소개글</h3>
-        </div>
-        <DynamicCustomEditor
-          text={value}
-          onChange={setValue}
-        />
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <h3 className="text-gray-900 text-lg font-semibold">소개글</h3>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DynamicCustomEditor
+            text={value}
+            onChange={setValue}
+          />
+        </CardContent>
+        <CardFooter className="justify-end">
+          <Button
+            onClick={handleSave}
+            className="h-[42px] gap-2"
+            disabled={saving}
+            size="lg"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? '저장 중...' : '저장'}
+          </Button>
+        </CardFooter>
       </Card>
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSave}
-          className="gap-2"
-          disabled={saving}
-          size="lg"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
-      </div>
     </div>
   );
 }

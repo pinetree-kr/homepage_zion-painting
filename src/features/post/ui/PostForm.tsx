@@ -6,7 +6,7 @@ import { ArrowLeft, Save, X, File } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
-import { Card } from '@/src/shared/ui';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/shared/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
@@ -472,10 +472,13 @@ export default function PostForm({
         </Button>
       </div>
 
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-6">{boardName} {postId ? '수정' : '작성'}</h2>
-
-        <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold">{boardName} {postId ? '수정' : '작성'}</h2>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 md:gap-4">
             <div className="space-y-2 col-span-3">
               <Label htmlFor="title">제목 *</Label>
@@ -662,19 +665,19 @@ export default function PostForm({
               </div>
             )}
           </div>
-        </div>
+        </CardContent>
+        <CardFooter className="justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={saving || uploading}
+            className="h-[42px] gap-2"
+            size="lg"
+          >
+            <Save className="h-4 w-4" />
+            {saving || uploading ? '저장 중...' : '저장'}
+          </Button>
+        </CardFooter>
       </Card>
-
-      <div className="flex items-center justify-end">
-        <Button
-          onClick={handleSave}
-          disabled={saving || uploading}
-          className="gap-2"
-        >
-          <Save className="h-4 w-4" />
-          {saving || uploading ? '저장 중...' : '저장'}
-        </Button>
-      </div>
 
       {/* 파일 삭제 확인 모달 */}
       <Dialog open={!!fileToDelete} onOpenChange={(open) => !open && setFileToDelete(null)}>

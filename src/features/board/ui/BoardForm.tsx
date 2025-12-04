@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Trash2, Check } from 'lucide-react';
 import { Board, BoardPolicy, VisibleType, AppRole } from '@/src/entities/board/model/types';
-import { Card } from '@/src/shared/ui';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/shared/ui';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
@@ -236,13 +236,13 @@ export default function BoardForm({ board }: BoardFormProps) {
             </div>
 
             <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-semibold text-gray-900 mb-2">게시판 권한 설정</h1>
-                    <p className="text-base text-gray-600">게시판의 공개 범위와 역할별 권한을 설정할 수 있습니다.</p>
-                </div>
-
-                <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden">
-                    <div className="p-6 border-b border-gray-200">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <span className="text-gray-900 text-lg font-semibold">게시판 기본 정보</span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <Label htmlFor="code">게시판 코드 *</Label>
@@ -278,7 +278,7 @@ export default function BoardForm({ board }: BoardFormProps) {
                                 />
                             </div>
 
-                            <div className="space-y-3">
+                            <div className="space-y-2 mb-4">
                                 <Label>공개 범위</Label>
                                 <div className="flex gap-2">
                                     <Button
@@ -332,187 +332,186 @@ export default function BoardForm({ board }: BoardFormProps) {
                                 )}
                             </div>
                         </div>
-                    </div>
 
-                    <div className="p-6 space-y-6">
-
-                        <div>
-                            <h3 className="text-base font-semibold text-gray-900 mb-4">역할별 권한 설정</h3>
-
-                            {/* 게시글 권한 */}
-                            <div className="mb-6">
-                                <div className="border-b border-gray-200 pb-2 mb-4">
-                                    <h4 className="text-sm font-medium text-gray-700">게시글 권한</h4>
-                                </div>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                    <table className="w-full">
-                                        <thead>
-                                            <tr className="bg-gray-50 border-b border-gray-200">
-                                                <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 w-[60%]">권한</th>
-                                                <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
-                                                    <div className="flex flex-col items-center">
-                                                        <span>관리자</span>
-                                                        {/* <span className="text-xs text-gray-500 font-normal">(Admin)</span> */}
-                                                    </div>
-                                                </th>
-                                                <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
-                                                    <div className="flex flex-col items-center">
-                                                        <span>회원</span>
-                                                        {/* <span className="text-xs text-gray-500 font-normal">(Member)</span> */}
-                                                    </div>
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <PermissionRow
-                                                label="게시글 목록"
-                                                adminChecked={policies.admin.post_list}
-                                                memberChecked={policies.member.post_list}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'post_list', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'post_list', checked)}
-                                            />
-                                            <PermissionRow
-                                                label="글 작성"
-                                                adminChecked={policies.admin.post_create}
-                                                memberChecked={policies.member.post_create}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'post_create', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'post_create', checked)}
-                                            />
-                                            <PermissionRow
-                                                label="글 읽기"
-                                                adminChecked={policies.admin.post_read}
-                                                memberChecked={policies.member.post_read}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'post_read', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'post_read', checked)}
-                                            />
-                                            <PermissionRow
-                                                label="글 수정"
-                                                note="회원은 자기 글만"
-                                                adminChecked={policies.admin.post_edit}
-                                                memberChecked={policies.member.post_edit}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'post_edit', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'post_edit', checked)}
-                                            />
-                                            <PermissionRow
-                                                label="글 삭제"
-                                                note="회원은 자기 글만"
-                                                adminChecked={policies.admin.post_delete}
-                                                memberChecked={policies.member.post_delete}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'post_delete', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'post_delete', checked)}
-                                            />
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            {/* 댓글 권한 */}
-                            <div className="mb-6">
-                                <div className="border-b border-gray-200 pb-2 mb-4">
-                                    <h4 className="text-sm font-medium text-gray-700">댓글 권한</h4>
-                                </div>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                    <table className="w-full">
-                                        <thead>
-                                            <tr className="bg-gray-50 border-b border-gray-200">
-                                                <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 w-[60%]">권한</th>
-                                                <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
-                                                    <div className="flex flex-col items-center">
-                                                        <span>관리자</span>
-                                                        {/* <span className="text-xs text-gray-500 font-normal">(Admin)</span> */}
-                                                    </div>
-                                                </th>
-                                                <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
-                                                    <div className="flex flex-col items-center">
-                                                        <span>회원</span>
-                                                        {/* <span className="text-xs text-gray-500 font-normal">(Member)</span> */}
-                                                    </div>
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <PermissionRow
-                                                label="댓글 작성"
-                                                adminChecked={policies.admin.cmt_create}
-                                                memberChecked={policies.member.cmt_create}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'cmt_create', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'cmt_create', checked)}
-                                            />
-                                            <PermissionRow
-                                                label="댓글 읽기"
-                                                adminChecked={policies.admin.cmt_read}
-                                                memberChecked={policies.member.cmt_read}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'cmt_read', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'cmt_read', checked)}
-                                            />
-                                            <PermissionRow
-                                                label="댓글 수정"
-                                                note="회원은 자기 댓글만"
-                                                adminChecked={policies.admin.cmt_edit}
-                                                memberChecked={policies.member.cmt_edit}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'cmt_edit', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'cmt_edit', checked)}
-                                            />
-                                            <PermissionRow
-                                                label="댓글 삭제"
-                                                note="회원은 자기 댓글만"
-                                                adminChecked={policies.admin.cmt_delete}
-                                                memberChecked={policies.member.cmt_delete}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'cmt_delete', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'cmt_delete', checked)}
-                                            />
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            {/* 파일 권한 */}
+                        <div className="space-y-6 pt-6 border-t border-gray-200">
                             <div>
-                                <div className="border-b border-gray-200 pb-2 mb-4">
-                                    <h4 className="text-sm font-medium text-gray-700">파일 권한</h4>
+                                <h3 className="text-base font-semibold text-gray-900 mb-4">역할별 권한 설정</h3>
+
+                                {/* 게시글 권한 */}
+                                <div className="mb-6">
+                                    <div className="border-b border-gray-200 pb-2 mb-4">
+                                        <h4 className="text-sm font-medium text-gray-700">게시글 권한</h4>
+                                    </div>
+                                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="bg-gray-50 border-b border-gray-200">
+                                                    <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 w-[60%]">권한</th>
+                                                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
+                                                        <div className="flex flex-col items-center">
+                                                            <span>관리자</span>
+                                                            {/* <span className="text-xs text-gray-500 font-normal">(Admin)</span> */}
+                                                        </div>
+                                                    </th>
+                                                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
+                                                        <div className="flex flex-col items-center">
+                                                            <span>회원</span>
+                                                            {/* <span className="text-xs text-gray-500 font-normal">(Member)</span> */}
+                                                        </div>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <PermissionRow
+                                                    label="게시글 목록"
+                                                    adminChecked={policies.admin.post_list}
+                                                    memberChecked={policies.member.post_list}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'post_list', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'post_list', checked)}
+                                                />
+                                                <PermissionRow
+                                                    label="글 작성"
+                                                    adminChecked={policies.admin.post_create}
+                                                    memberChecked={policies.member.post_create}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'post_create', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'post_create', checked)}
+                                                />
+                                                <PermissionRow
+                                                    label="글 읽기"
+                                                    adminChecked={policies.admin.post_read}
+                                                    memberChecked={policies.member.post_read}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'post_read', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'post_read', checked)}
+                                                />
+                                                <PermissionRow
+                                                    label="글 수정"
+                                                    note="회원은 자기 글만"
+                                                    adminChecked={policies.admin.post_edit}
+                                                    memberChecked={policies.member.post_edit}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'post_edit', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'post_edit', checked)}
+                                                />
+                                                <PermissionRow
+                                                    label="글 삭제"
+                                                    note="회원은 자기 글만"
+                                                    adminChecked={policies.admin.post_delete}
+                                                    memberChecked={policies.member.post_delete}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'post_delete', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'post_delete', checked)}
+                                                />
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                    <table className="w-full">
-                                        <thead>
-                                            <tr className="bg-gray-50 border-b border-gray-200">
-                                                <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 w-[60%]">권한</th>
-                                                <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
-                                                    <div className="flex flex-col items-center">
-                                                        <span>관리자</span>
-                                                        {/* <span className="text-xs text-gray-500 font-normal">(Admin)</span> */}
-                                                    </div>
-                                                </th>
-                                                <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
-                                                    <div className="flex flex-col items-center">
-                                                        <span>회원</span>
-                                                        {/* <span className="text-xs text-gray-500 font-normal">(Member)</span> */}
-                                                    </div>
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <PermissionRow
-                                                label="파일 업로드"
-                                                adminChecked={policies.admin.file_upload}
-                                                memberChecked={policies.member.file_upload}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'file_upload', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'file_upload', checked)}
-                                            />
-                                            <PermissionRow
-                                                label="파일 다운로드"
-                                                adminChecked={policies.admin.file_download}
-                                                memberChecked={policies.member.file_download}
-                                                onAdminChange={(checked) => updatePolicy('admin', 'file_download', checked)}
-                                                onMemberChange={(checked) => updatePolicy('member', 'file_download', checked)}
-                                            />
-                                        </tbody>
-                                    </table>
+
+                                {/* 댓글 권한 */}
+                                <div className="mb-6">
+                                    <div className="border-b border-gray-200 pb-2 mb-4">
+                                        <h4 className="text-sm font-medium text-gray-700">댓글 권한</h4>
+                                    </div>
+                                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="bg-gray-50 border-b border-gray-200">
+                                                    <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 w-[60%]">권한</th>
+                                                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
+                                                        <div className="flex flex-col items-center">
+                                                            <span>관리자</span>
+                                                            {/* <span className="text-xs text-gray-500 font-normal">(Admin)</span> */}
+                                                        </div>
+                                                    </th>
+                                                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
+                                                        <div className="flex flex-col items-center">
+                                                            <span>회원</span>
+                                                            {/* <span className="text-xs text-gray-500 font-normal">(Member)</span> */}
+                                                        </div>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <PermissionRow
+                                                    label="댓글 작성"
+                                                    adminChecked={policies.admin.cmt_create}
+                                                    memberChecked={policies.member.cmt_create}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'cmt_create', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'cmt_create', checked)}
+                                                />
+                                                <PermissionRow
+                                                    label="댓글 읽기"
+                                                    adminChecked={policies.admin.cmt_read}
+                                                    memberChecked={policies.member.cmt_read}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'cmt_read', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'cmt_read', checked)}
+                                                />
+                                                <PermissionRow
+                                                    label="댓글 수정"
+                                                    note="회원은 자기 댓글만"
+                                                    adminChecked={policies.admin.cmt_edit}
+                                                    memberChecked={policies.member.cmt_edit}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'cmt_edit', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'cmt_edit', checked)}
+                                                />
+                                                <PermissionRow
+                                                    label="댓글 삭제"
+                                                    note="회원은 자기 댓글만"
+                                                    adminChecked={policies.admin.cmt_delete}
+                                                    memberChecked={policies.member.cmt_delete}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'cmt_delete', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'cmt_delete', checked)}
+                                                />
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* 파일 권한 */}
+                                <div>
+                                    <div className="border-b border-gray-200 pb-2 mb-4">
+                                        <h4 className="text-sm font-medium text-gray-700">파일 권한</h4>
+                                    </div>
+                                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="bg-gray-50 border-b border-gray-200">
+                                                    <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 w-[60%]">권한</th>
+                                                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
+                                                        <div className="flex flex-col items-center">
+                                                            <span>관리자</span>
+                                                            {/* <span className="text-xs text-gray-500 font-normal">(Admin)</span> */}
+                                                        </div>
+                                                    </th>
+                                                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700">
+                                                        <div className="flex flex-col items-center">
+                                                            <span>회원</span>
+                                                            {/* <span className="text-xs text-gray-500 font-normal">(Member)</span> */}
+                                                        </div>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <PermissionRow
+                                                    label="파일 업로드"
+                                                    adminChecked={policies.admin.file_upload}
+                                                    memberChecked={policies.member.file_upload}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'file_upload', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'file_upload', checked)}
+                                                />
+                                                <PermissionRow
+                                                    label="파일 다운로드"
+                                                    adminChecked={policies.admin.file_download}
+                                                    memberChecked={policies.member.file_download}
+                                                    onAdminChange={(checked) => updatePolicy('admin', 'file_download', checked)}
+                                                    onMemberChange={(checked) => updatePolicy('member', 'file_download', checked)}
+                                                />
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </CardContent>
 
-                    <div className="bg-gray-50 border-t border-gray-200 px-6 py-6 flex justify-end gap-3">
+                    <CardFooter className="justify-between">
                         <Button
                             type="button"
                             variant="outline"
@@ -521,15 +520,31 @@ export default function BoardForm({ board }: BoardFormProps) {
                         >
                             취소
                         </Button>
-                        <Button
-                            type="button"
-                            onClick={handleSubmit}
-                            disabled={isSubmitting}
-                            className="h-[42px] bg-[#155DFC] text-white hover:bg-[#155DFC]/90"
-                        >
-                            {isSubmitting ? '저장 중...' : '저장'}
-                        </Button>
-                    </div>
+                        <div className="flex items-center gap-3">
+                            {isEdit && board && (
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    onClick={() => setShowDeleteDialog(true)}
+                                    className="h-[42px] gap-2"
+                                    disabled={deleting}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    {deleting ? '삭제 중...' : '삭제'}
+                                </Button>
+                            )}
+                            <Button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting}
+                                className="h-[42px] gap-2"
+                                size="lg"
+                            >
+                                <Save className="h-4 w-4" />
+                                {isSubmitting ? '저장 중...' : '저장'}
+                            </Button>
+                        </div>
+                    </CardFooter>
                 </Card>
 
                 {/* 기존 게시판 설정 (숨김 처리) */}

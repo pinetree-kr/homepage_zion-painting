@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Save, GripVertical, Upload, Loader2, X } from 'lucide-react';
-import { Button } from '@/src/shared/ui';
+import { Button, CardContent, CardFooter, CardHeader, CardTitle } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Textarea } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
@@ -628,11 +628,13 @@ export default function ManagementProloguePage() {
 
       {/* 프롤로그 설정 카드 */}
       <div className="space-y-6">
-        <Card className="p-6">
-          <div className="space-y-4">
-            <div className="mb-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <h3 className="text-gray-900 text-lg font-semibold">프롤로그 설정</h3>
-            </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
               <div>
                 <Label>대표 타이틀</Label>
@@ -657,105 +659,120 @@ export default function ManagementProloguePage() {
                 이미지별 타이틀/설명이 비어있을 때 대표 타이틀/설명이 표시됩니다
               </p>
             </div>
-          </div>
+          </CardContent>
+
+          <CardFooter className="justify-end">
+            <Button
+              onClick={handleSaveSettings}
+              className="h-[42px] gap-2"
+              disabled={isSavingSettings}
+              size="lg"
+            >
+              {isSavingSettings ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  저장 중...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  저장
+                </>
+              )}
+            </Button>
+          </CardFooter>
         </Card>
-        <div className="flex justify-end">
-          <Button onClick={handleSaveSettings} className="gap-2" disabled={isSavingSettings} size="lg">
-            {isSavingSettings ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                저장 중...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                저장
-              </>
-            )}
-          </Button>
-        </div>
       </div>
 
       {/* 캐러셀 이미지 관리 카드 */}
       <div className="space-y-6">
-        <Card className="p-6">
-          <div className="space-y-6">
-            <div className="mb-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <h3 className="text-gray-900 text-lg font-semibold">캐러셀 이미지 관리</h3>
-            </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageUpload}
-            className="hidden"
-            id="carousel-image-upload"
-          />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              className="hidden"
+              id="carousel-image-upload"
+            />
 
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={carouselItems.map((item) => item.id)}
-              strategy={verticalListSortingStrategy}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              <div className="space-y-4">
-                {carouselItems.map((item, index) => (
-                  <SortableItem
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    totalCount={carouselItems.length}
-                    defaultTitle={defaultTitle}
-                    defaultDescription={defaultDescription}
-                    onUpdate={updateCarouselItem}
-                    onRemove={handleDeleteClick}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+              <SortableContext
+                items={carouselItems.map((item) => item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-4">
+                  {carouselItems.map((item, index) => (
+                    <SortableItem
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      totalCount={carouselItems.length}
+                      defaultTitle={defaultTitle}
+                      defaultDescription={defaultDescription}
+                      onUpdate={updateCarouselItem}
+                      onRemove={handleDeleteClick}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
 
-          {/* 이미지 추가 영역 - 항상 하단에 표시 */}
-          <div
-            className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer mt-4 ${isDragging
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-              }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload className={`h-12 w-12 mx-auto mb-4 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
-            <p className={`text-sm font-medium ${isDragging ? 'text-blue-600' : 'text-gray-500'}`}>
-              {isDragging ? '이미지를 여기에 놓으세요' : '새 이미지 추가'}
-            </p>
-            <p className={`text-xs mt-1 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`}>
-              클릭하여 선택하거나 드래그하여 업로드하세요
-            </p>
-          </div>
-        </div>
+            {/* 이미지 추가 영역 - 항상 하단에 표시 */}
+            <div
+              className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer mt-4 ${isDragging
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className={`h-12 w-12 mx-auto mb-4 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
+              <p className={`text-sm font-medium ${isDragging ? 'text-blue-600' : 'text-gray-500'}`}>
+                {isDragging ? '이미지를 여기에 놓으세요' : '새 이미지 추가'}
+              </p>
+              <p className={`text-xs mt-1 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`}>
+                클릭하여 선택하거나 드래그하여 업로드하세요
+              </p>
+            </div>
+            </div>
+          </CardContent>
+          <CardFooter className="justify-end">
+            <Button
+              onClick={handleSaveCarouselItemsClick}
+              className="h-[42px] gap-2"
+              disabled={isSavingCarouselItems}
+              size="lg"
+            >
+              {isSavingCarouselItems ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  저장 중...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  저장
+                </>
+              )}
+            </Button>
+          </CardFooter>
         </Card>
-        <div className="flex justify-end">
-          <Button onClick={handleSaveCarouselItemsClick} className="gap-2" disabled={isSavingCarouselItems} size="lg">
-            {isSavingCarouselItems ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                저장 중...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                저장
-              </>
-            )}
-          </Button>
-        </div>
       </div>
 
       {/* 항목 제거 확인 모달 */}

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Mail, Phone, Calendar, User as UserIcon, Trash2 } from 'lucide-react';
-import { Button } from '@/src/shared/ui';
+import { Button, CardFooter } from '@/src/shared/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { toast } from 'sonner';
@@ -73,7 +73,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
             회원 정보
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pb-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-500">이름</label>
@@ -133,18 +133,17 @@ export default function MemberDetail({ member }: MemberDetailProps) {
             )}
           </div>
         </CardContent>
+        <CardFooter className="justify-end">
+          <Button
+            variant="destructive"
+            onClick={() => setShowDeleteDialog(true)}
+            className="h-[42px] gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            삭제
+          </Button>
+        </CardFooter>
       </Card>
-
-      <div>
-        <Button
-          variant="destructive"
-          onClick={() => setShowDeleteDialog(true)}
-          className="gap-2"
-        >
-          <Trash2 className="h-4 w-4" />
-          삭제
-        </Button>
-      </div>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
-import { Card } from '@/src/shared/ui';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { toast } from 'sonner';
@@ -17,10 +17,10 @@ interface ProductBoardSettingsProps {
   quoteBoardId: string | null;
 }
 
-export default function ProductBoardSettings({ 
-  boards, 
+export default function ProductBoardSettings({
+  boards,
   reviewBoardId: initialReviewBoardId,
-  quoteBoardId: initialQuoteBoardId 
+  quoteBoardId: initialQuoteBoardId
 }: ProductBoardSettingsProps) {
   const [reviewBoardId, setReviewBoardId] = useState<string>(initialReviewBoardId || '');
   const [quoteBoardId, setQuoteBoardId] = useState<string>(initialQuoteBoardId || '');
@@ -56,21 +56,22 @@ export default function ProductBoardSettings({
     }
   };
 
-  const hasChanges = 
+  const hasChanges =
     reviewBoardId !== (initialReviewBoardId || '') ||
     quoteBoardId !== (initialQuoteBoardId || '');
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="mb-6">
-          <h3 className="text-gray-900 text-lg font-semibold">게시판 연결 설정</h3>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <h3 className="text-gray-900 text-lg font-semibold">게시판 연결 설정</h3>
+          </CardTitle>
           <p className="text-gray-500 text-sm mt-1">
             제품과 연결할 <span className="font-bold text-blue-500">고객 후기</span> 게시판과 <span className="font-bold text-blue-500">견적 문의</span> 게시판을 선택하세요.
           </p>
-        </div>
-
-        <div className="space-y-6">
+        </CardHeader>
+        <CardContent className="space-y-6">
           {/* 리뷰게시판 선택 */}
           <div className="space-y-2">
             <Label htmlFor="review-board" className="text-gray-900 font-medium">
@@ -126,18 +127,19 @@ export default function ProductBoardSettings({
               </p>
             )}
           </div>
-        </div>
+        </CardContent>
+        <CardFooter className="justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={saving || !hasChanges}
+            className="h-[42px] gap-2"
+            size="lg"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? '저장 중...' : '저장'}
+          </Button>
+        </CardFooter>
       </Card>
-      <div className="flex justify-end">
-        <Button 
-          onClick={handleSave}
-          disabled={saving || !hasChanges}
-          className="gap-2"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
-      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState, useEffect, Suspense } from 'react';
 import { Save, Plus, Trash2, GripVertical } from 'lucide-react';
-import { Button, Card, Input, Label, Textarea } from '@/src/shared/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, CardFooter, Input, Label, Textarea } from '@/src/shared/ui';
 import { SortableValueItem } from './SortableValueItem';
 import { generateId } from './utils';
 import { fetchCompanyAboutField } from '../api/company-client';
@@ -121,10 +121,13 @@ function ValuesSectionContent() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="mb-4">
-          <h3 className="text-gray-900 text-lg font-semibold">핵심가치</h3>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <h3 className="text-gray-900 text-lg font-semibold">핵심가치</h3>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
 
         {isMounted ? (
           <DndContext
@@ -206,18 +209,19 @@ function ValuesSectionContent() {
             클릭하여 새로운 핵심가치를 추가하세요
           </p>
         </div>
+        </CardContent>
+        <CardFooter className="justify-end">
+          <Button
+            onClick={handleSave}
+            className="h-[42px] gap-2"
+            disabled={saving}
+            size="lg"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? '저장 중...' : '저장'}
+          </Button>
+        </CardFooter>
       </Card>
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSave}
-          className="gap-2"
-          disabled={saving}
-          size="lg"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
-      </div>
     </div>
   );
 }

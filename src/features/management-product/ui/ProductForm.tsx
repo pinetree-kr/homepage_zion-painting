@@ -6,7 +6,7 @@ import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
-import { Card } from '@/src/shared/ui';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/shared/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { DynamicCustomEditor } from '@/src/features/editor';
@@ -339,8 +339,13 @@ export default function ProductForm({
         </div>
       </div>
 
-      <Card className="p-6">
-        <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <h3 className="text-gray-900 text-lg font-semibold">제품 {productId ? '수정' : '추가'}</h3>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>제목</Label>
@@ -405,27 +410,31 @@ export default function ProductForm({
               }}
             />
           </div>
-        </div>
-      </Card>
+        </CardContent>
 
-      <div className="flex justify-end gap-2">
-        {productId && (
+        <CardFooter className="justify-end">
+          {productId && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              className="h-[42px] gap-2"
+              disabled={deleting}
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleting ? '삭제 중...' : '삭제'}
+            </Button>
+          )}
           <Button
-            variant="destructive"
-            onClick={() => setShowDeleteDialog(true)}
-            className="gap-2"
-            disabled={deleting}
+            onClick={handleSave}
+            className="h-[42px] gap-2"
+            disabled={saving}
             size="lg"
           >
-            <Trash2 className="h-4 w-4" />
-            {deleting ? '삭제 중...' : '삭제'}
+            <Save className="h-4 w-4" />
+            {saving ? '저장 중...' : '저장'}
           </Button>
-        )}
-        <Button onClick={handleSave} className="gap-2" disabled={saving} size="lg">
-          <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
-      </div>
+        </CardFooter>
+      </Card>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
