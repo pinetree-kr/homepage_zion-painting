@@ -166,9 +166,6 @@ CREATE POLICY "Admin write access for business_achievements" ON business_achieve
 CREATE POLICY "Admin update access for business_achievements" ON business_achievements
   FOR UPDATE USING (is_admin(auth.uid()));
 
-CREATE POLICY "Admin delete access for business_achievements" ON business_achievements
-  FOR UPDATE USING (is_admin(auth.uid()));
-
 -- ============================================================================
 -- 9. product_categories 테이블 RLS 정책
 -- ============================================================================
@@ -180,9 +177,6 @@ CREATE POLICY "Admin write access for product_categories" ON product_categories
   FOR INSERT WITH CHECK (is_admin(auth.uid()));
 
 CREATE POLICY "Admin update access for product_categories" ON product_categories
-  FOR UPDATE USING (is_admin(auth.uid()));
-
-CREATE POLICY "Admin soft delete access for product_categories" ON product_categories
   FOR UPDATE USING (is_admin(auth.uid()));
 
 -- ============================================================================
@@ -201,9 +195,6 @@ CREATE POLICY "Admin write access for products" ON products
 CREATE POLICY "Admin update access for products" ON products
   FOR UPDATE USING (is_admin(auth.uid()));
 
-CREATE POLICY "Admin delete access for products" ON products
-  FOR UPDATE USING (is_admin(auth.uid()));
-
 -- ============================================================================
 -- 11. boards 테이블 RLS 정책
 -- ============================================================================
@@ -220,9 +211,6 @@ CREATE POLICY "Admin write access for boards" ON boards
 CREATE POLICY "Admin update access for boards" ON boards
   FOR UPDATE USING (is_admin(auth.uid()));
 
-CREATE POLICY "Admin soft delete access for boards" ON boards
-  FOR UPDATE USING (is_admin(auth.uid()));
-
 -- ============================================================================
 -- 12. board_categories 테이블 RLS 정책
 -- ============================================================================
@@ -236,29 +224,21 @@ CREATE POLICY "Admin write access for board_categories" ON board_categories
 CREATE POLICY "Admin update access for board_categories" ON board_categories
   FOR UPDATE USING (is_admin(auth.uid()));
 
-CREATE POLICY "Admin soft delete access for board_categories" ON board_categories
-  FOR UPDATE USING (is_admin(auth.uid()));
 
 -- ============================================================================
 -- 13. posts 테이블 RLS 정책
 -- ============================================================================
 
 CREATE POLICY "Public read access for published posts" ON posts
-  FOR SELECT USING (status = 'published' AND deleted_at IS NULL);
+  FOR SELECT USING (status = 'published');
 
 CREATE POLICY "Authors can view own posts" ON posts
-  FOR SELECT USING (auth.uid() = author_id AND deleted_at IS NULL);
+  FOR SELECT USING (auth.uid() = author_id);
 
 CREATE POLICY "Authenticated users can create posts" ON posts
   FOR INSERT WITH CHECK (auth.uid() = author_id);
 
 CREATE POLICY "Authors and admins can update posts" ON posts
-  FOR UPDATE USING (
-    auth.uid() = author_id OR
-    is_admin(auth.uid())
-  );
-
-CREATE POLICY "Authors and admins can delete posts" ON posts
   FOR UPDATE USING (
     auth.uid() = author_id OR
     is_admin(auth.uid())
@@ -276,16 +256,6 @@ CREATE POLICY "Anyone can create post_files" ON post_files
 
 CREATE POLICY "Authors and admins can update post_files" ON post_files
   FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM posts 
-      WHERE posts.id = post_files.post_id 
-      AND posts.author_id = auth.uid()
-    ) OR
-    is_admin(auth.uid())
-  );
-
-CREATE POLICY "Authors and admins can delete post_files" ON post_files
-  FOR DELETE USING (
     EXISTS (
       SELECT 1 FROM posts 
       WHERE posts.id = post_files.post_id 
@@ -335,7 +305,7 @@ CREATE POLICY "Authenticated users can create comments" ON comments
 CREATE POLICY "Authors can update own comments" ON comments
   FOR UPDATE USING (auth.uid() = author_id);
 
-CREATE POLICY "Authors and admins can delete comments" ON comments
+CREATE POLICY "Authors and admins can update and soft delete own comments" ON comments
   FOR UPDATE USING (
     auth.uid() = author_id OR
     is_admin(auth.uid())
@@ -394,17 +364,6 @@ CREATE POLICY "Authors and admins can update product_reviews" ON product_reviews
     )
   );
 
-CREATE POLICY "Authors and admins can delete product_reviews" ON product_reviews
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM posts 
-      WHERE posts.id = product_reviews.post_id 
-      AND (
-        posts.author_id = auth.uid() OR
-        is_admin(auth.uid())
-      )
-    )
-  );
 
 -- ============================================================================
 -- 17. product_inquiries 테이블 RLS 정책
@@ -448,18 +407,6 @@ CREATE POLICY "Authors and admins can create product_inquiries" ON product_inqui
   );
 
 CREATE POLICY "Authors and admins can update product_inquiries" ON product_inquiries
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM posts 
-      WHERE posts.id = product_inquiries.post_id 
-      AND (
-        posts.author_id = auth.uid() OR
-        is_admin(auth.uid())
-      )
-    )
-  );
-
-CREATE POLICY "Authors and admins can delete product_inquiries" ON product_inquiries
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM posts 

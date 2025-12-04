@@ -6,6 +6,8 @@ import type { BusinessInfo, BusinessArea, BusinessCategory, Achievement } from '
 import { revalidatePath } from 'next/cache';
 import { Database } from '@/src/shared/lib/supabase-types';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
+import { logSectionSettingChange } from '@/src/entities';
 
 /**
  * 사업소개 정보 로드
@@ -605,7 +607,7 @@ export async function deleteBusinessAchievement(id: string): Promise<{ success: 
 
     const { error } = await supabase
       .from('business_achievements')
-      .update({ deleted_at: new Date().toISOString() } as any)
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {

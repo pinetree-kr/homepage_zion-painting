@@ -324,7 +324,7 @@ export async function saveBoardPolicies(
           const forwardedFor = headersList.get('x-forwarded-for');
           const realIp = headersList.get('x-real-ip');
           const cfConnectingIp = headersList.get('cf-connecting-ip');
-          
+
           if (forwardedFor) {
             ipAddress = forwardedFor.split(',')[0].trim();
           } else if (realIp) {
@@ -343,7 +343,7 @@ export async function saveBoardPolicies(
         // 기존 정책과 새 정책 비교
         policies.forEach(newPolicy => {
           const oldPolicy = oldPolicies?.find(p => p.role === newPolicy.role);
-          
+
           if (!oldPolicy) {
             // 새로 추가된 역할
             changedRoles.push(newPolicy.role);
@@ -354,7 +354,7 @@ export async function saveBoardPolicies(
             };
           } else {
             // 권한 변경 확인
-            const hasChanges = 
+            const hasChanges =
               oldPolicy.post_list !== newPolicy.post_list ||
               oldPolicy.post_create !== newPolicy.post_create ||
               oldPolicy.post_read !== newPolicy.post_read ||
@@ -587,7 +587,7 @@ export async function updateBoard(
     // 변경될 필드 확인 (실제로 변경된 필드만 업데이트)
     const updateData: any = {};
     const changedFields: string[] = [];
-    
+
     if (board.code !== undefined && board.code !== oldBoardData.code) {
       updateData.code = board.code;
       changedFields.push('code');
@@ -667,7 +667,7 @@ export async function updateBoard(
             const forwardedFor = headersList.get('x-forwarded-for');
             const realIp = headersList.get('x-real-ip');
             const cfConnectingIp = headersList.get('cf-connecting-ip');
-            
+
             if (forwardedFor) {
               ipAddress = forwardedFor.split(',')[0].trim();
             } else if (realIp) {
@@ -728,7 +728,7 @@ export async function deleteBoard(id: string): Promise<{ success: boolean; error
 
     const { error } = await supabase
       .from('boards')
-      .update({ deleted_at: new Date().toISOString() } as any)
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {
@@ -752,7 +752,7 @@ export async function getProductsUsingAdmin(
 ): Promise<Array<{ id: string; title: string }>> {
   try {
     const supabase = await createServerClient();
-    
+
     const { data, error } = await supabase
       .from('products')
       .select('id, title')
@@ -783,7 +783,7 @@ export async function getProductsUsingAnonymous(
 ): Promise<Array<{ id: string; title: string }>> {
   try {
     const supabase = createAnonymousServerClient();
-    
+
     const { data, error } = await supabase
       .from('products')
       .select('id, title')

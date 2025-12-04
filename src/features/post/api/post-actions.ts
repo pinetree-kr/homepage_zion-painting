@@ -313,11 +313,11 @@ export async function savePost(
  */
 export async function deletePost(id: string, boardCode: 'notices' | 'qna' | 'quotes' | 'reviews'): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createServerClient();
+    const supabase = await createServerClient(); console.log()
 
     const { error } = await supabase
       .from('posts')
-      .update({ deleted_at: new Date().toISOString() } as any)
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {

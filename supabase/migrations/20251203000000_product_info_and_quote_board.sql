@@ -42,7 +42,3 @@ CREATE POLICY "Admin write access for product_info" ON product_info
 
 CREATE POLICY "Admin update access for product_info" ON product_info
   FOR UPDATE USING (is_admin(auth.uid()));
-
-CREATE POLICY "Admin delete access for product_info" ON product_info
-  FOR DELETE USING (is_admin(auth.uid()));
-

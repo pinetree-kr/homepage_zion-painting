@@ -367,8 +367,6 @@ export async function saveProduct(product: Omit<Product, 'id'> & { id?: string |
       .is('deleted_at', null)
       .maybeSingle();
 
-    console.log({ adminData })
-
     if (adminError || !adminData) {
       return { success: false, error: '관리자 권한이 필요합니다.' };
     }
@@ -383,8 +381,6 @@ export async function saveProduct(product: Omit<Product, 'id'> & { id?: string |
       thumbnail_url: product.thumbnail_url || null,
       extra_json: product.extra_json || null,
     };
-
-    // console.log({ productData })
 
     if (product.id) {
       // 업데이트
@@ -437,7 +433,7 @@ export async function deleteProduct(id: string): Promise<{ success: boolean; err
 
     const { error } = await supabase
       .from('products')
-      .update({ deleted_at: new Date().toISOString() } as any)
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {

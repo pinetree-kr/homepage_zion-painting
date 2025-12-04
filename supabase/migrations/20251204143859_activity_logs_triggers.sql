@@ -279,7 +279,7 @@ CREATE TRIGGER on_board_delete
   EXECUTE FUNCTION log_board_delete();
 
 -- ============================================================================
--- 4. 게시글 작성 로그 트리거 (Q&A, 견적문의만)
+-- 4. 게시글 생성/수정/삭제 로그 트리거 (모든 게시판)
 -- ============================================================================
 
 -- 게시글 작성 로그 함수
@@ -291,30 +291,137 @@ DECLARE
   board_name_val VARCHAR(255);
   board_code_val VARCHAR(80);
 BEGIN
+  -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
+  -- 트리거 실행 시 posts 테이블의 RLS 정책으로 인한 오류 방지
+  SET LOCAL row_security = off;
+  
   -- 게시판 정보 가져오기
   SELECT name, code INTO board_name_val, board_code_val
   FROM boards
   WHERE id = NEW.board_id;
   
-  -- Q&A 또는 견적문의 게시판인 경우만 로그 기록
-  IF board_code_val IN ('qna', 'quotes') THEN
-    -- 작성자 정보
-    user_id_val := NEW.author_id;
-    user_name_val := COALESCE(NEW.author_name, '익명');
+  -- 게시판 정보가 없는 경우 처리
+  IF board_name_val IS NULL THEN
+    board_name_val := '알 수 없음';
+    board_code_val := 'unknown';
+  END IF;
+  
+  -- 작성자 정보
+  user_id_val := NEW.author_id;
+  user_name_val := COALESCE(NEW.author_name, '익명');
+  
+  -- 활동 로그 생성
+  -- 주의: 트리거에서는 IP 주소에 직접 접근할 수 없으므로, 
+  -- posts 테이블에 저장된 author_ip를 사용합니다 (있는 경우에만)
+  INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
+  VALUES (
+    user_id_val,
+    user_name_val,
+    'POST_CREATE',
+    '게시글 작성',
+    board_name_val || ' 게시글 작성 완료',
+    jsonb_build_object(
+      'boardName', board_name_val,
+      'boardCode', board_code_val,
+      'postId', NEW.id,
+      'postTitle', NEW.title
+    ),
+    CASE 
+      WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
+      THEN NEW.author_ip::inet 
+      ELSE NULL 
+    END
+  );
+  
+  RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 게시글 수정 로그 함수
+CREATE OR REPLACE FUNCTION log_post_update()
+RETURNS TRIGGER AS $$
+DECLARE
+  user_id_val UUID;
+  user_name_val VARCHAR(255);
+  board_name_val VARCHAR(255);
+  board_code_val VARCHAR(80);
+  changed_fields TEXT[];
+BEGIN
+  -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
+  -- 트리거 실행 시 posts 테이블의 RLS 정책으로 인한 오류 방지
+  SET LOCAL row_security = off;
+  
+  -- 게시판 정보 가져오기
+  SELECT name, code INTO board_name_val, board_code_val
+  FROM boards
+  WHERE id = NEW.board_id;
+  
+  -- 게시판 정보가 없는 경우 처리
+  IF board_name_val IS NULL THEN
+    board_name_val := '알 수 없음';
+    board_code_val := 'unknown';
+  END IF;
+  
+  -- 현재 사용자 정보 가져오기
+  user_id_val := auth.uid();
+  
+  IF user_id_val IS NOT NULL THEN
+    SELECT name INTO user_name_val
+    FROM profiles
+    WHERE id = user_id_val;
     
-    -- 활동 로그 생성
-    -- 주의: 트리거에서는 IP 주소에 직접 접근할 수 없으므로, 
-    -- posts 테이블에 저장된 author_ip를 사용합니다 (있는 경우에만)
+    IF user_name_val IS NULL OR user_name_val = '' THEN
+      user_name_val := COALESCE(NEW.author_name, '익명');
+    END IF;
+  ELSE
+    user_name_val := COALESCE(NEW.author_name, '익명');
+  END IF;
+  
+  -- 변경된 필드 확인
+  changed_fields := ARRAY[]::TEXT[];
+  
+  IF OLD.title IS DISTINCT FROM NEW.title THEN
+    changed_fields := array_append(changed_fields, 'title');
+  END IF;
+  IF OLD.content IS DISTINCT FROM NEW.content THEN
+    changed_fields := array_append(changed_fields, 'content');
+  END IF;
+  IF OLD.status IS DISTINCT FROM NEW.status THEN
+    changed_fields := array_append(changed_fields, 'status');
+  END IF;
+  IF OLD.is_pinned IS DISTINCT FROM NEW.is_pinned THEN
+    changed_fields := array_append(changed_fields, 'is_pinned');
+  END IF;
+  IF OLD.is_secret IS DISTINCT FROM NEW.is_secret THEN
+    changed_fields := array_append(changed_fields, 'is_secret');
+  END IF;
+  IF OLD.category_id IS DISTINCT FROM NEW.category_id THEN
+    changed_fields := array_append(changed_fields, 'category_id');
+  END IF;
+  IF OLD.thumbnail_url IS DISTINCT FROM NEW.thumbnail_url THEN
+    changed_fields := array_append(changed_fields, 'thumbnail_url');
+  END IF;
+  
+  -- 변경사항이 있는 경우에만 로그 기록
+  -- updated_at 변경만 있는 경우는 제외 (트리거에 의한 자동 업데이트)
+  IF array_length(changed_fields, 1) > 0 THEN
     INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
     VALUES (
       user_id_val,
       user_name_val,
-      'POST_CREATE',
-      '게시글 작성',
-      board_name_val || ' 게시글 작성 완료',
+      'POST_UPDATE',
+      '게시글 수정',
+      board_name_val || ' 게시글 수정',
       jsonb_build_object(
         'boardName', board_name_val,
-        'postId', NEW.id
+        'boardCode', board_code_val,
+        'postId', NEW.id,
+        'postTitle', NEW.title,
+        'changedFields', changed_fields
       ),
       CASE 
         WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
@@ -332,11 +439,94 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 게시글 작성 트리거 생성
+-- 게시글 삭제 로그 함수 (soft delete 포함)
+CREATE OR REPLACE FUNCTION log_post_delete()
+RETURNS TRIGGER AS $$
+DECLARE
+  user_id_val UUID;
+  user_name_val VARCHAR(255);
+  board_name_val VARCHAR(255);
+  board_code_val VARCHAR(80);
+BEGIN
+  -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
+  -- 트리거 실행 시 posts 테이블의 RLS 정책으로 인한 오류 방지
+  SET LOCAL row_security = off;
+  
+  -- soft delete인 경우 (deleted_at이 설정된 경우)
+  IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
+    -- 게시판 정보 가져오기
+    SELECT name, code INTO board_name_val, board_code_val
+    FROM boards
+    WHERE id = OLD.board_id;
+    
+    -- 게시판 정보가 없는 경우 처리
+    IF board_name_val IS NULL THEN
+      board_name_val := '알 수 없음';
+      board_code_val := 'unknown';
+    END IF;
+    
+    -- 현재 사용자 정보 가져오기
+    user_id_val := auth.uid();
+    
+    IF user_id_val IS NOT NULL THEN
+      SELECT name INTO user_name_val
+      FROM profiles
+      WHERE id = user_id_val;
+      
+      IF user_name_val IS NULL OR user_name_val = '' THEN
+        user_name_val := COALESCE(OLD.author_name, '익명');
+      END IF;
+    ELSE
+      user_name_val := COALESCE(OLD.author_name, '익명');
+    END IF;
+    
+    -- 활동 로그 생성
+    INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
+    VALUES (
+      user_id_val,
+      user_name_val,
+      'POST_DELETE',
+      '게시글 삭제',
+      board_name_val || ' 게시글 삭제',
+      jsonb_build_object(
+        'boardName', board_name_val,
+        'boardCode', board_code_val,
+        'postId', OLD.id,
+        'postTitle', OLD.title
+      ),
+      CASE 
+        WHEN OLD.author_ip IS NOT NULL AND OLD.author_ip != '' 
+        THEN OLD.author_ip::inet 
+        ELSE NULL 
+      END
+    );
+  END IF;
+  
+  RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 게시글 트리거 생성
 DROP TRIGGER IF EXISTS on_post_create ON posts;
 CREATE TRIGGER on_post_create
   AFTER INSERT ON posts
   FOR EACH ROW EXECUTE FUNCTION log_post_create();
+
+DROP TRIGGER IF EXISTS on_post_update ON posts;
+CREATE TRIGGER on_post_update
+  AFTER UPDATE ON posts
+  FOR EACH ROW EXECUTE FUNCTION log_post_update();
+
+DROP TRIGGER IF EXISTS on_post_delete ON posts;
+CREATE TRIGGER on_post_delete
+  AFTER UPDATE ON posts
+  FOR EACH ROW
+  WHEN (NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL)
+  EXECUTE FUNCTION log_post_delete();
 
 -- ============================================================================
 -- 5. 관리자 답변 로그 트리거 (댓글 작성 시 관리자인 경우)
@@ -352,6 +542,10 @@ DECLARE
   board_code_val VARCHAR(80);
   is_admin_user BOOLEAN;
 BEGIN
+  -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
+  -- 트리거 실행 시 posts 테이블의 RLS 정책으로 인한 오류 방지
+  SET LOCAL row_security = off;
+  
   -- 작성자가 관리자인지 확인
   user_id_val := NEW.author_id;
   
@@ -1148,9 +1342,11 @@ CREATE TRIGGER on_carousel_item_delete
 COMMENT ON FUNCTION log_user_signup() IS '사용자 가입 시 자동으로 활동 로그를 생성하는 트리거 함수';
 COMMENT ON FUNCTION log_admin_signup() IS '관리자 가입 시 자동으로 활동 로그를 생성하는 트리거 함수';
 COMMENT ON FUNCTION log_board_create() IS '게시판 생성 시 자동으로 활동 로그를 생성하는 트리거 함수';
-COMMENT ON FUNCTION log_board_update() IS '게시판 수정 시 자동으로 활동 로그를 생성하는 트리거 함수';
+-- COMMENT ON FUNCTION log_board_update() IS '게시판 수정 시 자동으로 활동 로그를 생성하는 트리거 함수'; -- 함수가 비활성화되어 있으므로 주석 처리
 COMMENT ON FUNCTION log_board_delete() IS '게시판 삭제 시 자동으로 활동 로그를 생성하는 트리거 함수';
-COMMENT ON FUNCTION log_post_create() IS '게시글 작성 시 자동으로 활동 로그를 생성하는 트리거 함수 (Q&A, 견적문의만)';
+COMMENT ON FUNCTION log_post_create() IS '게시글 작성 시 자동으로 활동 로그를 생성하는 트리거 함수 (모든 게시판)';
+COMMENT ON FUNCTION log_post_update() IS '게시글 수정 시 자동으로 활동 로그를 생성하는 트리거 함수 (모든 게시판)';
+COMMENT ON FUNCTION log_post_delete() IS '게시글 삭제 시 자동으로 활동 로그를 생성하는 트리거 함수 (모든 게시판, soft delete)';
 COMMENT ON FUNCTION log_post_answer() IS '관리자 답변 시 자동으로 활동 로그를 생성하는 트리거 함수';
 COMMENT ON FUNCTION log_company_info_change() IS '회사정보 섹션 설정 변경 시 자동으로 활동 로그를 생성하는 트리거 함수';
 COMMENT ON FUNCTION log_business_info_change() IS '사업정보 섹션 설정 변경 시 자동으로 활동 로그를 생성하는 트리거 함수';

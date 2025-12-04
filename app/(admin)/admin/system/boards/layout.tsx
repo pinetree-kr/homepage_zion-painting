@@ -30,7 +30,7 @@ export default function BoardsLayout({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-gray-900 text-2xl font-semibold">게시판 관리</h2>
+          <h2 className="text-gray-900 text-2xl font-semibold">게시판 설정</h2>
           <p className="text-gray-500 text-sm mt-1">게시판 목록 및 연결 설정을 관리합니다</p>
         </div>
       </div>

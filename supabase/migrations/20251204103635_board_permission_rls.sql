@@ -73,77 +73,26 @@ CREATE POLICY "Public read access for published posts" ON posts
 -- 작성자는 본인 게시물 조회 가능 (draft 포함)
 CREATE POLICY "Authors can view own posts" ON posts
   FOR SELECT USING (
-    auth.uid() = author_id 
-    AND deleted_at IS NULL
+    auth.uid() = author_id
   );
 
 -- UPDATE 정책: board_policies 기반 권한 체크
-CREATE POLICY "Members can update own posts with permission" ON posts
-  FOR UPDATE USING (
-    -- 관리자는 모든 게시물 수정 가능
-    is_admin(auth.uid()) OR
-    -- 일반 사용자는 본인 게시물이고 권한이 있을 때만 수정 가능
-    (
-      auth.uid() = author_id
-      AND NOT is_admin(auth.uid())
-      AND check_board_permission(board_id, auth.uid(), 'post_edit')
-    )
-  );
-
--- DELETE 정책: board_policies 기반 권한 체크
-CREATE POLICY "Members can delete own posts with permission" ON posts
-  FOR UPDATE USING (
-    -- 관리자는 모든 게시물 삭제 가능
-    is_admin(auth.uid()) OR
-    -- 일반 사용자는 본인 게시물이고 권한이 있을 때만 삭제 가능
-    (
-      auth.uid() = author_id
-      AND NOT is_admin(auth.uid())
-      AND check_board_permission(board_id, auth.uid(), 'post_delete')
-    )
-  );
+-- CREATE POLICY "Members can update own posts with permission" ON posts
+--   FOR UPDATE USING (
+--     -- 관리자는 모든 게시물 수정 가능
+--     is_admin(auth.uid()) OR
+--     -- 일반 사용자는 본인 게시물이고 권한이 있을 때만 수정 가능
+--     (
+--       auth.uid() = author_id
+--       AND NOT is_admin(auth.uid())
+--       AND check_board_permission(board_id, auth.uid(), 'post_edit')
+--     )
+--   );
 
 -- ============================================================================
 -- 3. 기존 comments 테이블 RLS 정책 삭제 및 재생성
 -- ============================================================================
 
--- 기존 정책 삭제
-DROP POLICY IF EXISTS "Authors can update own comments" ON comments;
-DROP POLICY IF EXISTS "Authors and admins can delete comments" ON comments;
-
--- UPDATE 정책: board_policies 기반 권한 체크
-CREATE POLICY "Members can update own comments with permission" ON comments
-  FOR UPDATE USING (
-    -- 관리자는 모든 댓글 수정 가능
-    is_admin(auth.uid()) OR
-    -- 일반 사용자는 본인 댓글이고 권한이 있을 때만 수정 가능
-    (
-      auth.uid() = author_id
-      AND NOT is_admin(auth.uid())
-      AND EXISTS (
-        SELECT 1 FROM posts
-        WHERE posts.id = comments.post_id
-        AND check_board_permission(posts.board_id, auth.uid(), 'cmt_edit')
-      )
-    )
-  );
-
--- DELETE 정책: board_policies 기반 권한 체크
-CREATE POLICY "Members can delete own comments with permission" ON comments
-  FOR UPDATE USING (
-    -- 관리자는 모든 댓글 삭제 가능
-    is_admin(auth.uid()) OR
-    -- 일반 사용자는 본인 댓글이고 권한이 있을 때만 삭제 가능
-    (
-      auth.uid() = author_id
-      AND NOT is_admin(auth.uid())
-      AND EXISTS (
-        SELECT 1 FROM posts
-        WHERE posts.id = comments.post_id
-        AND check_board_permission(posts.board_id, auth.uid(), 'cmt_delete')
-      )
-    )
-  );
 
 -- ============================================================================
 -- 4. board_policies 테이블 RLS 활성화 및 정책 추가

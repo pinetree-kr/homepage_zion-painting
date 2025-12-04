@@ -3,11 +3,11 @@
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ActivityLog, LogType } from '@/src/entities';
-import { 
-  Activity, 
-  AlertCircle, 
-  CheckCircle, 
-  Clock, 
+import {
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  Clock,
   Search,
   Download,
   User,
@@ -46,6 +46,8 @@ const logTypeLabels: Record<LogType, string> = {
   BOARD_CREATE: '게시판 생성',
   BOARD_UPDATE: '게시판 수정',
   BOARD_DELETE: '게시판 삭제',
+  POST_DELETE: '게시글 삭제',
+  POST_UPDATE: '게시글 수정',
   POST_CREATE: '게시글 작성',
   POST_ANSWER: '관리자 답변',
   ERROR: '오류 로그',
@@ -60,6 +62,8 @@ const logTypeIcons: Record<LogType, typeof Activity> = {
   BOARD_CREATE: FileText,
   BOARD_UPDATE: FileText,
   BOARD_DELETE: FileText,
+  POST_DELETE: FileText,
+  POST_UPDATE: FileText,
   POST_CREATE: MessageSquare,
   POST_ANSWER: MessageSquare,
   ERROR: AlertTriangle,
@@ -74,6 +78,8 @@ const logTypeColors: Record<LogType, string> = {
   BOARD_CREATE: 'bg-indigo-100 text-indigo-800 border-indigo-200',
   BOARD_UPDATE: 'bg-indigo-100 text-indigo-800 border-indigo-200',
   BOARD_DELETE: 'bg-gray-100 text-gray-800 border-gray-200',
+  POST_DELETE: 'bg-gray-100 text-gray-800 border-gray-200',
+  POST_UPDATE: 'bg-gray-100 text-gray-800 border-gray-200',
   POST_CREATE: 'bg-cyan-100 text-cyan-800 border-cyan-200',
   POST_ANSWER: 'bg-teal-100 text-teal-800 border-teal-200',
   ERROR: 'bg-red-100 text-red-800 border-red-200',
@@ -175,9 +181,9 @@ export default function LogManagement({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', { 
-      year: 'numeric', 
-      month: '2-digit', 
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
@@ -187,9 +193,9 @@ export default function LogManagement({
 
   const renderMetadata = (log: ActivityLog) => {
     if (!log.metadata) return null;
-    
+
     const metadataItems: React.ReactElement[] = [];
-    
+
     if (log.metadata.sectionName) {
       metadataItems.push(
         <div key="section" className="text-xs text-gray-500">
@@ -197,7 +203,7 @@ export default function LogManagement({
         </div>
       );
     }
-    
+
     if (log.metadata.boardName) {
       metadataItems.push(
         <div key="board" className="text-xs text-gray-500">
@@ -205,7 +211,7 @@ export default function LogManagement({
         </div>
       );
     }
-    
+
     if (log.metadata.postId) {
       metadataItems.push(
         <div key="post" className="text-xs text-gray-500">
@@ -213,7 +219,7 @@ export default function LogManagement({
         </div>
       );
     }
-    
+
     if (log.metadata.errorMessage) {
       metadataItems.push(
         <div key="error" className="text-xs text-red-600 font-medium">
@@ -221,7 +227,7 @@ export default function LogManagement({
         </div>
       );
     }
-    
+
     if (log.metadata.beforeValue && log.metadata.afterValue) {
       metadataItems.push(
         <div key="change" className="text-xs text-gray-500 mt-1">
@@ -230,7 +236,7 @@ export default function LogManagement({
         </div>
       );
     }
-    
+
     return metadataItems.length > 0 ? (
       <div className="mt-1 space-y-0.5">
         {metadataItems}
@@ -244,6 +250,7 @@ export default function LogManagement({
       header: '로그 타입',
       accessor: (row) => {
         const IconComponent = logTypeIcons[row.logType];
+
         return (
           <Badge variant="outline" className={`text-xs ${logTypeColors[row.logType]}`}>
             <IconComponent className="h-3 w-3 mr-1" />
@@ -391,47 +398,47 @@ export default function LogManagement({
         </Card>
       </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>활동 로그</CardTitle>
-              <CardDescription>
+      <Card>
+        <CardHeader>
+          <CardTitle>활동 로그</CardTitle>
+          <CardDescription>
             시스템의 모든 사용자 활동과 오류를 기록합니다
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1 flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="사용자, 작업, 상세 내용으로 검색..."
-                      defaultValue={initialSearchQuery}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleSearchChange(e.currentTarget.value);
-                        }
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  <Button
-                    onClick={(e) => {
-                      const input = e.currentTarget.previousElementSibling?.querySelector('input') as HTMLInputElement;
-                      if (input) {
-                        handleSearchChange(input.value);
-                      }
-                    }}
-                    variant="outline"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1 flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="사용자, 작업, 상세 내용으로 검색..."
+                  defaultValue={initialSearchQuery}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearchChange(e.currentTarget.value);
+                    }
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              <Button
+                onClick={(e) => {
+                  const input = e.currentTarget.previousElementSibling?.querySelector('input') as HTMLInputElement;
+                  if (input) {
+                    handleSearchChange(input.value);
+                  }
+                }}
+                variant="outline"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
 
             <Select value={initialLogTypeFilter} onValueChange={handleLogTypeChange}>
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="로그 타입" />
-                  </SelectTrigger>
-                  <SelectContent>
+              </SelectTrigger>
+              <SelectContent>
                 <SelectItem value="all">모든 타입</SelectItem>
                 <SelectItem value="USER_SIGNUP">사용자 가입</SelectItem>
                 <SelectItem value="ADMIN_SIGNUP">관리자 가입</SelectItem>
@@ -444,21 +451,21 @@ export default function LogManagement({
                 <SelectItem value="POST_CREATE">게시글 작성</SelectItem>
                 <SelectItem value="POST_ANSWER">관리자 답변</SelectItem>
                 <SelectItem value="ERROR">오류 로그</SelectItem>
-                  </SelectContent>
-                </Select>
+              </SelectContent>
+            </Select>
 
             <Select value={initialDateFilter} onValueChange={handleDateFilterChange}>
-                  <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectTrigger className="w-full sm:w-[150px]">
                 <SelectValue placeholder="기간" />
-                  </SelectTrigger>
-                  <SelectContent>
+              </SelectTrigger>
+              <SelectContent>
                 <SelectItem value="all">전체 기간</SelectItem>
                 <SelectItem value="today">오늘</SelectItem>
                 <SelectItem value="week">최근 7일</SelectItem>
                 <SelectItem value="month">최근 30일</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              </SelectContent>
+            </Select>
+          </div>
 
           <DataTable
             data={filteredLogs}
@@ -466,7 +473,7 @@ export default function LogManagement({
             getRowId={(row) => row.id}
             emptyMessage="로그가 없습니다"
           />
-          
+
           {totalPages > 1 && (
             <DataTablePagination
               currentPage={currentPage}
@@ -476,8 +483,8 @@ export default function LogManagement({
               onPageChange={handlePageChange}
             />
           )}
-            </CardContent>
-          </Card>
+        </CardContent>
+      </Card>
     </div>
   );
 }

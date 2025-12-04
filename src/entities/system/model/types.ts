@@ -8,6 +8,8 @@ export type LogType =
   | 'BOARD_UPDATE'          // 게시판 수정
   | 'BOARD_DELETE'          // 게시판 삭제
   | 'POST_CREATE'           // 게시글 작성 (Q&A, 견적문의)
+  | 'POST_UPDATE'           // 게시글 수정
+  | 'POST_DELETE'           // 게시글 삭제
   | 'POST_ANSWER'           // 관리자 답변
   | 'ERROR';                // 오류 로그
 
@@ -40,9 +42,6 @@ export interface BugReport {
   createdAt: string;
   resolvedAt?: string;
 }
-
-export type { LogType };
-
 export interface ResourceUsage {
   timestamp: string;
   memory: {

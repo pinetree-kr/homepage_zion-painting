@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, Calendar, CircleUser, Eye, Mail, Trash2, Pin, Edit, UserCircle, Search, Download, File, Image as ImageIcon, FileText } from 'lucide-react';
-import { Button } from '@/src/shared/ui';
+import { Button, CardFooter } from '@/src/shared/ui';
 import { Card, CardContent } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { Badge } from '@/src/shared/ui';
@@ -38,7 +38,7 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
     const loadUser = async () => {
       try {
         const { data: { user } } = await supabaseClient.auth.getUser();
-        
+
         if (!user) {
           setCurrentUser(null);
           setIsAdmin(false);
@@ -84,6 +84,7 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
   const handleDelete = async () => {
     setDeleting(true);
     try {
+      console.log('handleDelete', post.id, boardCode);
       const result = await deletePost(post.id, boardCode);
       if (result.success) {
         toast.success('게시글이 삭제되었습니다.');
@@ -149,19 +150,19 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
       if (!response.ok) {
         throw new Error('파일 다운로드에 실패했습니다.');
       }
-      
+
       const blob = await response.blob();
-      
+
       // Blob URL 생성
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       // 다운로드 링크 생성
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = file.file_name; // 원본 파일명으로 다운로드
       document.body.appendChild(link);
       link.click();
-      
+
       // 정리
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
@@ -184,8 +185,8 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
         </Button>
       </div>
 
-      <Card className="shadow-md">
-        <CardContent className="rounded-xl overflow-hidden" style={{ padding: '0px' }}>
+      <Card>
+        <CardContent style={{ padding: '0px' }}>
           {/* 제목 */}
           <div className="flex items-center justify-between p-2 md:p-4 px-4 md:px-8 bg-slate-200/60 border-b border-gray-200">
             <h1 className="text-2xl font-semibold flex items-center gap-2">
@@ -209,7 +210,7 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
                         {(() => {
                           // extra_json에서 author_image 확인 (나중에 author_image 필드가 추가될 수 있음)
                           const authorImage = post.extra_json?.author_image || null;
-                          
+
                           if (authorImage) {
                             return (
                               <Image
@@ -344,28 +345,31 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
             )}
           </div>
         </CardContent>
+        <CardFooter className="justify-end">
+          {canEdit && (
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+                className="gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                삭제
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => router.push(`/admin/boards/${boardCode}/${post.id}/edit`)}
+                className="gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                수정
+              </Button>
+            </div>
+          )}
+        </CardFooter>
       </Card>
 
-      {canEdit && (
-        <div className="flex items-center justify-end gap-3">
-          <Button
-            variant="destructive"
-            onClick={() => setShowDeleteDialog(true)}
-            className="gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            삭제
-          </Button>
-          <Button
-            variant="default"
-            onClick={() => router.push(`/admin/boards/${boardCode}/${post.id}/edit`)}
-            className="gap-2"
-          >
-            <Edit className="h-4 w-4" />
-            수정
-          </Button>
-        </div>
-      )}
+
 
       {/* 댓글 섹션 */}
       {allowComment && <Comments postId={post.id} />}

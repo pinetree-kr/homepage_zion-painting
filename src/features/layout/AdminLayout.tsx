@@ -165,6 +165,13 @@ const UserCogIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const SettingsIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
 const ImageIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
     <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
@@ -188,7 +195,7 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, boardConnections }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [openMenus, setOpenMenus] = useState<string[]>(['basic-info', 'customer-management', 'system-management']);
+  const [openMenus, setOpenMenus] = useState<string[]>(['basic-info', 'customer-management', 'board-management', 'system-management']);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -220,7 +227,10 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
     }
     if (pathname?.startsWith('/admin/system')) {
       if (pathname === '/admin/system/administrators') return 'admin-management';
-      if (pathname.includes('boards')) return 'boards-management';
+      if (pathname.includes('boards')) {
+        if (pathname.includes('board-settings')) return 'board-settings';
+        return 'boards-management';
+      }
       if (pathname.startsWith('/admin/system/logs')) return 'logs';
       return 'admin-management';
     }
@@ -249,6 +259,7 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
       'pds': getBoardRoute(boardConnections?.pdsBoardCode || null, '/admin/boards/pds'),
       'admin-management': '/admin/system/administrators',
       'boards-management': '/admin/system/boards',
+      'board-settings': '/admin/system/boards/board-settings',
       'logs': '/admin/system/logs',
     };
 
@@ -293,6 +304,13 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
         icon: MessageSquareIcon,
         items: [
           { id: 'members', label: '회원관리', icon: UsersIcon, route: '/admin/customer/members' },
+        ],
+      },
+      {
+        id: 'board-management',
+        label: '게시판관리',
+        icon: FileTextIcon,
+        items: [
           {
             id: 'notices',
             label: '공지사항',
@@ -323,6 +341,12 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
             icon: FileIcon,
             route: getBoardRoute(boardConnections?.pdsBoardCode || null)
           },
+          {
+            id: 'board-settings',
+            label: '설정',
+            icon: SettingsIcon,
+            route: '/admin/system/boards/board-settings'
+          },
         ],
       },
       {
@@ -331,7 +355,6 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
         icon: ServerIcon,
         items: [
           { id: 'admin-management', label: '관리자', icon: ShieldIcon, route: '/admin/system/administrators' },
-          { id: 'boards-management', label: '게시판 관리', icon: FileTextIcon, route: '/admin/system/boards' },
           { id: 'logs', label: '로그', icon: ActivityIcon, route: '/admin/system/logs' },
         ],
       },

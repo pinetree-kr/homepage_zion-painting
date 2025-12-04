@@ -152,7 +152,7 @@ export async function deleteUser(id: string): Promise<{ success: boolean; error?
 
     const { error } = await supabase
       .from('profiles')
-      .update({ deleted_at: new Date().toISOString() } as any)
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {

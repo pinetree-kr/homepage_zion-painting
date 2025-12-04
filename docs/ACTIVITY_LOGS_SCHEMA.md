@@ -33,7 +33,9 @@
 | `BOARD_CREATE` | 게시판 생성 | 새 게시판 생성 |
 | `BOARD_UPDATE` | 게시판 수정 | 게시판 설정 수정 |
 | `BOARD_DELETE` | 게시판 삭제 | 게시판 삭제 |
-| `POST_CREATE` | 게시글 작성 | Q&A, 견적문의 게시글 작성 |
+| `POST_CREATE` | 게시글 작성 | 게시글 작성 (모든 게시판) |
+| `POST_UPDATE` | 게시글 수정 | 게시글 수정 (모든 게시판) |
+| `POST_DELETE` | 게시글 삭제 | 게시글 삭제 (모든 게시판, soft delete) |
 | `POST_ANSWER` | 관리자 답변 | Q&A, 견적문의에 관리자 답변 작성 |
 | `ERROR` | 오류 로그 | 각종 액션 실행 중 오류 발생 |
 
@@ -59,12 +61,15 @@
 }
 ```
 
-### 게시글 작성 (POST_CREATE)
+### 게시글 관련 (POST_CREATE, POST_UPDATE, POST_DELETE)
 
 ```json
 {
   "boardName": "Q&A",
-  "postId": "uuid-here"
+  "boardCode": "qna",
+  "postId": "uuid-here",
+  "postTitle": "게시글 제목",
+  "changedFields": ["title", "content"]  // POST_UPDATE에만 포함
 }
 ```
 
