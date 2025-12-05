@@ -322,30 +322,6 @@ export type Database = {
         }
         Relationships: []
       }
-      business_info: {
-        Row: {
-          areas: Json | null
-          created_at: string | null
-          id: string
-          introduction: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          areas?: Json | null
-          created_at?: string | null
-          id?: string
-          introduction?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          areas?: Json | null
-          created_at?: string | null
-          id?: string
-          introduction?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       comments: {
         Row: {
           author_id: string | null
@@ -410,45 +386,39 @@ export type Database = {
           },
         ]
       }
-      company_info: {
+      pages: {
         Row: {
+          code: string
           created_at: string | null
-          greetings: string | null
-          histories: Json | null
+          display_order: number
           id: string
-          introduction: string | null
-          mission: string | null
-          organization_members: Json | null
-          strengths: Json | null
+          metadata: Json
+          page: string
+          section_type: string
+          status: Database["public"]["Enums"]["document_status"]
           updated_at: string | null
-          values: Json | null
-          vision: string | null
         }
         Insert: {
+          code: string
           created_at?: string | null
-          greetings?: string | null
-          histories?: Json | null
+          display_order?: number
           id?: string
-          introduction?: string | null
-          mission?: string | null
-          organization_members?: Json | null
-          strengths?: Json | null
+          metadata?: Json
+          page: string
+          section_type: string
+          status?: Database["public"]["Enums"]["document_status"]
           updated_at?: string | null
-          values?: Json | null
-          vision?: string | null
         }
         Update: {
+          code?: string
           created_at?: string | null
-          greetings?: string | null
-          histories?: Json | null
+          display_order?: number
           id?: string
-          introduction?: string | null
-          mission?: string | null
-          organization_members?: Json | null
-          strengths?: Json | null
+          metadata?: Json
+          page?: string
+          section_type?: string
+          status?: Database["public"]["Enums"]["document_status"]
           updated_at?: string | null
-          values?: Json | null
-          vision?: string | null
         }
         Relationships: []
       }
@@ -613,48 +583,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      product_info: {
-        Row: {
-          created_at: string | null
-          id: string
-          introduction: string | null
-          quote_board_id: string | null
-          review_board_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          introduction?: string | null
-          quote_board_id?: string | null
-          review_board_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          introduction?: string | null
-          quote_board_id?: string | null
-          review_board_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_info_quote_board_id_fkey"
-            columns: ["quote_board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_info_review_board_id_fkey"
-            columns: ["review_board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       product_inquiries: {
         Row: {
@@ -865,36 +793,6 @@ export type Database = {
         }
         Relationships: []
       }
-      prologue_carousel_items: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          display_order: number
-          id: string
-          image_url: string
-          title: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          display_order?: number
-          id?: string
-          image_url: string
-          title?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          display_order?: number
-          id?: string
-          image_url?: string
-          title?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       site_settings: {
         Row: {
           contact_address: string | null
@@ -911,8 +809,6 @@ export type Database = {
           inquire_board_id: string | null
           notice_board_id: string | null
           pds_board_id: string | null
-          prologue_default_description: string | null
-          prologue_default_title: string | null
           updated_at: string | null
         }
         Insert: {
@@ -930,8 +826,6 @@ export type Database = {
           inquire_board_id?: string | null
           notice_board_id?: string | null
           pds_board_id?: string | null
-          prologue_default_description?: string | null
-          prologue_default_title?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -949,8 +843,6 @@ export type Database = {
           inquire_board_id?: string | null
           notice_board_id?: string | null
           pds_board_id?: string | null
-          prologue_default_description?: string | null
-          prologue_default_title?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1006,6 +898,8 @@ export type Database = {
         | "BOARD_UPDATE"
         | "BOARD_DELETE"
         | "POST_CREATE"
+        | "POST_UPDATE"
+        | "POST_DELETE"
         | "POST_ANSWER"
         | "ERROR"
       visible_type: "public" | "member" | "owner"
@@ -1155,6 +1049,8 @@ export const Constants = {
         "BOARD_UPDATE",
         "BOARD_DELETE",
         "POST_CREATE",
+        "POST_UPDATE",
+        "POST_DELETE",
         "POST_ANSWER",
         "ERROR",
       ],

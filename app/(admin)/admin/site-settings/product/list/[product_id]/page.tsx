@@ -19,7 +19,7 @@ export default async function ProductEditPage({ params }: ProductEditPageProps) 
   ]);
 
   if (!product) {
-    redirect('/admin/sections/product/list');
+    redirect('/admin/site-settings/product/list');
   }
 
   return (

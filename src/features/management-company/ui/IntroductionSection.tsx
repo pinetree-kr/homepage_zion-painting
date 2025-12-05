@@ -18,6 +18,7 @@ function IntroductionSectionContent() {
     const loadData = async () => {
       try {
         const data = await fetchCompanyAboutField('introduction');
+        console.log({ data });
         setValue(data);
       } catch (error) {
         console.error('데이터 로드 오류:', error);

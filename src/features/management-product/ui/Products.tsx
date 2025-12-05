@@ -35,11 +35,11 @@ export default function Products({
   const router = useRouter();
 
   const addProduct = () => {
-    router.push('/admin/sections/product/list/new');
+    router.push('/admin/site-settings/product/list/new');
   };
 
   const editProduct = (product: Product & { category?: ProductCategory | null }) => {
-    router.push(`/admin/sections/product/list/${product.id}`);
+    router.push(`/admin/site-settings/product/list/${product.id}`);
   };
 
   const removeProduct = async (id: string) => {
@@ -75,7 +75,7 @@ export default function Products({
             {row.thumbnail_url && (
               <ImageIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
             )}
-            <Link href={`/admin/sections/product/list/${row.id}`} className="text-blue-500 hover:text-blue-700">
+            <Link href={`/admin/site-settings/product/list/${row.id}`} className="text-blue-500 hover:text-blue-700">
               {row.title}
             </Link>
           </div>

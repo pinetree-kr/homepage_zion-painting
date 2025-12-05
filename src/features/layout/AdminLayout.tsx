@@ -195,19 +195,19 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, boardConnections }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [openMenus, setOpenMenus] = useState<string[]>(['basic-info', 'customer-management', 'board-management', 'system-management']);
+  const [openMenus, setOpenMenus] = useState<string[]>(['site-settings', 'customer-management', 'board-management', 'system-management']);
   const pathname = usePathname();
   const router = useRouter();
 
   // 현재 경로에 따라 activeTab 결정
   const getActiveTab = useCallback(() => {
     if (pathname === '/admin/dashboard') return 'dashboard';
-    if (pathname?.startsWith('/admin/sections')) {
-      if (pathname === '/admin/sections/prologue') return 'prologue';
-      if (pathname.startsWith('/admin/sections/company')) return 'company-info';
-      if (pathname.startsWith('/admin/sections/business')) return 'business-info';
-      if (pathname.startsWith('/admin/sections/product')) return 'product-info';
-      return 'prologue';
+    if (pathname?.startsWith('/admin/site-settings')) {
+      if (pathname.startsWith('/admin/site-settings/default')) return 'default-info';
+      if (pathname.startsWith('/admin/site-settings/company')) return 'company-info';
+      if (pathname.startsWith('/admin/site-settings/business')) return 'business-info';
+      if (pathname.startsWith('/admin/site-settings/product')) return 'product-info';
+      return 'default-info';
     }
     if (pathname?.startsWith('/admin/customer')) {
       if (pathname === '/admin/customer/members') return 'members';
@@ -247,10 +247,10 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
 
     const routeMap: Record<string, string> = {
       'dashboard': '/admin/dashboard',
-      'prologue': '/admin/sections/prologue',
-      'company-info': '/admin/sections/company/introduction',
-      'business-info': '/admin/sections/business/introduction',
-      'product-info': '/admin/sections/product/introduction',
+      'default-info': '/admin/site-settings/default/prologue',
+      'company-info': '/admin/site-settings/company/introduction',
+      'business-info': '/admin/site-settings/business/introduction',
+      'product-info': '/admin/site-settings/product/introduction',
       'members': '/admin/customer/members',
       'notices': getBoardRoute(boardConnections?.noticeBoardCode || null, '/admin/boards/notices'),
       'qna': getBoardRoute(boardConnections?.inquireBoardCode || null, '/admin/boards/qna'),
@@ -288,14 +288,14 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
 
     return [
       {
-        id: 'basic-info',
-        label: '기본정보',
-        icon: Building2Icon,
+        id: 'site-settings',
+        label: '사이트설정',
+        icon: SettingsIcon,
         items: [
-          { id: 'prologue', label: '프롤로그', icon: ImageIcon, route: '/admin/sections/prologue' },
-          { id: 'company-info', label: '회사정보', icon: Building2Icon, route: '/admin/sections/company' },
-          { id: 'business-info', label: '사업정보', icon: BriefcaseIcon, route: '/admin/sections/business' },
-          { id: 'product-info', label: '제품정보', icon: PackageIcon, route: '/admin/sections/product' },
+          { id: 'default-info', label: '기본정보', icon: Building2Icon, route: '/admin/site-settings/default' },
+          { id: 'company-info', label: '회사정보', icon: Building2Icon, route: '/admin/site-settings/company' },
+          { id: 'business-info', label: '사업정보', icon: BriefcaseIcon, route: '/admin/site-settings/business' },
+          { id: 'product-info', label: '제품정보', icon: PackageIcon, route: '/admin/site-settings/product' },
         ],
       },
       {

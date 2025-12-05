@@ -25,18 +25,18 @@ const getInfoTypeLabel = (type: EmptyInfo['type']) => {
 const getInfoTypeLink = (type: EmptyInfo['type'], field: string) => {
   if (type === 'company') {
     if (field === 'introduction' || field === 'vision' || field === 'greetings' || field === 'mission' || field === 'strengths' || field === 'values') {
-      return '/admin/sections/company';
+      return '/admin/site-settings/company';
     } else if (field === 'histories') {
-      return '/admin/sections/company/history';
+      return '/admin/site-settings/company/histories';
     } else if (field === 'organization_members') {
-      return '/admin/sections/company/organization';
+      return '/admin/site-settings/company/organizations';
     } else {
-      return '/admin/sections/company';
+      return '/admin/site-settings/company';
     }
   } else if (type === 'business') {
-    return '/admin/sections/business';
+    return '/admin/site-settings/business';
   } else if (type === 'contact') {
-    return '/admin/sections/contacts';
+    return '/admin/site-settings/default/contact';
   }
   return '/admin';
 };

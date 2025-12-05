@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
-import type { Profile } from '@/src/entities/user';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import { recordAdminLogin, recordLoginFailed } from '@/src/features/auth/api/auth-actions';
 

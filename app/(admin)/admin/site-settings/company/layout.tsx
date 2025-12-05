@@ -19,12 +19,11 @@ export default function CompanyLayout({
     if (pathname?.endsWith('/greetings')) return 'greetings';
     if (pathname?.endsWith('/histories')) return 'histories';
     if (pathname?.endsWith('/organizations')) return 'organizations';
-    if (pathname?.endsWith('/contact')) return 'contact';
     return 'introduction'; // 기본값
   };
 
   const handleTabChange = (value: string) => {
-    router.push(`/admin/sections/company/${value}`);
+    router.push(`/admin/site-settings/company/${value}`);
   };
 
   return (
@@ -32,19 +31,18 @@ export default function CompanyLayout({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-gray-900 text-2xl font-semibold">회사정보 관리</h2>
-          <p className="text-gray-500 text-sm mt-1">회사소개, 강점, 비전·핵심가치, 인사말·경영철학, 연혁, 조직도, 오시는 길 · 연락처를 관리합니다</p>
+          <p className="text-gray-500 text-sm mt-1">회사소개, 강점, 비전·핵심가치, 인사말·경영철학, 연혁, 조직도를 관리합니다</p>
         </div>
       </div>
 
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="introduction">소개글</TabsTrigger>
           <TabsTrigger value="strengths">강점</TabsTrigger>
           <TabsTrigger value="visions-and-values">비전 · 핵심가치</TabsTrigger>
           <TabsTrigger value="greetings">인사말 · 경영철학</TabsTrigger>
           <TabsTrigger value="histories">연혁</TabsTrigger>
           <TabsTrigger value="organizations">조직도</TabsTrigger>
-          <TabsTrigger value="contact">오시는 길 · 연락처</TabsTrigger>
         </TabsList>
         <div className="mt-6">
           {children}
@@ -53,4 +51,3 @@ export default function CompanyLayout({
     </div>
   );
 }
-

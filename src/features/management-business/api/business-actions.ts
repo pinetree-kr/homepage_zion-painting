@@ -17,21 +17,24 @@ export async function getBusinessInfo(): Promise<BusinessInfo | null> {
   try {
     const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
-      .from('business_info')
-      .select('*')
-      .limit(1)
+      .from('pages')
+      .select('id, metadata, created_at, updated_at')
+      .eq('code', 'business_areas')
+      .eq('status', 'published')
       .maybeSingle() as {
         data: {
           id: string;
-          introduction: string | null;
-          areas: any;
+          metadata: {
+            introduction?: string | null;
+            areas?: BusinessArea[] | null;
+          };
           created_at: string | null;
           updated_at: string | null;
         } | null;
         error: any;
       };
 
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('사업소개 정보 로드 오류:', error);
       return {
         id: '',
@@ -40,10 +43,11 @@ export async function getBusinessInfo(): Promise<BusinessInfo | null> {
       };
     }
 
+    const metadata = data?.metadata || {};
     return {
       id: data?.id || '',
-      introduction: data?.introduction || '',
-      areas: data && Array.isArray(data.areas) ? (data.areas as BusinessArea[]) : [],
+      introduction: metadata.introduction || '',
+      areas: metadata.areas && Array.isArray(metadata.areas) ? (metadata.areas as BusinessArea[]) : [],
       created_at: data?.created_at || null,
       updated_at: data?.updated_at || null,
     };
@@ -64,21 +68,23 @@ export async function saveBusinessInfo(businessInfo: Partial<BusinessInfo>): Pro
   try {
     const supabase = await createServerClient();
 
-    // 기존 정보 확인
-    const { data: existingInfo } = await supabase
-      .from('business_info')
-      .select('id')
-      .limit(1)
-      .maybeSingle() as { data: { id: string } | null; error: any };
+    // 기존 페이지 확인
+    const { data: existingPage } = await supabase
+      .from('pages')
+      .select('id, metadata')
+      .eq('code', 'business_areas')
+      .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
-    const updateData: any = {};
+    const newMetadata = {
+      ...(existingPage?.metadata || {}),
+    };
 
     if (businessInfo.introduction !== undefined) {
-      updateData.introduction = businessInfo.introduction || '';
+      newMetadata.introduction = businessInfo.introduction || '';
     }
 
     if (businessInfo.areas !== undefined) {
-      updateData.areas = Array.isArray(businessInfo.areas)
+      newMetadata.areas = Array.isArray(businessInfo.areas)
         ? businessInfo.areas.map(area => ({
           title: area.title,
           description: area.description,
@@ -89,19 +95,15 @@ export async function saveBusinessInfo(businessInfo: Partial<BusinessInfo>): Pro
         : [];
     }
 
-    if (existingInfo) {
+    if (existingPage?.id) {
       // 기존 데이터 가져오기 (변경 전 값 비교용)
-      const { data: oldData } = await supabase
-        .from('business_info')
-        .select('*')
-        .eq('id', existingInfo.id)
-        .single();
+      const oldData = existingPage.metadata || {};
 
       // 업데이트
       const { error } = await supabase
-        .from('business_info')
-        .update(updateData)
-        .eq('id', existingInfo.id);
+        .from('pages')
+        .update({ metadata: newMetadata })
+        .eq('id', existingPage.id);
 
       if (error) {
         return { success: false, error: error.message };
@@ -113,10 +115,8 @@ export async function saveBusinessInfo(businessInfo: Partial<BusinessInfo>): Pro
         if (user) {
           // 변경된 필드 확인
           const changedFields: string[] = [];
-          if (oldData) {
-            if (oldData.introduction !== updateData.introduction) changedFields.push('introduction');
-            if (JSON.stringify(oldData.areas) !== JSON.stringify(updateData.areas)) changedFields.push('areas');
-          }
+          if (oldData.introduction !== newMetadata.introduction) changedFields.push('introduction');
+          if (JSON.stringify(oldData.areas) !== JSON.stringify(newMetadata.areas)) changedFields.push('areas');
 
           if (changedFields.length > 0) {
             await logSectionSettingChange(
@@ -124,7 +124,7 @@ export async function saveBusinessInfo(businessInfo: Partial<BusinessInfo>): Pro
               user.name || '알 수 없음',
               '사업정보',
               JSON.stringify(oldData || {}),
-              JSON.stringify(updateData)
+              JSON.stringify(newMetadata)
             );
           }
         }
@@ -135,8 +135,15 @@ export async function saveBusinessInfo(businessInfo: Partial<BusinessInfo>): Pro
     } else {
       // 새로 생성
       const { error } = await supabase
-        .from('business_info')
-        .insert(updateData);
+        .from('pages')
+        .insert({
+          code: 'business_areas',
+          page: 'business',
+          section_type: 'rich_text',
+          display_order: 0,
+          status: 'published',
+          metadata: newMetadata,
+        });
 
       if (error) {
         return { success: false, error: error.message };
@@ -202,7 +209,7 @@ export async function saveBusinessCategory(category: Partial<BusinessCategory>):
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/sections/business/categories');
+      revalidatePath('/admin/site-settings/business/categories');
 
       return { success: true, id: data.id };
     } else {
@@ -232,7 +239,7 @@ export async function saveBusinessCategory(category: Partial<BusinessCategory>):
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/sections/business/categories');
+      revalidatePath('/admin/site-settings/business/categories');
 
       return { success: true, id: data.id };
     }
@@ -265,7 +272,7 @@ export async function updateBusinessCategoriesOrder(categories: { id: string; di
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/sections/business/categories');
+    revalidatePath('/admin/site-settings/business/categories');
 
     return { success: true };
   } catch (error: any) {
@@ -290,7 +297,7 @@ export async function deleteBusinessCategory(id: string): Promise<{ success: boo
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/sections/business/categories');
+    revalidatePath('/admin/site-settings/business/categories');
 
     return { success: true };
   } catch (error: any) {
@@ -615,7 +622,7 @@ export async function deleteBusinessAchievement(id: string): Promise<{ success: 
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/sections/business/achievements');
+    revalidatePath('/admin/site-settings/business/achievements');
 
     return { success: true };
   } catch (error: any) {
@@ -631,19 +638,25 @@ export async function getBusinessAreas(): Promise<BusinessArea[]> {
   try {
     const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
-      .from('business_info')
-      .select('areas')
+      .from('pages')
+      .select('metadata')
+      .eq('code', 'business_areas')
+      .eq('status', 'published')
       .maybeSingle() as {
-        data: { areas: BusinessArea[] | null } | null;
+        data: {
+          metadata: {
+            areas?: BusinessArea[] | null;
+          };
+        } | null;
         error: any;
       };
 
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('사업 분야 로드 오류:', error);
       return [];
     }
 
-    return data?.areas || [];
+    return data?.metadata?.areas || [];
   } catch (error) {
     console.error('사업 분야 로드 중 예외 발생:', error);
     return [];

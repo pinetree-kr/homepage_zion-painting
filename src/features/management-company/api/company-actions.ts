@@ -41,21 +41,25 @@ export async function getCompanyAboutInfo(): Promise<CompanyAbout | null> {
   try {
     const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
-      .from('company_info')
-      .select('introduction, vision, greetings, mission, strengths, values')
-      .limit(1)
+      .from('pages')
+      .select('metadata')
+      .eq('code', 'company_intro')
+      .eq('status', 'published')
       .maybeSingle() as {
         data: {
-          introduction: string | null;
-          vision: string | null;
-          greetings: string | null;
-          mission: string | null;
-          strengths: CompanyStrength[] | null;
-          values: CompanyValue[] | null;
-        } | null; error: any
+          metadata: {
+            introduction?: string | null;
+            vision?: string | null;
+            greetings?: string | null;
+            mission?: string | null;
+            strengths?: CompanyStrength[] | null;
+            values?: CompanyValue[] | null;
+          };
+        } | null;
+        error: any;
       };
 
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('회사소개 정보 로드 오류:', error);
       return {
         introduction: '',
@@ -67,7 +71,7 @@ export async function getCompanyAboutInfo(): Promise<CompanyAbout | null> {
       };
     }
 
-    if (!data) {
+    if (!data?.metadata) {
       return {
         introduction: '',
         strengths: [],
@@ -78,13 +82,14 @@ export async function getCompanyAboutInfo(): Promise<CompanyAbout | null> {
       };
     }
 
+    const metadata = data.metadata;
     return {
-      introduction: data.introduction || '',
-      strengths: Array.isArray(data.strengths) ? data.strengths : [],
-      vision: data.vision || '',
-      values: Array.isArray(data.values) ? data.values : [],
-      greetings: data.greetings || '',
-      mission: data.mission || '',
+      introduction: metadata.introduction || '',
+      strengths: Array.isArray(metadata.strengths) ? metadata.strengths : [],
+      vision: metadata.vision || '',
+      values: Array.isArray(metadata.values) ? metadata.values : [],
+      greetings: metadata.greetings || '',
+      mission: metadata.mission || '',
     };
   } catch (error) {
     console.error('회사소개 정보 로드 중 예외 발생:', error);
@@ -106,15 +111,16 @@ export async function saveCompanyAboutInfo(aboutInfo: CompanyAbout): Promise<{ s
   try {
     const supabase = await createServerClient();
 
-    // 기존 정보 확인
-    const { data: existingInfo } = await supabase
-      .from('company_info')
-      .select('id')
-      .limit(1)
-      .maybeSingle() as { data: { id: string } | null; error: any };
+    // 기존 페이지 확인
+    const { data: existingPage } = await supabase
+      .from('pages')
+      .select('id, metadata')
+      .eq('code', 'company_intro')
+      .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
-    // 개별 필드로 저장
-    const updateData = {
+    // metadata로 저장
+    const newMetadata = {
+      ...(existingPage?.metadata || {}),
       introduction: aboutInfo.introduction || '',
       vision: aboutInfo.vision || '',
       greetings: aboutInfo.greetings || '',
@@ -130,12 +136,12 @@ export async function saveCompanyAboutInfo(aboutInfo: CompanyAbout): Promise<{ s
       })) : [],
     };
 
-    if (existingInfo) {
+    if (existingPage?.id) {
       // 업데이트
       const { error } = await supabase
-        .from('company_info')
-        .update(updateData)
-        .eq('id', existingInfo.id);
+        .from('pages')
+        .update({ metadata: newMetadata })
+        .eq('id', existingPage.id);
 
       if (error) {
         return { success: false, error: error.message };
@@ -143,8 +149,15 @@ export async function saveCompanyAboutInfo(aboutInfo: CompanyAbout): Promise<{ s
     } else {
       // 새로 생성
       const { error } = await supabase
-        .from('company_info')
-        .insert(updateData);
+        .from('pages')
+        .insert({
+          code: 'company_intro',
+          page: 'about',
+          section_type: 'rich_text',
+          display_order: 0,
+          status: 'published',
+          metadata: newMetadata,
+        });
 
       if (error) {
         return { success: false, error: error.message };
@@ -167,27 +180,29 @@ export async function saveCompanyAboutField(
   try {
     const supabase = await createServerClient();
 
-    // 기존 정보 확인
-    const { data: existingInfo } = await supabase
-      .from('company_info')
-      .select('id')
-      .limit(1)
-      .maybeSingle() as { data: { id: string } | null; error: any };
+    // 기존 페이지 확인
+    const { data: existingPage } = await supabase
+      .from('pages')
+      .select('id, metadata')
+      .eq('code', 'company_intro')
+      .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
-    const updateData: Record<string, any> = {};
+    const newMetadata = {
+      ...(existingPage?.metadata || {}),
+    };
 
     if (field === 'strengths' || field === 'values') {
-      updateData[field] = Array.isArray(value) ? value : [];
+      newMetadata[field] = Array.isArray(value) ? value : [];
     } else {
-      updateData[field] = value || '';
+      newMetadata[field] = value || '';
     }
 
-    if (existingInfo) {
+    if (existingPage?.id) {
       // 업데이트
       const { error } = await supabase
-        .from('company_info')
-        .update(updateData)
-        .eq('id', existingInfo.id);
+        .from('pages')
+        .update({ metadata: newMetadata })
+        .eq('id', existingPage.id);
 
       if (error) {
         return { success: false, error: error.message };
@@ -195,8 +210,15 @@ export async function saveCompanyAboutField(
     } else {
       // 새로 생성
       const { error } = await supabase
-        .from('company_info')
-        .insert(updateData);
+        .from('pages')
+        .insert({
+          code: 'company_intro',
+          page: 'about',
+          section_type: 'rich_text',
+          display_order: 0,
+          status: 'published',
+          metadata: newMetadata,
+        });
 
       if (error) {
         return { success: false, error: error.message };
@@ -218,23 +240,32 @@ export async function getCompanyHistories(): Promise<CompanyHistory[]> {
   try {
     const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
-      .from('company_info')
-      .select('histories')
-      .limit(1)
-      .maybeSingle() as { data: { histories: CompanyHistory[] | null } | null; error: any };
+      .from('pages')
+      .select('metadata')
+      .eq('code', 'company_intro')
+      .eq('status', 'published')
+      .maybeSingle() as {
+        data: {
+          metadata: {
+            histories?: CompanyHistory[] | null;
+          };
+        } | null;
+        error: any;
+      };
 
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('연혁 로드 오류:', error);
       return [];
     }
 
     // histories가 null이거나 배열이 아니면 빈 배열 반환
-    if (!data?.histories || !Array.isArray(data.histories)) {
+    const histories = data?.metadata?.histories;
+    if (!histories || !Array.isArray(histories)) {
       return [];
     }
 
     // display_order 기준으로 정렬하여 반환
-    return data.histories
+    return histories
       .map((item: CompanyHistory) => ({
         id: item.id || `temp-${Date.now()}-${Math.random()}`,
         year: item.year || '',
@@ -259,12 +290,12 @@ export async function saveCompanyHistory(history: CompanyHistory[]): Promise<{ s
   try {
     const supabase = await createServerClient();
 
-    // 기존 company_info 확인
-    const { data: existingInfo } = await supabase
-      .from('company_info')
-      .select('id')
-      .limit(1)
-      .maybeSingle() as { data: { id: string } | null; error: any };
+    // 기존 페이지 확인
+    const { data: existingPage } = await supabase
+      .from('pages')
+      .select('id, metadata')
+      .eq('code', 'company_intro')
+      .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
     // histories JSON 배열로 변환 (display_order 기준 정렬)
     const historiesJson = history
@@ -280,12 +311,17 @@ export async function saveCompanyHistory(history: CompanyHistory[]): Promise<{ s
       }))
       .sort((a, b) => a.display_order - b.display_order);
 
-    if (existingInfo) {
+    const newMetadata = {
+      ...(existingPage?.metadata || {}),
+      histories: historiesJson,
+    };
+
+    if (existingPage?.id) {
       // 기존 레코드 업데이트
       const { error } = await supabase
-        .from('company_info')
-        .update({ histories: historiesJson })
-        .eq('id', existingInfo.id);
+        .from('pages')
+        .update({ metadata: newMetadata })
+        .eq('id', existingPage.id);
 
       if (error) {
         return { success: false, error: error.message };
@@ -293,8 +329,15 @@ export async function saveCompanyHistory(history: CompanyHistory[]): Promise<{ s
     } else {
       // 새 레코드 생성
       const { error } = await supabase
-        .from('company_info')
-        .insert({ histories: historiesJson });
+        .from('pages')
+        .insert({
+          code: 'company_intro',
+          page: 'about',
+          section_type: 'rich_text',
+          display_order: 0,
+          status: 'published',
+          metadata: newMetadata,
+        });
 
       if (error) {
         return { success: false, error: error.message };
@@ -315,23 +358,32 @@ export async function getCompanyOrganizationMembers(): Promise<OrganizationMembe
   try {
     const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
-      .from('company_info')
-      .select('organization_members')
-      .limit(1)
-      .maybeSingle() as { data: { organization_members: OrganizationMember[] | null } | null; error: any };
+      .from('pages')
+      .select('metadata')
+      .eq('code', 'company_intro')
+      .eq('status', 'published')
+      .maybeSingle() as {
+        data: {
+          metadata: {
+            organization_members?: OrganizationMember[] | null;
+          };
+        } | null;
+        error: any;
+      };
 
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('조직도 구성원 로드 오류:', error);
       return [];
     }
 
     // organization_members가 null이거나 배열이 아니면 빈 배열 반환
-    if (!data?.organization_members || !Array.isArray(data.organization_members)) {
+    const organizationMembers = data?.metadata?.organization_members;
+    if (!organizationMembers || !Array.isArray(organizationMembers)) {
       return [];
     }
 
     // display_order 기준으로 정렬하여 반환
-    return data.organization_members
+    return organizationMembers
       .map((item: any) => ({
         id: item.id || `temp-${Date.now()}-${Math.random()}`,
         name: item.name || '',
@@ -356,12 +408,12 @@ export async function saveCompanyOrganizationMembers(members: OrganizationMember
   try {
     const supabase = await createServerClient();
 
-    // 기존 company_info 확인
-    const { data: existingInfo } = await supabase
-      .from('company_info')
-      .select('id')
-      .limit(1)
-      .maybeSingle() as { data: { id: string } | null; error: any };
+    // 기존 페이지 확인
+    const { data: existingPage } = await supabase
+      .from('pages')
+      .select('id, metadata')
+      .eq('code', 'company_intro')
+      .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
     // organization_members JSON 배열로 변환 (display_order 기준 정렬)
     const membersJson = members
@@ -376,12 +428,17 @@ export async function saveCompanyOrganizationMembers(members: OrganizationMember
       }))
       .sort((a, b) => a.display_order - b.display_order);
 
-    if (existingInfo) {
+    const newMetadata = {
+      ...(existingPage?.metadata || {}),
+      organization_members: membersJson,
+    };
+
+    if (existingPage?.id) {
       // 기존 레코드 업데이트
       const { error } = await supabase
-        .from('company_info')
-        .update({ organization_members: membersJson })
-        .eq('id', existingInfo.id);
+        .from('pages')
+        .update({ metadata: newMetadata })
+        .eq('id', existingPage.id);
 
       if (error) {
         return { success: false, error: error.message };
@@ -389,8 +446,15 @@ export async function saveCompanyOrganizationMembers(members: OrganizationMember
     } else {
       // 새 레코드 생성
       const { error } = await supabase
-        .from('company_info')
-        .insert({ organization_members: membersJson });
+        .from('pages')
+        .insert({
+          code: 'company_intro',
+          page: 'about',
+          section_type: 'rich_text',
+          display_order: 0,
+          status: 'published',
+          metadata: newMetadata,
+        });
 
       if (error) {
         return { success: false, error: error.message };
