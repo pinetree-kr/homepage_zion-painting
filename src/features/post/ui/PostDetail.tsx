@@ -19,13 +19,14 @@ import { type PostFile } from '../api/post-file-actions';
 
 interface PostDetailProps {
   post: Post;
-  boardCode: 'notices' | 'qna' | 'quotes' | 'reviews';
+  boardId: string;
+  boardCode: string;
   boardName: string;
   allowComment: boolean;
   attachedFiles?: PostFile[];
 }
 
-export default function PostDetail({ post, boardCode, boardName, allowComment, attachedFiles: initialAttachedFiles = [] }: PostDetailProps) {
+export default function PostDetail({ post, boardId, boardCode, boardName, allowComment, attachedFiles: initialAttachedFiles = [] }: PostDetailProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -84,12 +85,12 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      console.log('handleDelete', post.id, boardCode);
-      const result = await deletePost(post.id, boardCode);
+      console.log('handleDelete', post.id, boardId);
+      const result = await deletePost(post.id, boardId);
       if (result.success) {
         toast.success('게시글이 삭제되었습니다.');
         // quote는 estimates 경로로 리다이렉트
-        const redirectPath = `/admin/boards/${boardCode}`;
+        const redirectPath = `/admin/boards/${boardId}`;
         router.push(redirectPath);
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
@@ -173,18 +174,7 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          목록으로
-        </Button>
-      </div>
-
+    <>
       <Card>
         <CardContent style={{ padding: '0px' }}>
           {/* 제목 */}
@@ -253,7 +243,7 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
                     <DropdownMenuItem
                       onClick={() => {
                         if (post.author_name) {
-                          router.push(`/admin/boards/${boardCode}?search=${encodeURIComponent(post.author_name)}`);
+                          router.push(`/admin/boards/${boardId}?search=${encodeURIComponent(post.author_name)}`);
                         }
                       }}
                       className="cursor-pointer"
@@ -358,7 +348,7 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
               </Button>
               <Button
                 variant="default"
-                onClick={() => router.push(`/admin/boards/${boardCode}/${post.id}/edit`)}
+                onClick={() => router.push(`/admin/boards/${boardId}/${post.id}/edit`)}
                 className="gap-2"
               >
                 <Edit className="h-4 w-4" />
@@ -400,7 +390,7 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 

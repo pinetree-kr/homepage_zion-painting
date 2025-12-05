@@ -196,10 +196,9 @@ interface AdminLayoutProps {
   children: React.ReactNode;
   // boardConnections?: BoardConnections;
   defaultBoards?: DefaultBoards | null;
-  boardIdToCode?: { [key: string]: string };
 }
 
-export default function AdminLayout({ children, defaultBoards, boardIdToCode }: AdminLayoutProps) {
+export default function AdminLayout({ children, defaultBoards }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(['site-settings', 'customer-management', 'main-boards', 'system-management']);
   const pathname = usePathname();
@@ -220,25 +219,8 @@ export default function AdminLayout({ children, defaultBoards, boardIdToCode }: 
       return 'members';
     }
     if (pathname?.startsWith('/admin/boards')) {
-      // default_boards의 게시판인지 확인
-      if (defaultBoards && boardIdToCode) {
-        const boardCode = pathname.split('/admin/boards/')[1]?.split('/')[0];
-        if (boardCode) {
-          // boardCode로 boardId 찾기
-          for (const [boardId, code] of Object.entries(boardIdToCode)) {
-            if (code === boardCode) {
-              // defaultBoards에 있는지 확인
-              for (const [key, board] of Object.entries(defaultBoards)) {
-                if (board && board.id === boardId) {
-                  return `main-board-${key}`;
-                }
-              }
-            }
-          }
-        }
-      }
       // 게시판 연결 정보에 따라 활성 탭 결정
-      const boardCode = pathname.split('/admin/boards/')[1]?.split('/')[0];
+      const boardId = pathname.split('/admin/boards/')[1]?.split('/')[0];
 
       // if (boardCode === boardConnections?.noticeBoardCode) return 'notices';
       // if (boardCode === boardConnections?.inquireBoardCode) return 'qna';
@@ -247,7 +229,16 @@ export default function AdminLayout({ children, defaultBoards, boardIdToCode }: 
       // if (boardCode === boardConnections?.pdsBoardCode) return 'pds';
       // TODO
 
-      return boardCode || 'notices';
+
+      const defaultBoardKey = Object.entries(defaultBoards || {}).find(([key, board]: [string, { id: string | null; name: string; display_order: number } | null]) => {
+        return board?.id === boardId;
+      })?.[0] ?? null;
+
+      if (defaultBoardKey) {
+        return `main-board-${defaultBoardKey}`;
+      }
+
+      return `board-${boardId}`;
     }
     if (pathname?.startsWith('/admin/system')) {
       if (pathname === '/admin/system/administrators') return 'admin-management';
@@ -275,33 +266,22 @@ export default function AdminLayout({ children, defaultBoards, boardIdToCode }: 
       'product-info': '/admin/site-settings/product/introduction',
       'members': '/admin/services/members',
       'board-management': '/admin/system/boards/list',
-      // 'main-board-notice': defaultBoards?.notice && boardIdToCode?.[defaultBoards.notice.id] 
-      //   ? `/admin/boards/${boardIdToCode[defaultBoards.notice.id]}` 
-      //   : null,
-      // 'main-board-inquiry': defaultBoards?.inquiry && boardIdToCode?.[defaultBoards.inquiry.id] 
-      //   ? `/admin/boards/${boardIdToCode[defaultBoards.inquiry.id]}` 
-      //   : null,
-      // 'main-board-pds': defaultBoards?.pds && boardIdToCode?.[defaultBoards.pds.id] 
-      //   ? `/admin/boards/${boardIdToCode[defaultBoards.pds.id]}` 
-      //   : null,
-      // 'main-board-product': defaultBoards?.product && boardIdToCode?.[defaultBoards.product.id] 
-      //   ? `/admin/boards/${boardIdToCode[defaultBoards.product.id]}` 
-      //   : null,
-      // 'notices': getBoardRoute(boardConnections?.noticeBoardCode || null, '/admin/boards/notices'),
-      // 'qna': getBoardRoute(boardConnections?.inquireBoardCode || null, '/admin/boards/qna'),
-      // 'quotes': getBoardRoute(boardConnections?.quoteBoardCode || null, '/admin/boards/quotes'),
-      // 'reviews': getBoardRoute(boardConnections?.reviewBoardCode || null, '/admin/boards/reviews'),
-      // 'pds': getBoardRoute(boardConnections?.pdsBoardCode || null, '/admin/boards/pds'),
-      // TODO
       'admin-management': '/admin/system/administrators',
       'logs': '/admin/system/logs',
+      // ...(defaultBoards ? Object.entries(defaultBoards).reduce((acc, [key, board]) => {
+      //   if (board?.id) {
+      //     acc[`main-board-${board.id}`] = `/admin/boards/${board.id}`;
+      //     return acc;
+      //   }
+      //   return acc;
+      // }, {} as Record<string, string>) : {}),
     };
 
     const route = routeMap[tab];
     if (route) {
       router.push(route);
     }
-  }, [router, defaultBoards, boardIdToCode]);
+  }, [router, defaultBoards]);
 
   const toggleMenu = useCallback((menuId: string) => {
     setOpenMenus(prev =>
@@ -312,18 +292,10 @@ export default function AdminLayout({ children, defaultBoards, boardIdToCode }: 
   }, [setOpenMenus]);
 
   const menuStructure = useMemo(() => {
-    // 게시판 연결 정보에 따라 route 결정
-    const getBoardRoute = (boardCode: string | null): string | null => {
-      if (boardCode) {
-        return `/admin/boards/${boardCode}`;
-      }
-      return null;
-    };
-
     // 주요게시판 메뉴 아이템 생성
     const mainBoardItems: Array<{ id: string; label: string; icon: any; route: string | null }> = [];
 
-    if (defaultBoards && boardIdToCode) {
+    if (defaultBoards) {
       const boardLabels: { [key: string]: string } = {
         notice: '공지사항',
         inquiry: 'Q&A',
@@ -347,16 +319,16 @@ export default function AdminLayout({ children, defaultBoards, boardIdToCode }: 
         })
         .forEach(([key, board]) => {
           if (board) {
-            const boardCode = board.id ? boardIdToCode[board.id] : null;
+            // const boardCode = board.id ? boardIdToCode[board.id] : null;
             const boardName = board.name || boardLabels[key] || key;
 
-            if (boardCode) {
+            if (board.id) {
               // 연결된 게시판
               mainBoardItems.push({
                 id: `main-board-${key}`,
                 label: boardName,
                 icon: boardIcons[key] || FileTextIcon,
-                route: `/admin/boards/${boardCode}`,
+                route: `/admin/boards/${board.id}`,
               });
             } else {
               // 연결되지 않은 게시판
@@ -408,7 +380,7 @@ export default function AdminLayout({ children, defaultBoards, boardIdToCode }: 
         ],
       },
     ];
-  }, [defaultBoards, boardIdToCode]);
+  }, [defaultBoards]);
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -23,7 +23,7 @@ import Image from 'next/image';
 
 interface PostFormProps {
   boardId: string;
-  boardCode: 'notices' | 'qna' | 'quotes' | 'reviews';
+  boardCode: string;
   boardName: string;
   allowGuest: boolean;
   allowFile: boolean;
@@ -437,7 +437,7 @@ export default function PostForm({
       }
 
       toast.success('게시글이 저장되었습니다.');
-      const redirectPath = `/admin/boards/${boardCode}`;
+      const redirectPath = `/admin/boards/${boardId}/${result.id}`;
       router.push(redirectPath);
     } catch (error: any) {
       console.error('저장 오류:', error);
@@ -457,21 +457,7 @@ export default function PostForm({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center">
-        <Button
-          variant="ghost"
-          onClick={() => {
-            const redirectPath = `/admin/boards/${boardCode}`;
-            router.push(redirectPath);
-          }}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          목록으로
-        </Button>
-      </div>
-
+    <>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -666,7 +652,15 @@ export default function PostForm({
             )}
           </div>
         </CardContent>
-        <CardFooter className="justify-end">
+        <CardFooter className="justify-between">
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            size="lg"
+            className="h-[42px] gap-2"
+          >
+            취소
+          </Button>
           <Button
             onClick={handleSave}
             disabled={saving || uploading}
@@ -706,7 +700,7 @@ export default function PostForm({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 

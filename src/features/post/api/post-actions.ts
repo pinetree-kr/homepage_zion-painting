@@ -10,7 +10,7 @@ import type { Post } from '@/src/entities/post/model/types';
  * 게시판 코드로 게시글 목록 조회 (검색 및 페이지네이션 지원, 관리자용)
  */
 export async function searchPostsByBoardCodeUsingAdmin(
-  boardCode: string,
+  boardId: string,
   searchTerm: string = '',
   page: number = 1,
   itemsPerPage: number = 10,
@@ -18,7 +18,7 @@ export async function searchPostsByBoardCodeUsingAdmin(
   sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<{ data: Post[]; total: number; totalPages: number }> {
   const supabase = await createServerClient();
-  return searchPostsByBoardCode(supabase, boardCode, searchTerm, page, itemsPerPage, sortColumn, sortDirection);
+  return searchPostsByBoardCode(supabase, boardId, searchTerm, page, itemsPerPage, sortColumn, sortDirection);
 }
 
 /**
@@ -26,7 +26,7 @@ export async function searchPostsByBoardCodeUsingAdmin(
  */
 export async function searchPostsByBoardCode(
   supabase: SupabaseClient<Database>,
-  boardCode: string,
+  boardId: string,
   searchTerm: string = '',
   page: number = 1,
   itemsPerPage: number = 10,
@@ -34,22 +34,11 @@ export async function searchPostsByBoardCode(
   sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<{ data: Post[]; total: number; totalPages: number }> {
   try {
-    // 먼저 board_id를 가져옵니다
-    const { data: board, error: boardError } = await supabase
-      .from('boards')
-      .select('id')
-      .eq('code', boardCode)
-      .single();
-
-    if (boardError || !board) {
-      console.error('게시판 조회 오류:', boardError);
-      return { data: [], total: 0, totalPages: 0 };
-    }
 
     let query = supabase
       .from('posts')
       .select('*', { count: 'exact' })
-      .eq('board_id', board.id)
+      .eq('board_id', boardId)
       .is('deleted_at', null);
 
     // 검색어가 있으면 제목과 내용에서 검색
@@ -75,7 +64,7 @@ export async function searchPostsByBoardCode(
     let dataQuery = supabase
       .from('posts')
       .select('*')
-      .eq('board_id', board.id)
+      .eq('board_id', boardId)
       .is('deleted_at', null)
       .range(from, to);
 
@@ -200,7 +189,7 @@ function stripHtmlAndTruncate(html: string, maxLength: number = 50): string {
 export async function savePost(
   post: Omit<Post, 'id' | 'view_count' | 'like_count' | 'comment_count' | 'created_at' | 'updated_at' | 'deleted_at'> & {
     id?: string | null;
-    boardCode: 'notices' | 'qna' | 'quotes' | 'reviews';
+    boardCode: string;
   }
 ): Promise<{ success: boolean; error?: string; id?: string }> {
   try {
@@ -277,9 +266,12 @@ export async function savePost(
 
       // 화면 업데이트를 위한 캐시 무효화
       // const revalidatePathValue = post.boardCode === 'quotes' ? '/admin/customer/estimates' : `/admin/customer/${post.boardCode}`;
-      const revalidatePathValue = `/admin/boards/${post.boardCode}`;
-      revalidatePath(revalidatePathValue);
-      revalidatePath(`${revalidatePathValue}/${post.id}`);
+      // const revalidatePathValue = `/admin/boards/${post.boardCode}`;
+      revalidatePath(`/boards/${board.id}`);
+      revalidatePath(`/boards/${board.id}/${data.id}`);
+
+      revalidatePath(`/admin/boards/${board.id}`);
+      revalidatePath(`/admin/boards/${board.id}/${data.id}`);
 
       return { success: true, id: data.id };
     } else {
@@ -297,8 +289,13 @@ export async function savePost(
 
       // 화면 업데이트를 위한 캐시 무효화
       // const revalidatePathValue = post.boardCode === 'quote' ? '/admin/customer/estimates' : `/admin/customer/${post.boardCode}`;
-      const revalidatePathValue = `/admin/boards/${post.boardCode}`;
-      revalidatePath(revalidatePathValue);
+      // const revalidatePathValue = `/admin/boards/${board.id}/${post.boardCode}`;
+
+      revalidatePath(`/boards/${board.id}`);
+      revalidatePath(`/boards/${board.id}/${data.id}`);
+
+      revalidatePath(`/admin/boards/${board.id}`);
+      revalidatePath(`/admin/boards/${board.id}/${data.id}`);
 
       return { success: true, id: data.id };
     }
@@ -311,7 +308,7 @@ export async function savePost(
 /**
  * 게시글 삭제 (soft delete)
  */
-export async function deletePost(id: string, boardCode: 'notices' | 'qna' | 'quotes' | 'reviews'): Promise<{ success: boolean; error?: string }> {
+export async function deletePost(id: string, boardId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createServerClient(); console.log()
 
@@ -325,7 +322,7 @@ export async function deletePost(id: string, boardCode: 'notices' | 'qna' | 'quo
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    const revalidatePathValue = `/admin/boards/${boardCode}`;
+    const revalidatePathValue = `/admin/boards/${boardId}`;
     revalidatePath(revalidatePathValue);
 
     return { success: true };
@@ -951,7 +948,7 @@ export async function saveSiteSettings(
       if (settings.notice_board_id !== undefined) {
         if (settings.notice_board_id) {
           const board = boardsMap.get(settings.notice_board_id);
-          defaultBoardsUpdates.notice = board 
+          defaultBoardsUpdates.notice = board
             ? { id: board.id, name: board.name }
             : { id: settings.notice_board_id, name: '공지사항' };
         } else {
@@ -962,7 +959,7 @@ export async function saveSiteSettings(
       if (settings.inquire_board_id !== undefined) {
         if (settings.inquire_board_id) {
           const board = boardsMap.get(settings.inquire_board_id);
-          defaultBoardsUpdates.inquiry = board 
+          defaultBoardsUpdates.inquiry = board
             ? { id: board.id, name: board.name }
             : { id: settings.inquire_board_id, name: 'Q&A' };
         } else {
@@ -973,7 +970,7 @@ export async function saveSiteSettings(
       if (settings.pds_board_id !== undefined) {
         if (settings.pds_board_id) {
           const board = boardsMap.get(settings.pds_board_id);
-          defaultBoardsUpdates.pds = board 
+          defaultBoardsUpdates.pds = board
             ? { id: board.id, name: board.name }
             : { id: settings.pds_board_id, name: '자료실' };
         } else {
