@@ -27,7 +27,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
       const result = await deleteUser(member.id);
       if (result.success) {
         toast.success('회원이 삭제되었습니다.');
-        router.push('/admin/customer/members');
+        router.push('/admin/services/members');
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
         setDeleting(false);

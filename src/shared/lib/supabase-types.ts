@@ -795,79 +795,30 @@ export type Database = {
       }
       site_settings: {
         Row: {
-          contact_address: string | null
-          contact_business_hours: string | null
-          contact_email: string | null
-          contact_extra_json: string | null
-          contact_fax: string | null
-          contact_map_url: string | null
-          contact_phone_primary: string | null
-          contact_phone_secondary: string | null
+          contact: Json | null
           created_at: string | null
+          default_boards: Json | null
           deleted_at: string | null
           id: string
-          inquire_board_id: string | null
-          notice_board_id: string | null
-          pds_board_id: string | null
           updated_at: string | null
         }
         Insert: {
-          contact_address?: string | null
-          contact_business_hours?: string | null
-          contact_email?: string | null
-          contact_extra_json?: string | null
-          contact_fax?: string | null
-          contact_map_url?: string | null
-          contact_phone_primary?: string | null
-          contact_phone_secondary?: string | null
+          contact?: Json | null
           created_at?: string | null
+          default_boards?: Json | null
           deleted_at?: string | null
           id?: string
-          inquire_board_id?: string | null
-          notice_board_id?: string | null
-          pds_board_id?: string | null
           updated_at?: string | null
         }
         Update: {
-          contact_address?: string | null
-          contact_business_hours?: string | null
-          contact_email?: string | null
-          contact_extra_json?: string | null
-          contact_fax?: string | null
-          contact_map_url?: string | null
-          contact_phone_primary?: string | null
-          contact_phone_secondary?: string | null
+          contact?: Json | null
           created_at?: string | null
+          default_boards?: Json | null
           deleted_at?: string | null
           id?: string
-          inquire_board_id?: string | null
-          notice_board_id?: string | null
-          pds_board_id?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "site_settings_inquire_board_id_fkey"
-            columns: ["inquire_board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "site_settings_notice_board_id_fkey"
-            columns: ["notice_board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "site_settings_pds_board_id_fkey"
-            columns: ["pds_board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {

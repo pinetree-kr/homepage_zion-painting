@@ -207,18 +207,19 @@ export async function getEmptyInfo(): Promise<EmptyInfo[]> {
     // 연락처 정보 체크 (site_settings에서)
     const { data: contactInfo, error: contactError } = await supabase
       .from('site_settings')
-      .select('contact_email, contact_address, contact_phone_primary')
+      .select('contact')
       .is('deleted_at', null)
       .maybeSingle();
 
     if (!contactError && contactInfo) {
-      if (!contactInfo.contact_email || contactInfo.contact_email.trim() === '') {
+      const contact = (contactInfo.contact as any) || {};
+      if (!contact.email || contact.email.trim() === '') {
         emptyInfo.push({ type: 'contact', field: 'email', label: '이메일' });
       }
-      if (!contactInfo.contact_address || contactInfo.contact_address.trim() === '') {
+      if (!contact.address || contact.address.trim() === '') {
         emptyInfo.push({ type: 'contact', field: 'address', label: '주소' });
       }
-      if (!contactInfo.contact_phone_primary || contactInfo.contact_phone_primary.trim() === '') {
+      if (!contact.phone_primary || contact.phone_primary.trim() === '') {
         emptyInfo.push({ type: 'contact', field: 'phone_primary', label: '대표 전화' });
       }
     } else {

@@ -171,7 +171,7 @@ export default function BoardForm({ board }: BoardFormProps) {
                 const result = await updateBoard(board.id, form, policiesToSave);
                 if (result.success) {
                     toast.success('게시판이 수정되었습니다.');
-                    router.push('/admin/system/boards/list');
+                    router.push('/admin/services/boards/list');
                     router.refresh();
                 } else {
                     toast.error(result.error || '게시판 수정에 실패했습니다.');
@@ -185,7 +185,7 @@ export default function BoardForm({ board }: BoardFormProps) {
                 }, policiesToSave);
                 if (result.success) {
                     toast.success('게시판이 생성되었습니다.');
-                    router.push('/admin/system/boards/list');
+                    router.push('/admin/services/boards/list');
                     router.refresh();
                 } else {
                     toast.error(result.error || '게시판 생성에 실패했습니다.');
@@ -209,7 +209,7 @@ export default function BoardForm({ board }: BoardFormProps) {
             const result = await deleteBoard(board.id);
             if (result.success) {
                 toast.success('게시판이 삭제되었습니다.');
-                router.push('/admin/system/boards/list');
+                router.push('/admin/services/boards/list');
                 router.refresh();
             } else {
                 toast.error(result.error || '게시판 삭제에 실패했습니다.');
@@ -227,7 +227,7 @@ export default function BoardForm({ board }: BoardFormProps) {
             <div className="flex items-center">
                 <Button
                     variant="ghost"
-                    onClick={() => router.push('/admin/system/boards/list')}
+                    onClick={() => router.push('/admin/services/boards/list')}
                     className="gap-2"
                 >
                     <ArrowLeft className="h-4 w-4" />
@@ -515,7 +515,7 @@ export default function BoardForm({ board }: BoardFormProps) {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => router.push('/admin/system/boards/list')}
+                            onClick={() => router.push('/admin/services/boards/list')}
                             className="h-[42px]"
                         >
                             취소

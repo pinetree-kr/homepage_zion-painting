@@ -160,7 +160,7 @@ export async function deleteUser(id: string): Promise<{ success: boolean; error?
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/customer/members');
+    revalidatePath('/admin/services/members');
 
     return { success: true };
   } catch (error: any) {

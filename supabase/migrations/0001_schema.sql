@@ -308,18 +308,8 @@ CREATE INDEX IF NOT EXISTS idx_product_inquiries_inquiry_status ON product_inqui
 CREATE TABLE IF NOT EXISTS site_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   -- contact_info 통합 필드
-  contact_email VARCHAR(255), -- 연락처 이메일
-  contact_address TEXT, -- 연락처 주소
-  contact_business_hours TEXT, -- 영업시간
-  contact_phone_primary VARCHAR(50), -- 주요 전화번호
-  contact_phone_secondary VARCHAR(50), -- 보조 전화번호
-  contact_fax VARCHAR(50), -- 팩스
-  contact_map_url VARCHAR(255), -- 지도 URL
-  contact_extra_json TEXT, -- 추가 정보 (JSON)
-
-  notice_board_id UUID REFERENCES boards(id) ON DELETE SET NULL,
-  inquire_board_id UUID REFERENCES boards(id) ON DELETE SET NULL,
-  pds_board_id UUID REFERENCES boards(id) ON DELETE SET NULL,
+  contact JSONB DEFAULT '{}'::jsonb,
+  default_boards JSONB DEFAULT '{}'::jsonb,
 
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -327,9 +317,8 @@ CREATE TABLE IF NOT EXISTS site_settings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_site_settings_deleted_at ON site_settings(deleted_at) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_site_settings_notice_board_id ON site_settings(notice_board_id) WHERE notice_board_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_site_settings_inquire_board_id ON site_settings(inquire_board_id) WHERE inquire_board_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_site_settings_pds_board_id ON site_settings(pds_board_id) WHERE pds_board_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_site_settings_contact ON site_settings USING GIN (contact);
+CREATE INDEX IF NOT EXISTS idx_site_settings_default_boards ON site_settings USING GIN (default_boards);
 
 -- site_settings 단일 레코드 제약조건 (deleted_at이 NULL인 레코드는 하나만 허용)
 CREATE UNIQUE INDEX IF NOT EXISTS site_settings_single_row ON site_settings ((1)) WHERE deleted_at IS NULL;

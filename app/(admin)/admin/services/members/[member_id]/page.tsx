@@ -13,7 +13,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   const member = await getUserUsingAdmin(member_id);
 
   if (!member) {
-    redirect('/admin/customer/members');
+    redirect('/admin/services/members');
   }
 
   return (

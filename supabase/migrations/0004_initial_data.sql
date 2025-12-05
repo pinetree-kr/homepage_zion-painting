@@ -19,13 +19,13 @@ ON CONFLICT (code) DO NOTHING;
 
 INSERT INTO site_settings (
   id, 
-  contact_email,
-  contact_address,
-  notice_board_id,
-  inquire_board_id,
-  pds_board_id
+  contact,
+  default_boards
 )
-SELECT gen_random_uuid(), '', '', NULL, NULL, NULL
+SELECT 
+  gen_random_uuid(), 
+  '{}'::jsonb,
+  '{"notice": {"id": null, "name": "공지사항", "display_order": 0}, "inquiry": {"id": null, "name": "Q&A", "display_order": 1}, "pds": {"id": null, "name": "자료실", "display_order": 2}, "review": {"id": null, "name": "고객후기", "display_order": 3}, "quote": {"id": null, "name": "견적문의", "display_order": 4}}'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM site_settings WHERE deleted_at IS NULL);
 
 -- ============================================================================

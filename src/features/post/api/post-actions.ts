@@ -775,34 +775,40 @@ export async function getSiteSettings(): Promise<{
   notice_board_id: string | null;
   inquire_board_id: string | null;
   pds_board_id: string | null;
+  default_boards: { [key: string]: { id: string | null; name: string; display_order: number } | null } | null;
 } | null> {
   try {
     const supabase = await createServerClient();
 
     const { data, error } = await supabase
       .from('site_settings')
-      .select('id, prologue_default_title, prologue_default_description, contact_email, contact_address, contact_business_hours, contact_phone_primary, contact_phone_secondary, contact_fax, contact_map_url, contact_extra_json, notice_board_id, inquire_board_id, pds_board_id').is('deleted_at', null)
+      .select('id, contact, default_boards')
+      .is('deleted_at', null)
       .maybeSingle();
 
     if (error || !data) {
       return null;
     }
 
+    const contact = (data.contact as any) || {};
+    const defaultBoards = (data.default_boards as any) || {};
+
     return {
       id: data.id,
-      prologue_default_title: data.prologue_default_title,
-      prologue_default_description: data.prologue_default_description,
-      contact_email: data.contact_email,
-      contact_address: data.contact_address,
-      contact_business_hours: data.contact_business_hours,
-      contact_phone_primary: data.contact_phone_primary,
-      contact_phone_secondary: data.contact_phone_secondary,
-      contact_fax: data.contact_fax,
-      contact_map_url: data.contact_map_url,
-      contact_extra_json: data.contact_extra_json,
-      notice_board_id: data.notice_board_id,
-      inquire_board_id: data.inquire_board_id,
-      pds_board_id: data.pds_board_id,
+      prologue_default_title: null,
+      prologue_default_description: null,
+      contact_email: contact.email || null,
+      contact_address: contact.address || null,
+      contact_business_hours: contact.business_hours || null,
+      contact_phone_primary: contact.phone_primary || null,
+      contact_phone_secondary: contact.phone_secondary || null,
+      contact_fax: contact.fax || null,
+      contact_map_url: contact.map_url || null,
+      contact_extra_json: contact.extra_json || null,
+      notice_board_id: defaultBoards.notice?.id || null,
+      inquire_board_id: defaultBoards.inquiry?.id || null,
+      pds_board_id: defaultBoards.pds?.id || null,
+      default_boards: defaultBoards || null,
     };
   } catch (error) {
     console.error('사이트 설정 조회 오류:', error);
@@ -828,6 +834,7 @@ export async function saveSiteSettings(
     notice_board_id?: string | null;
     inquire_board_id?: string | null;
     pds_board_id?: string | null;
+    default_boards?: { [key: string]: { id: string | null; name: string; display_order: number } | null } | null;
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -854,50 +861,130 @@ export async function saveSiteSettings(
     // 기존 설정 확인
     const { data: existingSettings } = await supabase
       .from('site_settings')
-      .select('id')
+      .select('id, contact, default_boards')
       .is('deleted_at', null)
       .maybeSingle();
 
     const settingsData: any = {};
 
-    if (settings.prologue_default_title !== undefined) {
-      settingsData.prologue_default_title = settings.prologue_default_title || null;
-    }
-    if (settings.prologue_default_description !== undefined) {
-      settingsData.prologue_default_description = settings.prologue_default_description || null;
-    }
+    // contact 정보 업데이트
+    const existingContact = (existingSettings?.contact as any) || {};
+    const contactUpdates: any = {};
+    let hasContactUpdates = false;
+
     if (settings.contact_email !== undefined) {
-      settingsData.contact_email = settings.contact_email || null;
+      contactUpdates.email = settings.contact_email || null;
+      hasContactUpdates = true;
     }
     if (settings.contact_address !== undefined) {
-      settingsData.contact_address = settings.contact_address || null;
+      contactUpdates.address = settings.contact_address || null;
+      hasContactUpdates = true;
     }
     if (settings.contact_business_hours !== undefined) {
-      settingsData.contact_business_hours = settings.contact_business_hours || null;
+      contactUpdates.business_hours = settings.contact_business_hours || null;
+      hasContactUpdates = true;
     }
     if (settings.contact_phone_primary !== undefined) {
-      settingsData.contact_phone_primary = settings.contact_phone_primary || null;
+      contactUpdates.phone_primary = settings.contact_phone_primary || null;
+      hasContactUpdates = true;
     }
     if (settings.contact_phone_secondary !== undefined) {
-      settingsData.contact_phone_secondary = settings.contact_phone_secondary || null;
+      contactUpdates.phone_secondary = settings.contact_phone_secondary || null;
+      hasContactUpdates = true;
     }
     if (settings.contact_fax !== undefined) {
-      settingsData.contact_fax = settings.contact_fax || null;
+      contactUpdates.fax = settings.contact_fax || null;
+      hasContactUpdates = true;
     }
     if (settings.contact_map_url !== undefined) {
-      settingsData.contact_map_url = settings.contact_map_url || null;
+      contactUpdates.map_url = settings.contact_map_url || null;
+      hasContactUpdates = true;
     }
     if (settings.contact_extra_json !== undefined) {
-      settingsData.contact_extra_json = settings.contact_extra_json || null;
+      contactUpdates.extra_json = settings.contact_extra_json || null;
+      hasContactUpdates = true;
     }
-    if (settings.notice_board_id !== undefined) {
-      settingsData.notice_board_id = settings.notice_board_id || null;
+
+    if (hasContactUpdates) {
+      settingsData.contact = { ...existingContact, ...contactUpdates };
     }
-    if (settings.inquire_board_id !== undefined) {
-      settingsData.inquire_board_id = settings.inquire_board_id || null;
-    }
-    if (settings.pds_board_id !== undefined) {
-      settingsData.pds_board_id = settings.pds_board_id || null;
+
+    // default_boards 정보 업데이트
+    const existingDefaultBoards = (existingSettings?.default_boards as any) || {};
+    let hasDefaultBoardsUpdates = false;
+
+    // default_boards를 직접 받은 경우
+    if (settings.default_boards !== undefined) {
+      settingsData.default_boards = settings.default_boards;
+      hasDefaultBoardsUpdates = true;
+    } else {
+      // 기존 방식: 개별 board_id로 업데이트
+      const defaultBoardsUpdates: any = { ...existingDefaultBoards };
+
+      // boards 테이블에서 name 조회
+      const boardIdsToFetch: string[] = [];
+      if (settings.notice_board_id !== undefined && settings.notice_board_id) {
+        boardIdsToFetch.push(settings.notice_board_id);
+      }
+      if (settings.inquire_board_id !== undefined && settings.inquire_board_id) {
+        boardIdsToFetch.push(settings.inquire_board_id);
+      }
+      if (settings.pds_board_id !== undefined && settings.pds_board_id) {
+        boardIdsToFetch.push(settings.pds_board_id);
+      }
+
+      let boardsMap: Map<string, { id: string; name: string }> = new Map();
+      if (boardIdsToFetch.length > 0) {
+        const { data: boardsData } = await supabase
+          .from('boards')
+          .select('id, name')
+          .in('id', boardIdsToFetch)
+          .is('deleted_at', null);
+
+        if (boardsData) {
+          boardsData.forEach((board) => {
+            boardsMap.set(board.id, { id: board.id, name: board.name });
+          });
+        }
+      }
+
+      if (settings.notice_board_id !== undefined) {
+        if (settings.notice_board_id) {
+          const board = boardsMap.get(settings.notice_board_id);
+          defaultBoardsUpdates.notice = board 
+            ? { id: board.id, name: board.name }
+            : { id: settings.notice_board_id, name: '공지사항' };
+        } else {
+          defaultBoardsUpdates.notice = null;
+        }
+        hasDefaultBoardsUpdates = true;
+      }
+      if (settings.inquire_board_id !== undefined) {
+        if (settings.inquire_board_id) {
+          const board = boardsMap.get(settings.inquire_board_id);
+          defaultBoardsUpdates.inquiry = board 
+            ? { id: board.id, name: board.name }
+            : { id: settings.inquire_board_id, name: 'Q&A' };
+        } else {
+          defaultBoardsUpdates.inquiry = null;
+        }
+        hasDefaultBoardsUpdates = true;
+      }
+      if (settings.pds_board_id !== undefined) {
+        if (settings.pds_board_id) {
+          const board = boardsMap.get(settings.pds_board_id);
+          defaultBoardsUpdates.pds = board 
+            ? { id: board.id, name: board.name }
+            : { id: settings.pds_board_id, name: '자료실' };
+        } else {
+          defaultBoardsUpdates.pds = null;
+        }
+        hasDefaultBoardsUpdates = true;
+      }
+
+      if (hasDefaultBoardsUpdates) {
+        settingsData.default_boards = defaultBoardsUpdates;
+      }
     }
 
     if (existingSettings) {
@@ -922,7 +1009,7 @@ export async function saveSiteSettings(
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/system/boards/board-settings');
+    revalidatePath('/admin/system/board-connections');
 
     return { success: true };
   } catch (error: any) {

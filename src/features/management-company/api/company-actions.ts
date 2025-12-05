@@ -476,7 +476,7 @@ export async function getContactInfo(): Promise<ContactInfo | null> {
     const supabase = createAnonymousServerClient();
     const { data, error } = await supabase
       .from('site_settings')
-      .select('id, contact_email, contact_address, contact_business_hours, contact_phone_primary, contact_phone_secondary, contact_fax, contact_map_url, created_at, updated_at')
+      .select('id, contact, created_at, updated_at')
       .is('deleted_at', null)
       .maybeSingle();
 
@@ -488,16 +488,18 @@ export async function getContactInfo(): Promise<ContactInfo | null> {
     if (!data) {
       return null;
     }
+
+    const contact = (data.contact as any) || {};
     
     return {
       id: data.id,
-      email: data.contact_email || '',
-      address: data.contact_address || '',
-      business_hours: data.contact_business_hours || null,
-      phone_primary: formatPhoneForDisplay(data.contact_phone_primary),
-      phone_secondary: formatPhoneForDisplay(data.contact_phone_secondary),
-      fax: formatPhoneForDisplay(data.contact_fax),
-      map_url: data.contact_map_url || null,
+      email: contact.email || '',
+      address: contact.address || '',
+      business_hours: contact.business_hours || null,
+      phone_primary: formatPhoneForDisplay(contact.phone_primary),
+      phone_secondary: formatPhoneForDisplay(contact.phone_secondary),
+      fax: formatPhoneForDisplay(contact.fax),
+      map_url: contact.map_url || null,
       created_at: data.created_at || null,
       updated_at: data.updated_at || null,
     };
@@ -517,18 +519,22 @@ export async function saveContactInfo(contactInfo: Partial<Omit<ContactInfo, 'id
     // 기존 정보 확인
     const { data: existingInfo } = await supabase
       .from('site_settings')
-      .select('id')
+      .select('id, contact')
       .is('deleted_at', null)
       .maybeSingle();
 
+    const existingContact = (existingInfo?.contact as any) || {};
     const updateData = {
-      contact_email: contactInfo.email || '',
-      contact_address: contactInfo.address || '',
-      contact_business_hours: contactInfo.business_hours || null,
-      contact_phone_primary: contactInfo.phone_primary || null,
-      contact_phone_secondary: contactInfo.phone_secondary || null,
-      contact_fax: contactInfo.fax || null,
-      contact_map_url: contactInfo.map_url || null,
+      contact: {
+        ...existingContact,
+        email: contactInfo.email !== undefined ? (contactInfo.email || '') : existingContact.email,
+        address: contactInfo.address !== undefined ? (contactInfo.address || '') : existingContact.address,
+        business_hours: contactInfo.business_hours !== undefined ? contactInfo.business_hours : existingContact.business_hours,
+        phone_primary: contactInfo.phone_primary !== undefined ? contactInfo.phone_primary : existingContact.phone_primary,
+        phone_secondary: contactInfo.phone_secondary !== undefined ? contactInfo.phone_secondary : existingContact.phone_secondary,
+        fax: contactInfo.fax !== undefined ? contactInfo.fax : existingContact.fax,
+        map_url: contactInfo.map_url !== undefined ? contactInfo.map_url : existingContact.map_url,
+      },
     };
 
     if (existingInfo) {

@@ -13,13 +13,15 @@ export default function BoardsLayout({
 
   // 현재 경로에 따라 활성 탭 결정
   const getActiveTab = () => {
-    if (pathname?.endsWith('/board-settings')) return 'board-settings';
+    if (pathname?.endsWith('/board-connections')) return 'board-connections';
     if (pathname?.endsWith('/list') || pathname?.endsWith('/boards')) return 'list';
     return 'list'; // 기본값
   };
 
   const handleTabChange = (value: string) => {
-    if (value === 'list') {
+    if (value === 'board-connections') {
+      router.push('/admin/system/board-connections');
+    } else if (value === 'list') {
       router.push('/admin/system/boards/list');
     } else {
       router.push(`/admin/system/boards/${value}`);
@@ -38,7 +40,7 @@ export default function BoardsLayout({
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="list">게시판 목록</TabsTrigger>
-          <TabsTrigger value="board-settings">연결 설정</TabsTrigger>
+          <TabsTrigger value="board-connections">연결 설정</TabsTrigger>
         </TabsList>
         <div className="mt-6">
           {children}

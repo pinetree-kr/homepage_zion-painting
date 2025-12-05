@@ -180,22 +180,28 @@ const ImageIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-interface BoardConnections {
-  noticeBoardCode: string | null;
-  inquireBoardCode: string | null;
-  pdsBoardCode: string | null;
-  quoteBoardCode: string | null;
-  reviewBoardCode: string | null;
+// interface BoardConnections {
+//   noticeBoardCode: string | null;
+//   inquireBoardCode: string | null;
+//   pdsBoardCode: string | null;
+//   quoteBoardCode: string | null;
+//   reviewBoardCode: string | null;
+// }
+
+interface DefaultBoards {
+  [key: string]: { id: string | null; name: string; display_order: number } | null;
 }
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  boardConnections?: BoardConnections;
+  // boardConnections?: BoardConnections;
+  defaultBoards?: DefaultBoards | null;
+  boardIdToCode?: { [key: string]: string };
 }
 
-export default function AdminLayout({ children, boardConnections }: AdminLayoutProps) {
+export default function AdminLayout({ children, defaultBoards, boardIdToCode }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [openMenus, setOpenMenus] = useState<string[]>(['site-settings', 'customer-management', 'board-management', 'system-management']);
+  const [openMenus, setOpenMenus] = useState<string[]>(['site-settings', 'customer-management', 'main-boards', 'system-management']);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -209,33 +215,49 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
       if (pathname.startsWith('/admin/site-settings/product')) return 'product-info';
       return 'default-info';
     }
-    if (pathname?.startsWith('/admin/customer')) {
-      if (pathname === '/admin/customer/members') return 'members';
+    if (pathname?.startsWith('/admin/services')) {
+      if (pathname === '/admin/services/members') return 'members';
       return 'members';
     }
     if (pathname?.startsWith('/admin/boards')) {
+      // default_boards의 게시판인지 확인
+      if (defaultBoards && boardIdToCode) {
+        const boardCode = pathname.split('/admin/boards/')[1]?.split('/')[0];
+        if (boardCode) {
+          // boardCode로 boardId 찾기
+          for (const [boardId, code] of Object.entries(boardIdToCode)) {
+            if (code === boardCode) {
+              // defaultBoards에 있는지 확인
+              for (const [key, board] of Object.entries(defaultBoards)) {
+                if (board && board.id === boardId) {
+                  return `main-board-${key}`;
+                }
+              }
+            }
+          }
+        }
+      }
       // 게시판 연결 정보에 따라 활성 탭 결정
       const boardCode = pathname.split('/admin/boards/')[1]?.split('/')[0];
 
-      if (boardCode === boardConnections?.noticeBoardCode) return 'notices';
-      if (boardCode === boardConnections?.inquireBoardCode) return 'qna';
-      if (boardCode === boardConnections?.quoteBoardCode) return 'quotes';
-      if (boardCode === boardConnections?.reviewBoardCode) return 'reviews';
-      if (boardCode === boardConnections?.pdsBoardCode) return 'pds';
+      // if (boardCode === boardConnections?.noticeBoardCode) return 'notices';
+      // if (boardCode === boardConnections?.inquireBoardCode) return 'qna';
+      // if (boardCode === boardConnections?.quoteBoardCode) return 'quotes';
+      // if (boardCode === boardConnections?.reviewBoardCode) return 'reviews';
+      // if (boardCode === boardConnections?.pdsBoardCode) return 'pds';
+      // TODO
 
       return boardCode || 'notices';
     }
     if (pathname?.startsWith('/admin/system')) {
       if (pathname === '/admin/system/administrators') return 'admin-management';
-      if (pathname.includes('boards')) {
-        if (pathname.includes('board-settings')) return 'board-settings';
-        return 'boards-management';
-      }
       if (pathname.startsWith('/admin/system/logs')) return 'logs';
+      if (pathname.startsWith('/admin/system/boards')) return 'board-management';
+      if (pathname === '/admin/system/board-connections') return 'board-management';
       return 'admin-management';
     }
     return null;
-  }, [pathname, boardConnections]);
+  }, [pathname]);
 
   const handleTabChange = useCallback((tab: string) => {
     const getBoardRoute = (boardCode: string | null, defaultRoute: string) => {
@@ -251,15 +273,27 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
       'company-info': '/admin/site-settings/company/introduction',
       'business-info': '/admin/site-settings/business/introduction',
       'product-info': '/admin/site-settings/product/introduction',
-      'members': '/admin/customer/members',
-      'notices': getBoardRoute(boardConnections?.noticeBoardCode || null, '/admin/boards/notices'),
-      'qna': getBoardRoute(boardConnections?.inquireBoardCode || null, '/admin/boards/qna'),
-      'quotes': getBoardRoute(boardConnections?.quoteBoardCode || null, '/admin/boards/quotes'),
-      'reviews': getBoardRoute(boardConnections?.reviewBoardCode || null, '/admin/boards/reviews'),
-      'pds': getBoardRoute(boardConnections?.pdsBoardCode || null, '/admin/boards/pds'),
+      'members': '/admin/services/members',
+      'board-management': '/admin/system/boards/list',
+      // 'main-board-notice': defaultBoards?.notice && boardIdToCode?.[defaultBoards.notice.id] 
+      //   ? `/admin/boards/${boardIdToCode[defaultBoards.notice.id]}` 
+      //   : null,
+      // 'main-board-inquiry': defaultBoards?.inquiry && boardIdToCode?.[defaultBoards.inquiry.id] 
+      //   ? `/admin/boards/${boardIdToCode[defaultBoards.inquiry.id]}` 
+      //   : null,
+      // 'main-board-pds': defaultBoards?.pds && boardIdToCode?.[defaultBoards.pds.id] 
+      //   ? `/admin/boards/${boardIdToCode[defaultBoards.pds.id]}` 
+      //   : null,
+      // 'main-board-product': defaultBoards?.product && boardIdToCode?.[defaultBoards.product.id] 
+      //   ? `/admin/boards/${boardIdToCode[defaultBoards.product.id]}` 
+      //   : null,
+      // 'notices': getBoardRoute(boardConnections?.noticeBoardCode || null, '/admin/boards/notices'),
+      // 'qna': getBoardRoute(boardConnections?.inquireBoardCode || null, '/admin/boards/qna'),
+      // 'quotes': getBoardRoute(boardConnections?.quoteBoardCode || null, '/admin/boards/quotes'),
+      // 'reviews': getBoardRoute(boardConnections?.reviewBoardCode || null, '/admin/boards/reviews'),
+      // 'pds': getBoardRoute(boardConnections?.pdsBoardCode || null, '/admin/boards/pds'),
+      // TODO
       'admin-management': '/admin/system/administrators',
-      'boards-management': '/admin/system/boards',
-      'board-settings': '/admin/system/boards/board-settings',
       'logs': '/admin/system/logs',
     };
 
@@ -267,7 +301,7 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
     if (route) {
       router.push(route);
     }
-  }, [router, boardConnections]);
+  }, [router, defaultBoards, boardIdToCode]);
 
   const toggleMenu = useCallback((menuId: string) => {
     setOpenMenus(prev =>
@@ -286,6 +320,57 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
       return null;
     };
 
+    // 주요게시판 메뉴 아이템 생성
+    const mainBoardItems: Array<{ id: string; label: string; icon: any; route: string | null }> = [];
+
+    if (defaultBoards && boardIdToCode) {
+      const boardLabels: { [key: string]: string } = {
+        notice: '공지사항',
+        inquiry: 'Q&A',
+        pds: '자료실',
+        product: '제품',
+      };
+
+      const boardIcons: { [key: string]: any } = {
+        notice: FileTextIcon,
+        inquiry: MessageSquareIcon,
+        pds: FileIcon,
+        product: PackageIcon,
+      };
+
+      // default_boards의 각 항목을 메뉴 아이템으로 추가 (display_order 기준 정렬)
+      Object.entries(defaultBoards)
+        .sort(([, a], [, b]) => {
+          const orderA = a?.display_order ?? 999;
+          const orderB = b?.display_order ?? 999;
+          return orderA - orderB;
+        })
+        .forEach(([key, board]) => {
+          if (board) {
+            const boardCode = board.id ? boardIdToCode[board.id] : null;
+            const boardName = board.name || boardLabels[key] || key;
+
+            if (boardCode) {
+              // 연결된 게시판
+              mainBoardItems.push({
+                id: `main-board-${key}`,
+                label: boardName,
+                icon: boardIcons[key] || FileTextIcon,
+                route: `/admin/boards/${boardCode}`,
+              });
+            } else {
+              // 연결되지 않은 게시판
+              mainBoardItems.push({
+                id: `main-board-${key}`,
+                label: `${boardName} (연결안됨)`,
+                icon: boardIcons[key] || FileTextIcon,
+                route: `/admin/system/board-connections`,
+              });
+            }
+          }
+        });
+    }
+
     return [
       {
         id: 'site-settings',
@@ -300,55 +385,19 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
       },
       {
         id: 'customer-management',
-        label: '고객관리',
+        label: '서비스 관리',
         icon: MessageSquareIcon,
         items: [
-          { id: 'members', label: '회원관리', icon: UsersIcon, route: '/admin/customer/members' },
+          { id: 'members', label: '회원관리', icon: UsersIcon, route: '/admin/services/members' },
+          { id: 'board-management', label: '게시판관리', icon: FileTextIcon, route: '/admin/system/boards/list' },
         ],
       },
-      {
-        id: 'board-management',
-        label: '게시판관리',
+      ...(mainBoardItems.length > 0 ? [{
+        id: 'main-boards',
+        label: '주요게시판',
         icon: FileTextIcon,
-        items: [
-          {
-            id: 'notices',
-            label: '공지사항',
-            icon: FileTextIcon,
-            route: getBoardRoute(boardConnections?.noticeBoardCode || null)
-          },
-          {
-            id: 'qna',
-            label: 'Q&A',
-            icon: MessageSquareIcon,
-            route: getBoardRoute(boardConnections?.inquireBoardCode || null)
-          },
-          {
-            id: 'quotes',
-            label: '견적문의',
-            icon: CalculatorIcon,
-            route: getBoardRoute(boardConnections?.quoteBoardCode || null)
-          },
-          {
-            id: 'reviews',
-            label: '고객후기',
-            icon: StarIcon,
-            route: getBoardRoute(boardConnections?.reviewBoardCode || null)
-          },
-          {
-            id: 'pds',
-            label: '자료실',
-            icon: FileIcon,
-            route: getBoardRoute(boardConnections?.pdsBoardCode || null)
-          },
-          {
-            id: 'board-settings',
-            label: '설정',
-            icon: SettingsIcon,
-            route: '/admin/system/boards/board-settings'
-          },
-        ],
-      },
+        items: mainBoardItems,
+      }] : []),
       {
         id: 'system-management',
         label: '시스템관리',
@@ -359,7 +408,7 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
         ],
       },
     ];
-  }, [boardConnections]);
+  }, [defaultBoards, boardIdToCode]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -471,18 +520,14 @@ export default function AdminLayout({ children, boardConnections }: AdminLayoutP
                                 {item.label}
                               </Link>
                             ) : (
-                              <Link
+                              <div
                                 key={item.id}
-                                href={'/admin/system/boards/board-settings'}
-                                onClick={() => {
-                                  handleTabChange(item.id);
-                                  setIsSidebarOpen(false);
-                                }}
-                                className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-gray-500"
+                                className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-gray-400 cursor-not-allowed"
+                                title="게시판이 연결되지 않았습니다"
                               >
                                 <IconComponent className="h-4 w-4" />
-                                {item.label} (미지정)
-                              </Link>
+                                {item.label}
+                              </div>
                             )
                           );
                         })}

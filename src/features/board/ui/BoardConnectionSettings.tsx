@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Save } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
@@ -8,69 +8,100 @@ import { Label } from '@/src/shared/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { Board } from '@/src/entities/board/model/types';
-import { saveProductInfo } from '@/src/features/management-product/api/product-actions';
 import { saveSiteSettings } from '@/src/features/post/api/post-actions';
 import { useRouter } from 'next/navigation';
 
+interface DefaultBoards {
+  [key: string]: { id: string | null; name: string; display_order: number } | null;
+}
+
 interface BoardConnectionSettingsProps {
   boards: Board[];
-  // 제품 관련 (product_info)
-  reviewBoardId: string | null;
-  quoteBoardId: string | null;
-  // 사이트 설정 관련 (site_settings)
-  noticeBoardId: string | null;
-  inquireBoardId: string | null;
-  pdsBoardId: string | null;
+  defaultBoards: DefaultBoards | null;
 }
 
 export default function BoardConnectionSettings({
   boards,
-  reviewBoardId: initialReviewBoardId,
-  quoteBoardId: initialQuoteBoardId,
-  noticeBoardId: initialNoticeBoardId,
-  inquireBoardId: initialInquireBoardId,
-  pdsBoardId: initialPdsBoardId,
+  defaultBoards: initialDefaultBoards,
 }: BoardConnectionSettingsProps) {
-  const [reviewBoardId, setReviewBoardId] = useState<string>(initialReviewBoardId || '');
-  const [quoteBoardId, setQuoteBoardId] = useState<string>(initialQuoteBoardId || '');
-  const [noticeBoardId, setNoticeBoardId] = useState<string>(initialNoticeBoardId || '');
-  const [inquireBoardId, setInquireBoardId] = useState<string>(initialInquireBoardId || '');
-  const [pdsBoardId, setPdsBoardId] = useState<string>(initialPdsBoardId || '');
-  const [saving, setSaving] = useState(false);
   const router = useRouter();
+  const [saving, setSaving] = useState(false);
 
+  // defaultBoards를 state로 관리
+  const [boardStates, setBoardStates] = useState<Record<string, string>>({});
+
+  // 초기 defaultBoards를 state로 변환
   useEffect(() => {
-    setReviewBoardId(initialReviewBoardId || '');
-    setQuoteBoardId(initialQuoteBoardId || '');
-    setNoticeBoardId(initialNoticeBoardId || '');
-    setInquireBoardId(initialInquireBoardId || '');
-    setPdsBoardId(initialPdsBoardId || '');
-  }, [initialReviewBoardId, initialQuoteBoardId, initialNoticeBoardId, initialInquireBoardId, initialPdsBoardId]);
+    if (initialDefaultBoards) {
+      const states: Record<string, string> = {};
+      Object.entries(initialDefaultBoards).forEach(([key, board]) => {
+        states[key] = board?.id || '';
+      });
+      setBoardStates(states);
+    }
+  }, [initialDefaultBoards]);
+
+  // 게시판 설정 목록 생성 (display_order 기준 정렬)
+  const boardConfigs = useMemo(() => {
+    if (!initialDefaultBoards) return [];
+
+    return Object.entries(initialDefaultBoards)
+      .map(([key, board]) => ({
+        key,
+        // ...BOARD_CONFIGS[key] || { label: key, placeholder: `${key} 게시판을 선택하세요` },
+        label: `${board?.name || ''} 게시판`,
+        placeholder: `${board?.name || ''} 게시판을 선택하세요`,
+        currentBoardId: boardStates[key] || board?.id || null,
+        displayOrder: board?.display_order ?? 999, // display_order가 없으면 맨 뒤로
+      }))
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  }, [initialDefaultBoards, boardStates]);
+
+  const handleBoardChange = (key: string, boardId: string) => {
+    setBoardStates((prev) => ({
+      ...prev,
+      [key]: boardId,
+    }));
+  };
 
   const handleSave = async () => {
     try {
       setSaving(true);
 
-      // 제품 정보 저장 (product_info)
-      const productResult = await saveProductInfo({
-        review_board_id: reviewBoardId || null,
-        quote_board_id: quoteBoardId || null,
-      });
+      // defaultBoards 구조로 변환 (display_order 포함)
+      const defaultBoardsUpdate: DefaultBoards = {};
 
-      if (!productResult.success) {
-        toast.error(`제품 게시판 연결 저장 중 오류가 발생했습니다: ${productResult.error || '알 수 없는 오류'}`);
-        return;
+      if (initialDefaultBoards) {
+        Object.entries(initialDefaultBoards).forEach(([key, board]) => {
+          const boardId = boardStates[key] || '';
+          if (boardId) {
+            // 선택된 게시판 정보 가져오기
+            const selectedBoard = boards.find((b) => b.id === boardId);
+            if (selectedBoard) {
+              defaultBoardsUpdate[key] = {
+                id: selectedBoard.id,
+                name: selectedBoard.name,
+                display_order: board?.display_order ?? 999,
+              };
+            }
+          } else {
+            // 연결이 해제된 경우에도 display_order는 유지
+            defaultBoardsUpdate[key] = board ? {
+              id: null,
+              name: board.name,
+              display_order: board.display_order,
+            } : null;
+          }
+        });
       }
 
       // 사이트 설정 저장 (site_settings)
       const siteResult = await saveSiteSettings({
-        notice_board_id: noticeBoardId || null,
-        inquire_board_id: inquireBoardId || null,
-        pds_board_id: pdsBoardId || null,
+        default_boards: defaultBoardsUpdate,
       });
 
       if (!siteResult.success) {
-        toast.error(`사이트 게시판 연결 저장 중 오류가 발생했습니다: ${siteResult.error || '알 수 없는 오류'}`);
+        toast.error(`게시판 연결 저장 중 오류가 발생했습니다: ${siteResult.error || '알 수 없는 오류'}`);
         return;
       }
 
@@ -84,12 +115,16 @@ export default function BoardConnectionSettings({
     }
   };
 
-  const hasChanges =
-    reviewBoardId !== (initialReviewBoardId || '') ||
-    quoteBoardId !== (initialQuoteBoardId || '') ||
-    noticeBoardId !== (initialNoticeBoardId || '') ||
-    inquireBoardId !== (initialInquireBoardId || '') ||
-    pdsBoardId !== (initialPdsBoardId || '');
+  // 변경사항 확인
+  const hasChanges = useMemo(() => {
+    if (!initialDefaultBoards) return false;
+
+    return Object.keys(initialDefaultBoards).some((key) => {
+      const currentId = boardStates[key] || '';
+      const initialId = initialDefaultBoards[key]?.id || '';
+      return currentId !== initialId;
+    });
+  }, [boardStates, initialDefaultBoards]);
 
   return (
     <div className="space-y-6">
@@ -102,145 +137,37 @@ export default function BoardConnectionSettings({
         </div>
 
         <div className="border-b border-gray-200 mb-6 space-y-6">
-          {/* 공지 게시판 */}
-          <div className="space-y-2">
-            <Label htmlFor="notice-board" className="text-gray-900 font-medium">
-              공지 게시판
-            </Label>
-            <Select
-              value={noticeBoardId}
-              onValueChange={setNoticeBoardId}
-            >
-              <SelectTrigger id="notice-board" className="w-full">
-                <SelectValue placeholder="공지사항 게시판을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">선택 안 함</SelectItem>
-                {boards.map((board) => (
-                  <SelectItem key={board.id} value={board.id}>
-                    {board.name} {board.code && `(${board.code})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {noticeBoardId && (
-              <p className="text-sm text-gray-500">
-                선택된 게시판: {boards.find(b => b.id === noticeBoardId)?.name}
-              </p>
-            )}
-          </div>
-
-          {/* 일반 문의 게시판 */}
-          <div className="space-y-2">
-            <Label htmlFor="inquire-board" className="text-gray-900 font-medium">
-              일반 문의 게시판
-            </Label>
-            <Select
-              value={inquireBoardId}
-              onValueChange={setInquireBoardId}
-            >
-              <SelectTrigger id="inquire-board" className="w-full">
-                <SelectValue placeholder="Q&A 게시판을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">선택 안 함</SelectItem>
-                {boards.map((board) => (
-                  <SelectItem key={board.id} value={board.id}>
-                    {board.name} {board.code && `(${board.code})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {inquireBoardId && (
-              <p className="text-sm text-gray-500">
-                선택된 게시판: {boards.find(b => b.id === inquireBoardId)?.name}
-              </p>
-            )}
-          </div>
-
-          {/* 제품 리뷰 게시판 */}
-          <div className="space-y-2">
-            <Label htmlFor="review-board" className="text-gray-900 font-medium">
-              제품 리뷰 게시판
-            </Label>
-            <Select
-              value={reviewBoardId}
-              onValueChange={setReviewBoardId}
-            >
-              <SelectTrigger id="review-board" className="w-full">
-                <SelectValue placeholder="고객후기 게시판을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">선택 안 함</SelectItem>
-                {boards.map((board) => (
-                  <SelectItem key={board.id} value={board.id}>
-                    {board.name} {board.code && `(${board.code})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {reviewBoardId && (
-              <p className="text-sm text-gray-500">
-                선택된 게시판: {boards.find(b => b.id === reviewBoardId)?.name}
-              </p>
-            )}
-          </div>
-
-          {/* 제품 견적 문의 게시판 */}
-          <div className="space-y-2">
-            <Label htmlFor="quote-board" className="text-gray-900 font-medium">
-              제품 견적 문의 게시판
-            </Label>
-            <Select
-              value={quoteBoardId}
-              onValueChange={setQuoteBoardId}
-            >
-              <SelectTrigger id="quote-board" className="w-full">
-                <SelectValue placeholder="견적 문의 게시판을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">선택 안 함</SelectItem>
-                {boards.map((board) => (
-                  <SelectItem key={board.id} value={board.id}>
-                    {board.name} {board.code && `(${board.code})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {quoteBoardId && (
-              <p className="text-sm text-gray-500">
-                선택된 게시판: {boards.find(b => b.id === quoteBoardId)?.name}
-              </p>
-            )}
-          </div>
-
-          {/* 자료실 게시판 */}
-          <div className="space-y-2">
-            <Label htmlFor="pds-board" className="text-gray-900 font-medium">
-              자료실 게시판
-            </Label>
-            <Select
-              value={pdsBoardId}
-              onValueChange={setPdsBoardId}
-            >
-              <SelectTrigger id="pds-board" className="w-full">
-                <SelectValue placeholder="자료실 게시판을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">선택 안 함</SelectItem>
-                {boards.map((board) => (
-                  <SelectItem key={board.id} value={board.id}>
-                    {board.name} {board.code && `(${board.code})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {pdsBoardId && (
-              <p className="text-sm text-gray-500">
-                선택된 게시판: {boards.find(b => b.id === pdsBoardId)?.name}
-              </p>
-            )}
-          </div>
+          {boardConfigs.map((config) => {
+            const currentBoardId = boardStates[config.key] || '';
+            return (
+              <div key={config.key} className="space-y-2">
+                <Label htmlFor={`board-${config.key}`} className="text-gray-900 font-medium">
+                  {config.label}
+                </Label>
+                <Select
+                  value={currentBoardId}
+                  onValueChange={(value) => handleBoardChange(config.key, value)}
+                >
+                  <SelectTrigger id={`board-${config.key}`} className="w-full">
+                    <SelectValue placeholder={config.placeholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">선택 안 함</SelectItem>
+                    {boards.map((board) => (
+                      <SelectItem key={board.id} value={board.id}>
+                        {board.name} {board.code && `(${board.code})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {currentBoardId && (
+                  <p className="text-sm text-gray-500">
+                    선택된 게시판: {boards.find(b => b.id === currentBoardId)?.name}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       </Card>
       <div className="flex justify-end">

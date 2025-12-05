@@ -57,7 +57,7 @@ export default function Members({
       header: '이름',
       accessor: (row) => {
         return (
-          <Link href={`/admin/customer/members/${row.id}`} className="text-blue-500 hover:text-blue-700 font-medium">
+          <Link href={`/admin/services/members/${row.id}`} className="text-blue-500 hover:text-blue-700 font-medium">
             {row.name || '-'}
           </Link>
         );
