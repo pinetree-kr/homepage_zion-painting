@@ -45,7 +45,7 @@ export async function getPrologueManagementData(): Promise<PrologueManagementDat
     // hero_carousel_items 페이지에서 캐러셀 아이템 로드
     const { data: carouselData, error: carouselError } = await supabase
       .from('pages')
-      .select('id, carousel_items:metadata->>items')
+      .select('id, carousel_items:metadata->items')
       .eq('code', 'hero_carousel_items')
       .eq('status', 'published')
       .maybeSingle();
@@ -55,7 +55,13 @@ export async function getPrologueManagementData(): Promise<PrologueManagementDat
     if (carouselError && carouselError.code !== 'PGRST116') {
       console.error('캐러셀 아이템 로드 오류:', carouselError);
     } else if (carouselData?.carousel_items) {
-      const itemsArray = JSON.parse(carouselData.carousel_items) as Array<{
+      // const itemsArray = JSON.parse(carouselData.carousel_items) as Array<{
+      //   image_url: string;
+      //   title: string;
+      //   description: string;
+      //   display_order: number;
+      // }>;
+      const itemsArray = carouselData?.carousel_items as Array<{
         image_url: string;
         title: string;
         description: string;

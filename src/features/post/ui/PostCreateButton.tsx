@@ -1,42 +1,36 @@
-import { getUserRole } from '@/src/entities/user/model/checkPermission';
 import { Button } from '@/src/shared/ui/Button';
-import { Plus } from 'lucide-react';
+import { LockIcon, Plus } from 'lucide-react';
 import Link from 'next/link';
 import type { Board, BoardPolicy } from '@/src/entities/board/model/types';
 
 interface PostCreateButtonProps {
   boardId: string;
-  boardInfo: Board;
-  boardPolicies?: BoardPolicy[];
+  allowWrite: boolean;
 }
 
-export default async function PostCreateButton({ boardId, boardInfo, boardPolicies = [] }: PostCreateButtonProps) {
-  // 사용자의 현재 롤 확인
-  const userRole = await getUserRole();
-
-  // 사용자 롤에 따른 권한 확인
-  let canCreate = false;
-
-  if (userRole === null) {
-    // 로그인하지 않은 사용자 - visibility가 'public'일 때만 게시글 작성 가능
-    canCreate = boardInfo.visibility === 'public';
+export default async function PostCreateButton({ boardId, allowWrite }: PostCreateButtonProps) {
+  if (allowWrite) {
+    return (
+      <Link href={`/boards/${boardId}/new`}>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          글 작성
+        </Button>
+      </Link>
+    )
   } else {
-    // 로그인한 사용자 - 해당 롤의 권한 정책 확인
-    const userPolicy = boardPolicies.find(p => p.role === userRole);
-    canCreate = userPolicy?.post_create ?? false;
+    return (
+      <div className="flex items-center gap-2">
+        <Button className="gap-2" disabled>
+          <LockIcon className="h-4 w-4" />
+          글 작성
+        </Button>
+        <Link href={`/auth/sign-in`}>
+          <Button className="gap-2" variant="outline">
+            로그인
+          </Button>
+        </Link>
+      </div>
+    )
   }
-
-  // 권한이 없으면 버튼을 표시하지 않음
-  if (!canCreate) {
-    return null;
-  }
-
-  return (
-    <Link href={`/boards/${boardId}/new`}>
-      <Button className="gap-2">
-        <Plus className="h-4 w-4" />
-        글 작성
-      </Button>
-    </Link>
-  );
 }

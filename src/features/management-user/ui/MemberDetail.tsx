@@ -57,7 +57,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
     <div className="space-y-6">
       <div className="flex items-center">
         <Button
-          variant="ghost"
+          variant="outline"
           onClick={() => router.back()}
           className="gap-2"
         >

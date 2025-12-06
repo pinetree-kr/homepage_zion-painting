@@ -30,7 +30,7 @@ export default async function NewPostPage({ params }: NewPostPageProps) {
       <div className="flex items-center">
         <Link passHref href={`/admin/boards/${board_id}`}>
           <Button
-            variant="ghost"
+            variant="outline"
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

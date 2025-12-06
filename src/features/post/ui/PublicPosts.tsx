@@ -13,7 +13,6 @@ import { useRouter } from 'next/navigation';
 interface PublicPostsProps {
   boardId: string;
   boardName: string;
-  boardPolicies: BoardPolicy[];
   items: Post[];
   totalItems: number;
   totalPages: number;
@@ -27,17 +26,13 @@ const ITEMS_PER_PAGE = 10;
 export default function PublicPosts({
   boardId,
   boardName,
-  boardPolicies,
   items,
   totalItems,
   totalPages,
   currentPage,
   searchTerm,
-  createButton
+  createButton,
 }: PublicPostsProps) {
-  const [loading, setLoading] = useState(true);
-  const [userPolicy, setUserPolicy] = useState<BoardPolicy | null>(null);
-
   const postColumns: DataTableColumn<Post>[] = [
     {
       id: 'title',
@@ -114,24 +109,6 @@ export default function PublicPosts({
     }
   ];
 
-
-  useEffect(() => {
-    // 사용자 정보 조회후, 사용자 정보에 맞는 boardPolicies 확인후 핸들링
-    const loadUser = async () => {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-      const userPolicy = boardPolicies.find(p => p.role === user.role);
-      setUserPolicy(userPolicy || null);
-      setLoading(false);
-    };
-    loadUser();
-
-  }, [boardPolicies]);
-
-
   return (
     <div className="space-y-6">
       <Card className="p-6">
@@ -147,33 +124,14 @@ export default function PublicPosts({
           />
         </div>
 
-        {
-          loading ? (
-            <div className="flex items-center justify-center min-h-[200px]">
-              <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
-            </div>
-          ) : userPolicy?.post_list ? (
-            <DataTable
-              data={items}
-              columns={postColumns}
-              getRowId={(row) => row.id}
-              emptyMessage="등록된 게시글이 없습니다"
-              useUrlSort={true}
-            />
-          ) : (
-            <div className="flex items-center justify-center min-h-[200px] gap-4">
-              <div className="flex flex-col items-center gap-6">
-                <p className="text-lg font-semibold">로그인 후 이용해주세요.</p>
-                <Link href="/auth/sign-in">
-                  <Button>
-                    <LogIn className="h-4 w-4" />
-                    로그인
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )
-        }
+        <DataTable
+          data={items}
+          columns={postColumns}
+          getRowId={(row) => row.id}
+          emptyMessage="등록된 게시글이 없습니다"
+          useUrlSort={true}
+        />
+
         {totalPages > 0 && (
           <DataTablePagination
             currentPage={currentPage}

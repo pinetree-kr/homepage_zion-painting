@@ -9,9 +9,9 @@ import type { Post } from '@/src/entities/post/model/types';
 import type { SiteSetting } from '@/src/entities/site-setting/model/types';
 
 /**
- * 게시판 코드로 게시글 목록 조회 (검색 및 페이지네이션 지원, 관리자용)
+ * 게시판 ID로 게시글 목록 조회 (검색 및 페이지네이션 지원, 관리자용)
  */
-export async function searchPostsByBoardCodeUsingAdmin(
+export async function searchPostsByBoardIdUsingAdmin(
   boardId: string,
   searchTerm: string = '',
   page: number = 1,
@@ -20,13 +20,13 @@ export async function searchPostsByBoardCodeUsingAdmin(
   sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<{ data: Post[]; total: number; totalPages: number }> {
   const supabase = await createServerClient();
-  return searchPostsByBoardCode(supabase, boardId, searchTerm, page, itemsPerPage, sortColumn, sortDirection);
+  return searchPostsByBoardId(supabase, boardId, searchTerm, page, itemsPerPage, sortColumn, sortDirection);
 }
 
 /**
- * 게시판 코드로 게시글 목록 조회 (검색 및 페이지네이션 지원, 일반 사용자용 - 익명 클라이언트)
+ * 게시판 ID로 게시글 목록 조회 (검색 및 페이지네이션 지원, 일반 사용자용 - 익명 클라이언트)
  */
-export async function searchPostsByBoardCodeUsingAnonymous(
+export async function searchPostsByBoardIdUsingAnonymous(
   boardId: string,
   searchTerm: string = '',
   page: number = 1,
@@ -35,13 +35,29 @@ export async function searchPostsByBoardCodeUsingAnonymous(
   sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<{ data: Post[]; total: number; totalPages: number }> {
   const supabase = createAnonymousServerClient();
-  return searchPostsByBoardCode(supabase, boardId, searchTerm, page, itemsPerPage, sortColumn, sortDirection, true);
+  return searchPostsByBoardId(supabase, boardId, searchTerm, page, itemsPerPage, sortColumn, sortDirection, true);
 }
 
 /**
- * 게시판 코드로 게시글 목록 조회 (검색 및 페이지네이션 지원, supabase 클라이언트 전달)
+ * 게시판 ID로 1:1 전용 게시글 목록 조회 (검색 및 페이지네이션 지원, 일반 사용자용 - 익명 클라이언트)
  */
-export async function searchPostsByBoardCode(
+export async function searchPostsByBoardIdUsing1To1Board(
+  boardId: string,
+  authorId: string,
+  searchTerm: string = '',
+  page: number = 1,
+  itemsPerPage: number = 10,
+  sortColumn?: string | null,
+  sortDirection: 'asc' | 'desc' = 'asc'
+): Promise<{ data: Post[]; total: number; totalPages: number }> {
+  const supabase = createAnonymousServerClient();
+  return searchPostsByBoardId(supabase, boardId, searchTerm, page, itemsPerPage, sortColumn, sortDirection, true, authorId);
+}
+
+/**
+ * 게시판 ID로 게시글 목록 조회 (검색 및 페이지네이션 지원, supabase 클라이언트 전달)
+ */
+export async function searchPostsByBoardId(
   supabase: SupabaseClient<Database>,
   boardId: string,
   searchTerm: string = '',
@@ -49,7 +65,8 @@ export async function searchPostsByBoardCode(
   itemsPerPage: number = 10,
   sortColumn?: string | null,
   sortDirection: 'asc' | 'desc' = 'asc',
-  publishedOnly: boolean = false
+  publishedOnly: boolean = false,
+  authorId?: string | null,
 ): Promise<{ data: Post[]; total: number; totalPages: number }> {
   try {
 
@@ -62,6 +79,11 @@ export async function searchPostsByBoardCode(
     // 일반 사용자용인 경우 게시된 게시글만 조회
     if (publishedOnly) {
       query = query.eq('status', 'published');
+    }
+
+    // 작성자 ID가 있으면 필터링
+    if (authorId) {
+      query = query.eq('author_id', authorId);
     }
 
     // 검색어가 있으면 제목과 내용에서 검색
@@ -247,7 +269,7 @@ function stripHtmlAndTruncate(html: string, maxLength: number = 50): string {
 export async function savePost(
   post: Omit<Post, 'id' | 'view_count' | 'like_count' | 'comment_count' | 'created_at' | 'updated_at' | 'deleted_at'> & {
     id?: string | null;
-    boardCode: string;
+    board_id: string;
   }
 ): Promise<{ success: boolean; error?: string; id?: string }> {
   try {
@@ -278,11 +300,11 @@ export async function savePost(
       .eq('id', user.id)
       .single();
 
-    // board_id 가져오기
+    // 게시판 정보 가져오기
     const { data: board, error: boardError } = await supabase
       .from('boards')
       .select('id')
-      .eq('code', post.boardCode)
+      .eq('id', post.board_id)
       .single();
 
     if (boardError || !board) {

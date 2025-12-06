@@ -841,53 +841,65 @@ export async function getProductsUsingAnonymous(
 }
 
 /**
- * board_id를 기반으로 제품 연결 가능 여부 확인
- * 해당 게시판의 게시글들 중 product_reviews나 product_inquiries가 있는지 확인
+ * board_id를 기반으로 제품 연결 가능 여부 확인 (일반 사용자용 - 익명 클라이언트)
+ * site_settings의 default_boards에서 review나 quote로 지정된 board_id인지 확인
+ */
+export async function checkBoardSupportsProductLinkingUsingAnonymous(boardId: string): Promise<boolean> {
+  try {
+    const supabase = createAnonymousServerClient();
+
+    // site_settings에서 default_boards 조회
+    const { data: siteSettingsData, error: siteSettingsError } = await supabase
+      .from('site_settings')
+      .select('review_board_id:default_boards->review->id, quote_board_id:default_boards->quote->id')
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (siteSettingsError || !siteSettingsData) {
+      console.error('site_settings 조회 오류:', siteSettingsError);
+      return false;
+    }
+
+    const reviewBoardId = siteSettingsData.review_board_id;
+    const quoteBoardId = siteSettingsData.quote_board_id;
+
+    return (reviewBoardId === boardId) || (quoteBoardId === boardId);
+  } catch (error) {
+    console.error('제품 연결 가능 여부 확인 중 오류:', error);
+    return false;
+  }
+}
+
+/**
+ * board_id를 기반으로 제품 연결 가능 여부 확인 (관리자용)
+ * site_settings의 default_boards에서 review나 quote로 지정된 board_id인지 확인
  */
 export async function checkBoardSupportsProductLinking(boardId: string): Promise<boolean> {
   try {
     const supabase = await createServerClient();
 
-    // 해당 board_id에 속한 게시글들 조회
-    const { data: postsData, error: postsError } = await supabase
-      .from('posts')
-      .select('id')
-      .eq('board_id', boardId)
+    // site_settings에서 default_boards 조회
+    const { data: siteSettingsData, error: siteSettingsError } = await supabase
+      .from('site_settings')
+      .select('default_boards')
       .is('deleted_at', null)
-      .limit(1);
+      .maybeSingle();
 
-    if (postsError || !postsData || postsData.length === 0) {
+    if (siteSettingsError || !siteSettingsData) {
+      console.error('site_settings 조회 오류:', siteSettingsError);
       return false;
     }
 
-    const postIds = postsData.map(p => p.id);
-
-    // 해당 board_id의 게시글들 중 product_reviews가 있는지 확인
-    const { data: reviewsInBoard, error: reviewsInBoardError } = await supabase
-      .from('product_reviews')
-      .select('id')
-      .in('post_id', postIds)
-      .is('deleted_at', null)
-      .limit(1);
-
-    if (reviewsInBoardError) {
-      console.error('board product_reviews 조회 오류:', reviewsInBoardError);
+    const defaultBoards = siteSettingsData.default_boards as any;
+    if (!defaultBoards) {
+      return false;
     }
 
-    // 해당 board_id의 게시글들 중 product_inquiries가 있는지 확인
-    const { data: inquiriesInBoard, error: inquiriesInBoardError } = await supabase
-      .from('product_inquiries')
-      .select('id')
-      .in('post_id', postIds)
-      .is('deleted_at', null)
-      .limit(1);
+    // review나 quote로 지정된 board_id인지 확인
+    const reviewBoardId = defaultBoards.review?.id;
+    const quoteBoardId = defaultBoards.quote?.id;
 
-    if (inquiriesInBoardError) {
-      console.error('board product_inquiries 조회 오류:', inquiriesInBoardError);
-    }
-
-    // product_reviews나 product_inquiries가 하나라도 있으면 제품 연결 가능
-    return !!(reviewsInBoard && reviewsInBoard.length > 0) || !!(inquiriesInBoard && inquiriesInBoard.length > 0);
+    return (reviewBoardId === boardId) || (quoteBoardId === boardId);
   } catch (error) {
     console.error('제품 연결 가능 여부 확인 중 오류:', error);
     return false;

@@ -1,6 +1,6 @@
 import Posts from '@/src/features/post/ui/Posts';
 import { getBoardInfoUsingAdminById } from '@/src/features/board/api/board-actions';
-import { searchPostsByBoardCodeUsingAdmin } from '@/src/features/post/api/post-actions';
+import { searchPostsByBoardIdUsingAdmin } from '@/src/features/post/api/post-actions';
 import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -35,11 +35,11 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
     return notFound();
   }
 
-  const result = await searchPostsByBoardCodeUsingAdmin(board_id, searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection);
+  const result = await searchPostsByBoardIdUsingAdmin(board_id, searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection);
 
   return (
     <Posts
-      boardCode={board_id}
+      boardId={boardInfo.id}
       boardName={boardInfo.name}
       items={result.data}
       totalItems={result.total}

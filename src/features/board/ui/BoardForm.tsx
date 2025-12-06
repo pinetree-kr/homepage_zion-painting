@@ -229,7 +229,7 @@ export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps)
         <div className="space-y-6">
             <div className="flex items-center">
                 <Button
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => router.push('/admin/services/boards/list')}
                     className="gap-2"
                 >

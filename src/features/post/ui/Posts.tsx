@@ -10,7 +10,7 @@ import { Post } from '@/src/entities/post/model/types';
 import Link from 'next/link';
 
 interface PostsProps {
-  boardCode: string;
+  boardId: string;
   boardName: string;
   items: Post[];
   totalItems: number;
@@ -22,7 +22,7 @@ interface PostsProps {
 const ITEMS_PER_PAGE = 10;
 
 export default function Posts({
-  boardCode,
+  boardId,
   boardName,
   items,
   totalItems,
@@ -33,7 +33,7 @@ export default function Posts({
   const router = useRouter();
 
   const handleAdd = () => {
-    const newPath = `/admin/boards/${boardCode}/new`;
+    const newPath = `/admin/boards/${boardId}/new`;
     router.push(newPath);
   };
 
@@ -51,7 +51,7 @@ export default function Posts({
               <Pin className="h-4 w-4 text-yellow-500 flex-shrink-0" />
             )}
             <Link
-              href={`/admin/boards/${boardCode}/${row.id}`}
+              href={`/admin/boards/${boardId}/${row.id}`}
               className="text-blue-500 hover:text-blue-700 font-medium"
             >
               {row.title}

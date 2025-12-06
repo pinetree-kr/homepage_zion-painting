@@ -27,9 +27,12 @@ interface PostFormProps {
   boardName: string;
   allowGuest: boolean; // 서버에서 이미 확인된 값
   allowProductLink: boolean; // 서버에서 이미 확인된 값 (board_id 기반)
-  boardPolicies?: Array<{ role: string; file_upload: boolean }>;
+  boardPolicies?: Array<{ role: string; file_upload: boolean }>; // 하위 호환성을 위해 유지 (관리자 페이지용)
+  allowFile?: boolean; // 서버에서 이미 확인된 파일 업로드 권한 (일반 사용자용)
   postId?: string;
   data?: Post | null;
+  redirectPath?: string; // 저장 후 리다이렉트할 경로 (기본값: 관리자 페이지)
+  hideStatusField?: boolean; // 상태 필드 숨김 여부 (일반 사용자용)
 }
 
 /**
@@ -74,11 +77,16 @@ export default function PostForm({
   allowGuest,
   allowProductLink,
   boardPolicies = [],
+  allowFile: allowFileProp,
   postId,
   data = null,
+  redirectPath,
+  hideStatusField = false,
 }: PostFormProps) {
-  // board_policies에서 파일 업로드 권한 확인 (어떤 역할이든 하나라도 file_upload 권한이 있으면 허용)
-  const allowFile = boardPolicies.some(policy => policy.file_upload);
+  // 파일 업로드 권한 확인: allowFile prop이 있으면 사용, 없으면 boardPolicies에서 계산 (하위 호환성)
+  const allowFile = allowFileProp !== undefined 
+    ? allowFileProp 
+    : boardPolicies.some(policy => policy.file_upload);
   const router = useRouter();
   const [post, setPost] = useState<Omit<Post, 'id' | 'view_count' | 'like_count' | 'comment_count' | 'created_at' | 'updated_at' | 'deleted_at' | 'board_id'> & { id?: string | null }>(() => {
     if (data) {
@@ -108,7 +116,7 @@ export default function PostForm({
       author_name: '',
       author_email: '',
       author_phone: '',
-      status: 'draft',
+      status: hideStatusField ? 'published' : 'draft',
       is_pinned: false,
       is_secret: false,
       thumbnail_url: null,
@@ -352,9 +360,9 @@ export default function PostForm({
 
       const postToSave = {
         ...post,
+        status: hideStatusField ? 'published' : post.status, // hideStatusField가 true이면 항상 'published'
         thumbnail_url: extractedImageUrl || post.thumbnail_url || null,
         board_id: boardId,
-        boardCode: boardCode,
       };
 
       // 게시물 저장
@@ -458,8 +466,11 @@ export default function PostForm({
       }
 
       toast.success('게시글이 저장되었습니다.');
-      const redirectPath = `/admin/boards/${boardId}/${result.id}`;
-      router.push(redirectPath);
+      // redirectPath가 제공되면 해당 경로로, 아니면 관리자 페이지로 리다이렉트
+      const finalRedirectPath = redirectPath 
+        ? `${redirectPath}/${result.id}` 
+        : `/admin/boards/${boardId}/${result.id}`;
+      router.push(finalRedirectPath);
     } catch (error: any) {
       console.error('저장 오류:', error);
       toast.error(`저장 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
@@ -486,8 +497,8 @@ export default function PostForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 md:gap-4">
-            <div className="space-y-2 col-span-3">
+          <div className={`grid grid-cols-1 ${hideStatusField ? '' : 'md:grid-cols-4 md:gap-4'}`}>
+            <div className={`space-y-2 ${hideStatusField ? '' : 'col-span-3'}`}>
               <Label htmlFor="title">제목 *</Label>
               <Input
                 id="title"
@@ -497,21 +508,23 @@ export default function PostForm({
               />
             </div>
 
-            <div className="space-y-2 col-span-1">
-              <Label htmlFor="status">상태</Label>
-              <Select
-                value={post.status}
-                onValueChange={(value: 'draft' | 'published') => setPost({ ...post, status: value })}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">임시저장</SelectItem>
-                  <SelectItem value="published">게시됨</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {!hideStatusField && (
+              <div className="space-y-2 col-span-1">
+                <Label htmlFor="status">상태</Label>
+                <Select
+                  value={post.status}
+                  onValueChange={(value: 'draft' | 'published') => setPost({ ...post, status: value })}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">임시저장</SelectItem>
+                    <SelectItem value="published">게시됨</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* 제품 선택 (board_id 기반으로 제품 연결 가능한 게시판일 때만) */}

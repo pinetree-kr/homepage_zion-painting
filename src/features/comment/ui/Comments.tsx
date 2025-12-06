@@ -14,13 +14,21 @@ import "./style.css";
 
 interface CommentsProps {
     postId: string;
+    permissions: CommentsPermissions;
 }
 
 interface CommentWithProfile extends Comment {
     profile_name?: string | null;
 }
 
-export default function Comments({ postId }: CommentsProps) {
+interface CommentsPermissions {
+    cmt_create: boolean;
+    cmt_read: boolean;
+    cmt_edit: boolean;
+    cmt_delete: boolean;
+}
+
+export default function Comments({ postId, permissions }: CommentsProps) {
     const [comments, setComments] = useState<CommentWithProfile[]>([]);
     const [loadingComments, setLoadingComments] = useState(false);
     const [commentContent, setCommentContent] = useState('');
@@ -28,7 +36,7 @@ export default function Comments({ postId }: CommentsProps) {
     const [showWarning, setShowWarning] = useState(false);
     const [submittingComment, setSubmittingComment] = useState(false);
 
-    const formatCommentDate = (dateString: string | null | undefined) => {
+    const formatCommentDate = useCallback((dateString: string | null | undefined) => {
         if (!dateString) return '-';
         const date = new Date(dateString);
         return date.toLocaleDateString('ko-KR', {
@@ -39,7 +47,7 @@ export default function Comments({ postId }: CommentsProps) {
             minute: '2-digit',
             second: '2-digit'
         }).replace(/\./g, '-').replace(/,/g, '');
-    };
+    }, []);
 
     const loadComments = useCallback(async (postId: string) => {
         setLoadingComments(true);

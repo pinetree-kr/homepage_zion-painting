@@ -1,18 +1,15 @@
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { getBoardInfoByIdUsingAnonymous, getBoardPoliciesUsingAnonymous } from '@/src/features/board/api/board-actions';
-import { searchPostsByBoardCodeUsingAnonymous, getPostUsingAnonymous } from '@/src/features/post/api/post-actions';
-import { getPostFiles } from '@/src/features/post/api/post-file-actions';
+import { searchPostsByBoardIdUsingAnonymous, searchPostsByBoardIdUsing1To1Board } from '@/src/features/post/api/post-actions';
 import PublicPosts from '@/src/features/post/ui/PublicPosts';
-import PostDetail from '@/src/features/post/ui/PostDetail';
 import PostCreateButton from '@/src/features/post/ui/PostCreateButton';
-import { Button } from '@/src/shared/ui/Button';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { getUserRole } from '@/src/entities/user/model/checkPermission';
+import { Post } from '@/src/entities/post/model/types';
+import BoardError from './error';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const dynamicParams = true;
-
 interface BoardsPageProps {
   params: Promise<{
     board_id: string;
@@ -44,12 +41,48 @@ export default async function BoardsPage({ params, searchParams }: BoardsPagePro
     return notFound();
   }
 
+  // 사용자 롤 확인
+  const userRoleInfo = await getUserRole();
+
+  // 권한 체크
+  // 1. 목록 접근 권한
+  let canList = false;
+
+  if (boardInfo.visibility === 'public') {
+    canList = true;
+  } else {
+    canList = boardPolicies.find(p => p.role === userRoleInfo?.role)?.post_list ?? false;
+  }
+
+  if (!canList) {
+    if (userRoleInfo == null) {
+      return (
+        <BoardError statusCode={401} error={new Error('로그인이 필요합니다.')} />
+      )
+    } else {
+      return (
+        <BoardError statusCode={403} error={new Error('게시판 접근 권한이 없습니다.')} />
+      )
+    }
+  }
+
+  // 2. 쓰기 권한
+  const canWrite = boardPolicies.find(p => p.role === userRoleInfo?.role)?.post_create ?? false;
+
   const searchTerm = searchParamsData?.search || '';
   const page = parseInt(searchParamsData?.page || '1', 10);
   const sortColumn = searchParamsData?.sort || null;
   const sortDirection = (searchParamsData?.order === 'desc' ? 'desc' : 'asc') as 'asc' | 'desc';
 
-  const result = await searchPostsByBoardCodeUsingAnonymous(board_id, searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection);
+
+  let result: { data: Post[]; total: number; totalPages: number } | null = null;
+
+  // 만약 visibility가 owner이면, 본인 게시물만 조회 가능
+  if (boardInfo.visibility === 'owner' && userRoleInfo?.user_id) {
+    result = await searchPostsByBoardIdUsing1To1Board(board_id, userRoleInfo.user_id, searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection);
+  } else {
+    result = await searchPostsByBoardIdUsingAnonymous(board_id, searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection);
+  }
 
   return (
     <div className="relative bg-[#F4F6F8] min-h-[calc(100vh-405px)]">
@@ -57,13 +90,14 @@ export default async function BoardsPage({ params, searchParams }: BoardsPagePro
         <PublicPosts
           boardId={board_id}
           boardName={boardInfo.name}
-          boardPolicies={boardPolicies}
-          items={result.data}
-          totalItems={result.total}
-          totalPages={result.totalPages}
+          items={result?.data || []}
+          totalItems={result?.total || 0}
+          totalPages={result?.totalPages || 0}
           currentPage={page}
           searchTerm={searchTerm}
-          createButton={<PostCreateButton boardId={board_id} boardInfo={boardInfo} boardPolicies={boardPolicies} />}
+          createButton={
+            <PostCreateButton boardId={board_id} allowWrite={canWrite} />
+          }
         />
       </div>
     </div>

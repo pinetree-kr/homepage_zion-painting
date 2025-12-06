@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, Calendar, CircleUser, Eye, Mail, Trash2, Pin, Edit, UserCircle, Search, Download, File, Image as ImageIcon, FileText } from 'lucide-react';
@@ -24,70 +24,54 @@ interface PostDetailProps {
   boardCode: string;
   boardName: string;
   attachedFiles?: PostFile[];
-  boardPolicies: BoardPolicy[];
   isPublic?: boolean; // 일반 사용자용인지 여부
+  isAdmin?: boolean; // 관리자 여부
+  isAuthor?: boolean; // 작성자 여부
+  permissions?: Omit<BoardPolicy, 'board_id' | 'role' | 'post_list' | 'post_create' | 'file_upload' | 'created_at' | 'updated_at'>; // 권한 정보
 }
 
-export default function PostDetail({ post, boardId, boardCode, boardName, attachedFiles: initialAttachedFiles = [], boardPolicies = [], isPublic = false }: PostDetailProps) {
+export default function PostDetail({
+  post,
+  boardId,
+  boardName,
+  attachedFiles = [],
+  isPublic = false,
+  isAdmin = false,
+  isAuthor = false,
+  permissions = {
+    post_read: false,
+    post_edit: false,
+    post_delete: false,
+    cmt_create: false,
+    cmt_read: false,
+    cmt_edit: false,
+    cmt_delete: false,
+    file_download: false,
+  }
+}: PostDetailProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [currentUser, setCurrentUser] = useState<Profile | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [attachedFiles, setAttachedFiles] = useState<PostFile[]>(initialAttachedFiles);
 
   // board_policies에서 댓글 권한 확인 (어떤 역할이든 하나라도 cmt_create 또는 cmt_read 권한이 있으면 허용)
-  const allowComment = boardPolicies.some(policy => policy.cmt_create || policy.cmt_read);
+  // permissions가 있으면 그것을 우선 사용
+  const allowComment = useMemo(() => {
+    return permissions?.cmt_create || permissions?.cmt_read;
+  }, [permissions?.cmt_create, permissions?.cmt_read]);
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
+  const canEdit = useMemo(() => {
+    return permissions?.post_edit && (isAuthor || isAdmin);
+  }, [permissions?.post_edit, isAuthor, isAdmin]);
 
-        if (!user) {
-          setCurrentUser(null);
-          setIsAdmin(false);
-          setLoading(false);
-          return;
-        }
+  const canDelete = useMemo(() => {
+    return permissions?.post_delete && (isAuthor || isAdmin);
+  }, [permissions?.post_delete, isAuthor, isAdmin]);
 
-        // 프로필 정보 가져오기
-        const { data: profileData } = await supabaseClient
-          .from('profiles')
-          .select('id, name, email')
-          .eq('id', user.id)
-          .single<Profile>();
+  const canDownloadFile = useMemo(() => {
+    return permissions?.file_download;
+  }, [permissions?.file_download]);
 
-        if (profileData) {
-          setCurrentUser(profileData);
-        }
-
-        // 관리자 여부 확인
-        const { data: adminData } = await supabaseClient
-          .from('administrators')
-          .select('id')
-          .eq('id', user.id)
-          .is('deleted_at', null)
-          .maybeSingle();
-
-        setIsAdmin(adminData !== null);
-      } catch (error) {
-        console.error('사용자 정보 로드 오류:', error);
-        setCurrentUser(null);
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUser();
-  }, []);
-
-  // 작성자 또는 관리자인지 확인
-  const canEdit = currentUser && (currentUser.id === post.author_id || isAdmin);
-
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     setDeleting(true);
     try {
       console.log('handleDelete', post.id, boardId);
@@ -108,9 +92,9 @@ export default function PostDetail({ post, boardId, boardCode, boardName, attach
       setDeleting(false);
       setShowDeleteDialog(false);
     }
-  };
+  }, [post.id, boardId, isPublic, router]);
 
-  const formatDate = (dateString: string | null | undefined) => {
+  const formatDate = useCallback((dateString: string | null | undefined) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('ko-KR', {
@@ -120,23 +104,23 @@ export default function PostDetail({ post, boardId, boardCode, boardName, attach
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
+  }, []);
 
   /**
    * 파일 크기를 읽기 쉬운 형식으로 변환
    */
-  const formatFileSize = (bytes: number): string => {
+  const formatFileSize = useCallback((bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
+  }, []);
 
   /**
    * 파일 타입에 따른 아이콘 반환
    */
-  const getFileIcon = (mimeType: string) => {
+  const getFileIcon = useCallback((mimeType: string) => {
     if (mimeType.startsWith('image/')) {
       return ImageIcon;
     }
@@ -144,12 +128,12 @@ export default function PostDetail({ post, boardId, boardCode, boardName, attach
       return FileText;
     }
     return File;
-  };
+  }, []);
 
   /**
    * 파일 다운로드 핸들러
    */
-  const handleDownload = async (file: PostFile) => {
+  const handleDownload = useCallback(async (file: PostFile) => {
     try {
       // 파일을 fetch로 가져와서 Blob으로 변환
       const response = await fetch(file.file_url);
@@ -176,7 +160,7 @@ export default function PostDetail({ post, boardId, boardCode, boardName, attach
       console.error('파일 다운로드 오류:', error);
       toast.error('파일 다운로드에 실패했습니다.');
     }
-  };
+  }, []);
 
   return (
     <>
@@ -325,16 +309,18 @@ export default function PostDetail({ post, boardId, boardCode, boardName, attach
                         </div>
 
                         {/* 다운로드 버튼 */}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(file)}
-                          className="flex-shrink-0 gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          다운로드
-                        </Button>
+                        {canDownloadFile && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(file)}
+                            className="flex-shrink-0 gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            다운로드
+                          </Button>
+                        )}
                       </div>
                     );
                   })}
@@ -354,10 +340,15 @@ export default function PostDetail({ post, boardId, boardCode, boardName, attach
                 <Trash2 className="h-4 w-4" />
                 삭제
               </Button>
-              {!isPublic && (
+              {canEdit && (
                 <Button
                   variant="default"
-                  onClick={() => router.push(`/admin/boards/${boardId}/${post.id}/edit`)}
+                  onClick={() => {
+                    const editPath = isPublic
+                      ? `/boards/${boardId}/${post.id}/edit`
+                      : `/admin/boards/${boardId}/${post.id}/edit`;
+                    router.push(editPath);
+                  }}
                   className="gap-2"
                 >
                   <Edit className="h-4 w-4" />
@@ -372,7 +363,12 @@ export default function PostDetail({ post, boardId, boardCode, boardName, attach
 
 
       {/* 댓글 섹션 */}
-      {allowComment && <Comments postId={post.id} />}
+      {allowComment && <Comments postId={post.id} permissions={{
+        cmt_create: permissions?.cmt_create,
+        cmt_read: permissions?.cmt_read,
+        cmt_edit: permissions?.cmt_edit,
+        cmt_delete: permissions?.cmt_delete,
+      }} />}
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
