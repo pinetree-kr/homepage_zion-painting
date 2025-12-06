@@ -93,7 +93,7 @@ export default function PostDetail({ post, boardId, boardCode, boardName, allowC
       if (result.success) {
         toast.success('게시글이 삭제되었습니다.');
         // 일반 사용자용인지 확인하여 리다이렉트 경로 결정
-        const redirectPath = isPublic ? `/boards?b_id=${boardId}` : `/admin/boards/${boardId}`;
+        const redirectPath = isPublic ? `/boards/${boardId}` : `/admin/boards/${boardId}`;
         router.push(redirectPath);
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
@@ -247,7 +247,7 @@ export default function PostDetail({ post, boardId, boardCode, boardName, allowC
                       onClick={() => {
                         if (post.author_name) {
                           const searchPath = isPublic
-                            ? `/boards?b_id=${boardId}&search=${encodeURIComponent(post.author_name)}`
+                            ? `/boards/${boardId}&search=${encodeURIComponent(post.author_name)}`
                             : `/admin/boards/${boardId}?search=${encodeURIComponent(post.author_name)}`;
                           router.push(searchPath);
                         }

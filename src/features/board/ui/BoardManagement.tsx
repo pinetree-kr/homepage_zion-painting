@@ -157,7 +157,7 @@ export default function BoardManagement({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => window.open(`/boards?b_id=${row.id}`, '_blank')}
+            onClick={() => window.open(`/boards/${row.id}`, '_blank')}
             className="h-8 w-8"
             title="외부 링크"
           >

@@ -52,7 +52,7 @@ export default function PublicPosts({
               <Pin className="h-4 w-4 text-yellow-500 flex-shrink-0" />
             )}
             <Link
-              href={`/boards?b_id=${boardId}&p_id=${row.id}`}
+              href={`/boards/${boardId}/${row.id}`}
               className="text-blue-500 hover:text-blue-700 font-medium"
             >
               {row.title}

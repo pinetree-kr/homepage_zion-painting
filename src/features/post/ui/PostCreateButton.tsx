@@ -32,7 +32,7 @@ export default async function PostCreateButton({ boardId, boardInfo, boardPolici
   }
 
   return (
-    <Link href={`/boards?b_id=${boardId}&action=new`}>
+    <Link href={`/boards/${boardId}/new`}>
       <Button className="gap-2">
         <Plus className="h-4 w-4" />
         글 작성

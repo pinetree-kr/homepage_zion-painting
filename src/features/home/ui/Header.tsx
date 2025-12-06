@@ -224,7 +224,7 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
                       {customerCenterItems.map((item) => (
                         <Link
                           key={item.id}
-                          href={`/boards?b_id=${item.id}`}
+                          href={`/boards/${item.id}`}
                           onClick={() => setIsCustomerCenterOpen(false)}
                           className="block px-4 py-2 text-sm text-[#101828] hover:bg-gray-50 hover:text-[#1A2C6D] transition-colors"
                         >
@@ -313,7 +313,7 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
                   {customerCenterItems.map((item) => (
                     <Link
                       key={item.id}
-                      href={`/boards?b_id=${item.id}`}
+                      href={`/boards/${item.id}`}
                       onClick={() => setIsMenuOpen(false)}
                       className="px-6 py-3 text-left text-base font-normal text-[#101828] hover:bg-gray-50 hover:text-[#1A2C6D] transition-colors"
                     >
