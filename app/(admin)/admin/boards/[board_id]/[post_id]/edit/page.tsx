@@ -1,4 +1,4 @@
-import { getBoardInfoUsingAdminById } from '@/src/features/board/api/board-actions';
+import { getBoardInfoUsingAdminById, getBoardPolicies, checkBoardSupportsProductLinking } from '@/src/features/board/api/board-actions';
 import PostForm from '@/src/features/post/ui/PostForm';
 import { getPostUsingAdmin } from '@/src/features/post/api/post-actions';
 import { notFound, redirect } from 'next/navigation';
@@ -24,15 +24,20 @@ export default async function PostEditPage({ params }: PostEditPageProps) {
     redirect(`/admin/boards/${board_id}`);
   }
 
+  const boardPolicies = await getBoardPolicies(board_id);
+  // 서버 사이드에서 visibility 확인: 'public'이면 비로그인 사용자도 게시글 작성 가능
+  const allowGuest = boardInfo.visibility === 'public';
+  // 서버 사이드에서 board_id 기반으로 제품 연결 가능 여부 확인
+  const allowProductLink = await checkBoardSupportsProductLinking(board_id);
+
   return (
     <PostForm
       boardCode={boardInfo.code}
       boardId={boardInfo.id}
       boardName={boardInfo.name}
-      allowGuest={boardInfo.allow_guest}
-      allowFile={boardInfo.allow_file}
-      allowSecret={boardInfo.allow_secret}
-      allowProductLink={boardInfo.allow_product_link}
+      allowGuest={allowGuest}
+      allowProductLink={allowProductLink}
+      boardPolicies={boardPolicies}
       postId={post_id}
       data={post}
     />

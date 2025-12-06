@@ -53,7 +53,7 @@ export default async function BoardsPage({ params, searchParams }: BoardsPagePro
 
   return (
     <div className="relative bg-[#F4F6F8] min-h-[calc(100vh-405px)]">
-      <div className="lg:max-w-6xl mx-auto px-4 pt-24 md:pt-34">
+      <div className="lg:max-w-6xl mx-auto px-4 pt-24 pb-8 md:pt-34 md:pb-18">
         <PublicPosts
           boardId={board_id}
           boardName={boardInfo.name}

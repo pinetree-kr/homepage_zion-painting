@@ -25,10 +25,9 @@ interface PostFormProps {
   boardId: string;
   boardCode: string;
   boardName: string;
-  allowGuest: boolean;
-  allowFile: boolean;
-  allowSecret: boolean;
-  allowProductLink: boolean;
+  allowGuest: boolean; // 서버에서 이미 확인된 값
+  allowProductLink: boolean; // 서버에서 이미 확인된 값 (board_id 기반)
+  boardPolicies?: Array<{ role: string; file_upload: boolean }>;
   postId?: string;
   data?: Post | null;
 }
@@ -73,12 +72,13 @@ export default function PostForm({
   boardCode,
   boardName,
   allowGuest,
-  allowFile,
-  allowSecret,
   allowProductLink,
+  boardPolicies = [],
   postId,
   data = null,
 }: PostFormProps) {
+  // board_policies에서 파일 업로드 권한 확인 (어떤 역할이든 하나라도 file_upload 권한이 있으면 허용)
+  const allowFile = boardPolicies.some(policy => policy.file_upload);
   const router = useRouter();
   const [post, setPost] = useState<Omit<Post, 'id' | 'view_count' | 'like_count' | 'comment_count' | 'created_at' | 'updated_at' | 'deleted_at' | 'board_id'> & { id?: string | null }>(() => {
     if (data) {
@@ -127,7 +127,7 @@ export default function PostForm({
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [loadingProducts, setLoadingProducts] = useState(false);
 
-  // allow_guest가 false일 때 로그인 확인 및 사용자 정보 자동 채우기
+  // allowGuest가 false일 때 로그인 확인 및 사용자 정보 자동 채우기
   useEffect(() => {
     const loadUserInfo = async () => {
       try {
@@ -148,12 +148,12 @@ export default function PostForm({
         }
 
         if (allowGuest) {
-          // allow_guest가 true이면 로그인 확인 불필요
+          // allowGuest가 true이면 로그인 확인 불필요
           setLoading(false);
           return;
         }
 
-        // allow_guest가 false이면 로그인 확인 필요
+        // allowGuest가 false이면 로그인 확인 필요
         if (userError || !user) {
           toast.error('로그인이 필요합니다.');
           router.push('/auth/sign-in');
@@ -216,7 +216,7 @@ export default function PostForm({
     loadExistingFiles();
   }, [postId, allowFile]);
 
-  // 제품 목록 로드 (allow_product_link가 true일 때만)
+  // 제품 목록 로드 (board_id 기반으로 제품 연결 가능한 게시판일 때만)
   useEffect(() => {
     const loadProducts = async () => {
       if (allowProductLink) {
@@ -236,21 +236,22 @@ export default function PostForm({
     loadProducts();
   }, [allowProductLink]);
 
-  // 수정 모드일 때 기존 제품 정보 로드
+  // 수정 모드일 때 기존 제품 정보 로드 (post_id 기반)
   useEffect(() => {
     const loadExistingProduct = async () => {
       if (postId && allowProductLink) {
         try {
-          if (boardCode === 'reviews') {
-            const review = await getProductReview(postId);
-            if (review?.product_id) {
-              setSelectedProductId(review.product_id);
-            }
-          } else if (boardCode === 'quotes') {
-            const inquiry = await getProductInquiry(postId);
-            if (inquiry?.product_id) {
-              setSelectedProductId(inquiry.product_id);
-            }
+          // post_id로 product_reviews 확인
+          const review = await getProductReview(postId);
+          if (review?.product_id) {
+            setSelectedProductId(review.product_id);
+            return;
+          }
+          
+          // product_reviews가 없으면 product_inquiries 확인
+          const inquiry = await getProductInquiry(postId);
+          if (inquiry?.product_id) {
+            setSelectedProductId(inquiry.product_id);
           }
         } catch (error) {
           console.error('기존 제품 정보 로드 오류:', error);
@@ -259,7 +260,7 @@ export default function PostForm({
     };
 
     loadExistingProduct();
-  }, [postId, allowProductLink, boardCode]);
+  }, [postId, allowProductLink]);
 
   /**
    * 파일을 Supabase Storage에 업로드
@@ -411,27 +412,47 @@ export default function PostForm({
         }
       }
 
-      // 제품 연결이 허용된 경우 추가 정보 저장
-      // posts를 먼저 저장한 후, post_id와 product_id를 함께 전달하여 product_reviews/product_inquiries 저장
+      // 제품 연결이 허용된 경우 추가 정보 저장 (post_id 기반)
+      // posts를 먼저 저장한 후, post_id로 기존 product_reviews나 product_inquiries 확인하여 저장
       if (allowProductLink && selectedProductId) {
-        if (boardCode === 'reviews') {
+        // post_id로 기존 product_reviews 확인
+        const existingReview = await getProductReview(result.id);
+        if (existingReview) {
+          // 기존에 product_reviews가 있으면 업데이트
           const reviewResult = await saveProductReview(result.id, selectedProductId, {
-            rating: 0,
-            pros: '',
-            cons: '',
-            purchase_date: new Date().toISOString().split('T')[0],
+            rating: existingReview.rating,
+            pros: existingReview.pros,
+            cons: existingReview.cons,
+            purchase_date: existingReview.purchase_date,
           });
           if (!reviewResult.success) {
             console.error('리뷰 정보 저장 오류:', reviewResult.error);
             toast.warning('게시물은 저장되었지만 리뷰 정보 저장에 실패했습니다.');
           }
-        } else if (boardCode === 'quotes') {
-          const inquiryResult = await saveProductInquiry(result.id, selectedProductId, {
-            type: 'quote',
-          });
-          if (!inquiryResult.success) {
-            console.error('문의 정보 저장 오류:', inquiryResult.error);
-            toast.warning('게시물은 저장되었지만 문의 정보 저장에 실패했습니다.');
+        } else {
+          // product_reviews가 없으면 product_inquiries 확인
+          const existingInquiry = await getProductInquiry(result.id);
+          if (existingInquiry) {
+            // 기존에 product_inquiries가 있으면 업데이트
+            const inquiryResult = await saveProductInquiry(result.id, selectedProductId, {
+              type: existingInquiry.type,
+            });
+            if (!inquiryResult.success) {
+              console.error('문의 정보 저장 오류:', inquiryResult.error);
+              toast.warning('게시물은 저장되었지만 문의 정보 저장에 실패했습니다.');
+            }
+          } else {
+            // 둘 다 없으면 product_reviews로 새로 생성
+            const reviewResult = await saveProductReview(result.id, selectedProductId, {
+              rating: 0,
+              pros: '',
+              cons: '',
+              purchase_date: new Date().toISOString().split('T')[0],
+            });
+            if (!reviewResult.success) {
+              console.error('리뷰 정보 저장 오류:', reviewResult.error);
+              toast.warning('게시물은 저장되었지만 리뷰 정보 저장에 실패했습니다.');
+            }
           }
         }
       }
@@ -493,10 +514,10 @@ export default function PostForm({
             </div>
           </div>
 
-          {/* 제품 선택 (allow_product_link가 true일 때만) */}
+          {/* 제품 선택 (board_id 기반으로 제품 연결 가능한 게시판일 때만) */}
           {allowProductLink && (
             <div className="space-y-2">
-              <Label htmlFor="product">연결된 제품 {boardCode === 'reviews' ? '(리뷰 대상)' : boardCode === 'quotes' ? '(견적 문의 대상)' : ''}</Label>
+              <Label htmlFor="product">연결된 제품</Label>
               <Select
                 value={selectedProductId || ''}
                 onValueChange={(value) => setSelectedProductId(value || null)}
@@ -638,18 +659,6 @@ export default function PostForm({
               </div>
             )}
 
-            {allowSecret && (
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="is_secret"
-                  checked={post.is_secret}
-                  onCheckedChange={(checked) => setPost({ ...post, is_secret: checked === true })}
-                />
-                <Label htmlFor="is_secret" className="cursor-pointer">
-                  비밀 게시글
-                </Label>
-              </div>
-            )}
           </div>
         </CardContent>
         <CardFooter className="justify-between">

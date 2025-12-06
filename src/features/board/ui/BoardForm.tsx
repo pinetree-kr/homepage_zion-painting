@@ -27,13 +27,7 @@ export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps)
         code: board?.code || '',
         name: board?.name || '',
         description: board?.description || '',
-        is_public: board?.is_public || false,
-        visibility: (board?.visibility || (board?.is_public ? 'public' : 'member')) as VisibleType,
-        allow_anonymous: board?.allow_anonymous || false,
-        allow_comment: board?.allow_comment || false,
-        allow_file: board?.allow_file || false,
-        allow_guest: board?.allow_guest || false,
-        allow_secret: board?.allow_secret || false,
+        visibility: (board?.visibility || 'public') as VisibleType,
     });
 
     // 권한 정책 상태
@@ -187,11 +181,10 @@ export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps)
                     toast.error(result.error || '게시판 수정에 실패했습니다.');
                 }
             } else {
-                // display_order와 allow_product_link는 기본값으로 설정 (UI에서 제거되었지만 타입 호환성을 위해)
+                // display_order는 기본값으로 설정
                 const result = await createBoard({
                     ...form,
                     display_order: 0,
-                    allow_product_link: false,
                 }, policiesToSave);
                 if (result.success) {
                     toast.success('게시판이 생성되었습니다.');
@@ -294,7 +287,7 @@ export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps)
                                     <Button
                                         type="button"
                                         variant={form.visibility === 'public' ? 'default' : 'outline'}
-                                        onClick={() => setForm({ ...form, visibility: 'public', is_public: true })}
+                                        onClick={() => setForm({ ...form, visibility: 'public' })}
                                         className={cn(
                                             "h-10 flex-1",
                                             form.visibility === 'public' && "bg-[#155DFC] text-white hover:bg-[#155DFC]/90"
@@ -305,7 +298,7 @@ export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps)
                                     <Button
                                         type="button"
                                         variant={form.visibility === 'member' ? 'default' : 'outline'}
-                                        onClick={() => setForm({ ...form, visibility: 'member', is_public: false })}
+                                        onClick={() => setForm({ ...form, visibility: 'member' })}
                                         className={cn(
                                             "h-10 flex-1",
                                             form.visibility === 'member' && "bg-[#155DFC] text-white hover:bg-[#155DFC]/90"
@@ -316,7 +309,7 @@ export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps)
                                     <Button
                                         type="button"
                                         variant={form.visibility === 'owner' ? 'default' : 'outline'}
-                                        onClick={() => setForm({ ...form, visibility: 'owner', is_public: false })}
+                                        onClick={() => setForm({ ...form, visibility: 'owner' })}
                                         className={cn(
                                             "h-10 flex-1",
                                             form.visibility === 'owner' && "bg-[#155DFC] text-white hover:bg-[#155DFC]/90"
@@ -588,64 +581,6 @@ export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps)
                             />
                         </div>
 
-                        <div className="space-y-4 pt-4 border-t border-gray-200">
-                            <h3 className="text-sm font-semibold text-gray-700">게시판 설정</h3>
-
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="allow-anonymous"
-                                    checked={form.allow_anonymous}
-                                    onCheckedChange={(checked) => setForm({ ...form, allow_anonymous: checked === true })}
-                                />
-                                <Label htmlFor="allow-anonymous" className="cursor-pointer">
-                                    익명 게시 허용
-                                </Label>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="allow-comment"
-                                    checked={form.allow_comment}
-                                    onCheckedChange={(checked) => setForm({ ...form, allow_comment: checked === true })}
-                                />
-                                <Label htmlFor="allow-comment" className="cursor-pointer">
-                                    댓글 허용
-                                </Label>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="allow-file"
-                                    checked={form.allow_file}
-                                    onCheckedChange={(checked) => setForm({ ...form, allow_file: checked === true })}
-                                />
-                                <Label htmlFor="allow-file" className="cursor-pointer">
-                                    파일 첨부 허용
-                                </Label>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="allow-guest"
-                                    checked={form.allow_guest}
-                                    onCheckedChange={(checked) => setForm({ ...form, allow_guest: checked === true })}
-                                />
-                                <Label htmlFor="allow-guest" className="cursor-pointer">
-                                    비회원 게시 허용
-                                </Label>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="allow-secret"
-                                    checked={form.allow_secret}
-                                    onCheckedChange={(checked) => setForm({ ...form, allow_secret: checked === true })}
-                                />
-                                <Label htmlFor="allow-secret" className="cursor-pointer">
-                                    비밀글 허용
-                                </Label>
-                            </div>
-                        </div>
                     </form>
                 </Card>
             </div>

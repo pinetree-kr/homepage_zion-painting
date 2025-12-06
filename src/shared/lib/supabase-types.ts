@@ -196,52 +196,34 @@ export type Database = {
       }
       boards: {
         Row: {
-          allow_anonymous: boolean
-          allow_comment: boolean
-          allow_file: boolean
-          allow_guest: boolean
-          allow_secret: boolean
           code: string
           created_at: string | null
           deleted_at: string | null
           description: string | null
           display_order: number
           id: string
-          is_public: boolean
           name: string
           updated_at: string | null
           visibility: Database["public"]["Enums"]["visible_type"]
         }
         Insert: {
-          allow_anonymous?: boolean
-          allow_comment?: boolean
-          allow_file?: boolean
-          allow_guest?: boolean
-          allow_secret?: boolean
           code: string
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
           display_order?: number
           id?: string
-          is_public?: boolean
           name: string
           updated_at?: string | null
           visibility?: Database["public"]["Enums"]["visible_type"]
         }
         Update: {
-          allow_anonymous?: boolean
-          allow_comment?: boolean
-          allow_file?: boolean
-          allow_guest?: boolean
-          allow_secret?: boolean
           code?: string
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
           display_order?: number
           id?: string
-          is_public?: boolean
           name?: string
           updated_at?: string | null
           visibility?: Database["public"]["Enums"]["visible_type"]

@@ -5,6 +5,7 @@ import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous
 // import type { CompanyInfo, CompanyHistory } from '@/src/shared/lib/supabase-types';
 import type { CompanyInfo, CompanyHistory, CompanyHistoryType, OrganizationMember, CompanyAbout, CompanyStrength, CompanyValue } from '@/src/entities/company/model/types';
 import type { ContactInfo } from '@/src/entities/contact/model/types';
+import type { SiteSetting } from '@/src/entities/site-setting/model/types';
 import { formatPhoneForDisplay } from '@/src/shared/lib/utils';
 import { logSectionSettingChange } from '@/src/entities/system';
 import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
@@ -523,17 +524,28 @@ export async function saveContactInfo(contactInfo: Partial<Omit<ContactInfo, 'id
       .is('deleted_at', null)
       .maybeSingle();
 
-    const existingContact = (existingInfo?.contact as any) || {};
-    const updateData = {
+    const existingContact = (existingInfo?.contact as SiteSetting['contact']) || {
+      email: null,
+      address: null,
+      business_hours: null,
+      phone_primary: null,
+      phone_secondary: null,
+      fax: null,
+      map_url: null,
+      extra_json: null,
+    };
+    
+    const updateData: Partial<SiteSetting> = {
       contact: {
         ...existingContact,
-        email: contactInfo.email !== undefined ? (contactInfo.email || '') : existingContact.email,
-        address: contactInfo.address !== undefined ? (contactInfo.address || '') : existingContact.address,
+        email: contactInfo.email !== undefined ? (contactInfo.email || null) : existingContact.email,
+        address: contactInfo.address !== undefined ? (contactInfo.address || null) : existingContact.address,
         business_hours: contactInfo.business_hours !== undefined ? contactInfo.business_hours : existingContact.business_hours,
         phone_primary: contactInfo.phone_primary !== undefined ? contactInfo.phone_primary : existingContact.phone_primary,
         phone_secondary: contactInfo.phone_secondary !== undefined ? contactInfo.phone_secondary : existingContact.phone_secondary,
         fax: contactInfo.fax !== undefined ? contactInfo.fax : existingContact.fax,
         map_url: contactInfo.map_url !== undefined ? contactInfo.map_url : existingContact.map_url,
+        extra_json: existingContact.extra_json, // extra_json은 변경하지 않음
       },
     };
 

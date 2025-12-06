@@ -155,12 +155,6 @@ CREATE TABLE IF NOT EXISTS boards (
   code VARCHAR(80) NOT NULL UNIQUE, -- 게시판 코드 (ex: notice, qna, quote, review)
   name VARCHAR(255) NOT NULL, -- 게시판 이름 (ex: 공지사항, Q&A, 견적, 리뷰)
   description TEXT, -- 게시판 설명
-  is_public BOOLEAN NOT NULL DEFAULT FALSE, -- 게시판 공개 여부
-  allow_anonymous BOOLEAN NOT NULL DEFAULT FALSE, -- 익명 게시 여부
-  allow_comment BOOLEAN NOT NULL DEFAULT FALSE, -- 댓글 허용 여부
-  allow_file BOOLEAN NOT NULL DEFAULT FALSE, -- 파일 첨부 허용 여부
-  allow_guest BOOLEAN NOT NULL DEFAULT FALSE, -- 비로그인 게시 허용 여부
-  allow_secret BOOLEAN NOT NULL DEFAULT FALSE, -- 비밀글 허용 여부
   display_order INTEGER NOT NULL DEFAULT 0, -- 게시판 순서
   visibility visible_type NOT NULL DEFAULT 'public', -- 공개 범위: public(공개), member(회원용), owner(1:1 게시판)
   created_at TIMESTAMPTZ DEFAULT NOW(),

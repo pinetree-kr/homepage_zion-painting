@@ -77,7 +77,6 @@ export default async function BoardsPage({ params, searchParams }: BoardsPagePro
         boardCode={boardInfo.code}
         boardName={boardInfo.name}
         boardPolicies={boardPolicies}
-        allowComment={boardInfo.allow_comment}
         attachedFiles={attachedFiles}
         isPublic={true}
       />

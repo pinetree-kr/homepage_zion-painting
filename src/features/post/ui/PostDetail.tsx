@@ -23,13 +23,12 @@ interface PostDetailProps {
   boardId: string;
   boardCode: string;
   boardName: string;
-  allowComment: boolean;
   attachedFiles?: PostFile[];
   boardPolicies: BoardPolicy[];
   isPublic?: boolean; // 일반 사용자용인지 여부
 }
 
-export default function PostDetail({ post, boardId, boardCode, boardName, allowComment, attachedFiles: initialAttachedFiles = [], boardPolicies = [], isPublic = false }: PostDetailProps) {
+export default function PostDetail({ post, boardId, boardCode, boardName, attachedFiles: initialAttachedFiles = [], boardPolicies = [], isPublic = false }: PostDetailProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -37,6 +36,9 @@ export default function PostDetail({ post, boardId, boardCode, boardName, allowC
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [attachedFiles, setAttachedFiles] = useState<PostFile[]>(initialAttachedFiles);
+
+  // board_policies에서 댓글 권한 확인 (어떤 역할이든 하나라도 cmt_create 또는 cmt_read 권한이 있으면 허용)
+  const allowComment = boardPolicies.some(policy => policy.cmt_create || policy.cmt_read);
 
   useEffect(() => {
     const loadUser = async () => {

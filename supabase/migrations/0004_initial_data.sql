@@ -6,11 +6,11 @@
 -- 1. 기본 게시판 데이터 삽입
 -- ============================================================================
 
-INSERT INTO boards (code, name, description, is_public, allow_anonymous, allow_comment, allow_file, allow_guest, display_order, visibility) VALUES
-('notices', '공지사항', '공지사항 게시판', TRUE, FALSE, FALSE, FALSE, FALSE, 0, 'public'),
-('qna', 'Q&A', 'Q&A 게시판', TRUE, FALSE, TRUE, FALSE, FALSE, 1, 'public'),
-('quotes', '견적문의', '견적문의 게시판', TRUE, FALSE, TRUE, FALSE, FALSE, 2, 'public'),
-('reviews', '고객후기', '고객후기 게시판', TRUE, FALSE, TRUE, FALSE, FALSE, 3, 'public')
+INSERT INTO boards (code, name, description, display_order, visibility) VALUES
+('notices', '공지사항', '공지사항 게시판', 0, 'public'),
+('qna', 'Q&A', 'Q&A 게시판', 1, 'public'),
+('quotes', '견적문의', '견적문의 게시판', 2, 'public'),
+('reviews', '고객후기', '고객후기 게시판', 3, 'public')
 ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================================

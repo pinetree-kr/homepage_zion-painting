@@ -9,15 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Board } from '@/src/entities/board/model/types';
 import { saveSiteSettings } from '@/src/features/post/api/post-actions';
+import type { SiteSetting } from '@/src/entities/site-setting/model/types';
 import { useRouter } from 'next/navigation';
-
-interface DefaultBoards {
-  [key: string]: { id: string | null; name: string; display_order: number } | null;
-}
 
 interface BoardConnectionSettingsProps {
   boards: Board[];
-  defaultBoards: DefaultBoards | null;
+  defaultBoards: SiteSetting['default_boards'];
 }
 
 export default function BoardConnectionSettings({
@@ -69,7 +66,7 @@ export default function BoardConnectionSettings({
       setSaving(true);
 
       // defaultBoards 구조로 변환 (display_order 포함)
-      const defaultBoardsUpdate: DefaultBoards = {};
+      const defaultBoardsUpdate: NonNullable<SiteSetting['default_boards']> = {};
 
       if (initialDefaultBoards) {
         Object.entries(initialDefaultBoards).forEach(([key, board]) => {
@@ -80,7 +77,7 @@ export default function BoardConnectionSettings({
             if (selectedBoard) {
               defaultBoardsUpdate[key] = {
                 id: selectedBoard.id,
-                name: selectedBoard.name,
+                name: selectedBoard.name || null,
                 display_order: board?.display_order ?? 999,
               };
             }
@@ -88,8 +85,8 @@ export default function BoardConnectionSettings({
             // 연결이 해제된 경우에도 display_order는 유지
             defaultBoardsUpdate[key] = board ? {
               id: null,
-              name: board.name,
-              display_order: board.display_order,
+              name: board.name || null,
+              display_order: board.display_order ?? null,
             } : null;
           }
         });

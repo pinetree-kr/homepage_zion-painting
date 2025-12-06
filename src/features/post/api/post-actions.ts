@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/src/shared/lib/supabase-types';
 import type { Post } from '@/src/entities/post/model/types';
+import type { SiteSetting } from '@/src/entities/site-setting/model/types';
 
 /**
  * 게시판 코드로 게시글 목록 조회 (검색 및 페이지네이션 지원, 관리자용)
@@ -814,29 +815,13 @@ export async function getPostInquiry(postId: string): Promise<{
 /**
  * 사이트 설정 정보 조회 (프로젝트 전체의 일관된 설정)
  */
-export async function getSiteSettings(): Promise<{
-  id: string;
-  prologue_default_title: string | null;
-  prologue_default_description: string | null;
-  contact_email: string | null;
-  contact_address: string | null;
-  contact_business_hours: string | null;
-  contact_phone_primary: string | null;
-  contact_phone_secondary: string | null;
-  contact_fax: string | null;
-  contact_map_url: string | null;
-  contact_extra_json: string | null;
-  notice_board_id: string | null;
-  inquire_board_id: string | null;
-  pds_board_id: string | null;
-  default_boards: { [key: string]: { id: string | null; name: string; display_order: number } | null } | null;
-} | null> {
+export async function getSiteSettings(): Promise<SiteSetting | null> {
   try {
     const supabase = await createServerClient();
 
     const { data, error } = await supabase
       .from('site_settings')
-      .select('id, contact, default_boards')
+      .select('id, contact, default_boards, created_at, updated_at, deleted_at')
       .is('deleted_at', null)
       .maybeSingle();
 
@@ -845,24 +830,24 @@ export async function getSiteSettings(): Promise<{
     }
 
     const contact = (data.contact as any) || {};
-    const defaultBoards = (data.default_boards as any) || {};
+    const defaultBoards = (data.default_boards as any) || null;
 
     return {
       id: data.id,
-      prologue_default_title: null,
-      prologue_default_description: null,
-      contact_email: contact.email || null,
-      contact_address: contact.address || null,
-      contact_business_hours: contact.business_hours || null,
-      contact_phone_primary: contact.phone_primary || null,
-      contact_phone_secondary: contact.phone_secondary || null,
-      contact_fax: contact.fax || null,
-      contact_map_url: contact.map_url || null,
-      contact_extra_json: contact.extra_json || null,
-      notice_board_id: defaultBoards.notice?.id || null,
-      inquire_board_id: defaultBoards.inquiry?.id || null,
-      pds_board_id: defaultBoards.pds?.id || null,
-      default_boards: defaultBoards || null,
+      contact: {
+        email: contact.email || null,
+        address: contact.address || null,
+        business_hours: contact.business_hours || null,
+        phone_primary: contact.phone_primary || null,
+        phone_secondary: contact.phone_secondary || null,
+        fax: contact.fax || null,
+        map_url: contact.map_url || null,
+        extra_json: contact.extra_json || null,
+      },
+      default_boards: defaultBoards,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      deleted_at: data.deleted_at,
     };
   } catch (error) {
     console.error('사이트 설정 조회 오류:', error);
@@ -874,7 +859,8 @@ export async function getSiteSettings(): Promise<{
  * 사이트 설정 저장/업데이트 (관리자용)
  */
 export async function saveSiteSettings(
-  settings: {
+  settings: Partial<Omit<SiteSetting, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>> & {
+    // 하위 호환성을 위한 레거시 필드들 (deprecated)
     prologue_default_title?: string | null;
     prologue_default_description?: string | null;
     contact_email?: string | null;
@@ -888,7 +874,6 @@ export async function saveSiteSettings(
     notice_board_id?: string | null;
     inquire_board_id?: string | null;
     pds_board_id?: string | null;
-    default_boards?: { [key: string]: { id: string | null; name: string; display_order: number } | null } | null;
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -923,44 +908,54 @@ export async function saveSiteSettings(
 
     // contact 정보 업데이트
     const existingContact = (existingSettings?.contact as any) || {};
-    const contactUpdates: any = {};
+    const contactUpdates: Partial<SiteSetting['contact']> = {};
     let hasContactUpdates = false;
 
-    if (settings.contact_email !== undefined) {
-      contactUpdates.email = settings.contact_email || null;
+    // 인터페이스 기반: settings.contact가 직접 전달된 경우
+    if (settings.contact !== undefined) {
+      settingsData.contact = {
+        ...existingContact,
+        ...settings.contact,
+      };
       hasContactUpdates = true;
-    }
-    if (settings.contact_address !== undefined) {
-      contactUpdates.address = settings.contact_address || null;
-      hasContactUpdates = true;
-    }
-    if (settings.contact_business_hours !== undefined) {
-      contactUpdates.business_hours = settings.contact_business_hours || null;
-      hasContactUpdates = true;
-    }
-    if (settings.contact_phone_primary !== undefined) {
-      contactUpdates.phone_primary = settings.contact_phone_primary || null;
-      hasContactUpdates = true;
-    }
-    if (settings.contact_phone_secondary !== undefined) {
-      contactUpdates.phone_secondary = settings.contact_phone_secondary || null;
-      hasContactUpdates = true;
-    }
-    if (settings.contact_fax !== undefined) {
-      contactUpdates.fax = settings.contact_fax || null;
-      hasContactUpdates = true;
-    }
-    if (settings.contact_map_url !== undefined) {
-      contactUpdates.map_url = settings.contact_map_url || null;
-      hasContactUpdates = true;
-    }
-    if (settings.contact_extra_json !== undefined) {
-      contactUpdates.extra_json = settings.contact_extra_json || null;
-      hasContactUpdates = true;
-    }
+    } else {
+      // 레거시 필드 지원 (하위 호환성)
+      if (settings.contact_email !== undefined) {
+        contactUpdates.email = settings.contact_email || null;
+        hasContactUpdates = true;
+      }
+      if (settings.contact_address !== undefined) {
+        contactUpdates.address = settings.contact_address || null;
+        hasContactUpdates = true;
+      }
+      if (settings.contact_business_hours !== undefined) {
+        contactUpdates.business_hours = settings.contact_business_hours || null;
+        hasContactUpdates = true;
+      }
+      if (settings.contact_phone_primary !== undefined) {
+        contactUpdates.phone_primary = settings.contact_phone_primary || null;
+        hasContactUpdates = true;
+      }
+      if (settings.contact_phone_secondary !== undefined) {
+        contactUpdates.phone_secondary = settings.contact_phone_secondary || null;
+        hasContactUpdates = true;
+      }
+      if (settings.contact_fax !== undefined) {
+        contactUpdates.fax = settings.contact_fax || null;
+        hasContactUpdates = true;
+      }
+      if (settings.contact_map_url !== undefined) {
+        contactUpdates.map_url = settings.contact_map_url || null;
+        hasContactUpdates = true;
+      }
+      if (settings.contact_extra_json !== undefined) {
+        contactUpdates.extra_json = settings.contact_extra_json || null;
+        hasContactUpdates = true;
+      }
 
-    if (hasContactUpdates) {
-      settingsData.contact = { ...existingContact, ...contactUpdates };
+      if (hasContactUpdates) {
+        settingsData.contact = { ...existingContact, ...contactUpdates };
+      }
     }
 
     // default_boards 정보 업데이트

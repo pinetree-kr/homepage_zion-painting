@@ -49,7 +49,6 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         boardCode={boardInfo.code}
         boardName={boardInfo.name}
         boardPolicies={boardPolicies}
-        allowComment={boardInfo.allow_comment}
         attachedFiles={attachedFiles}
       />
     </div>

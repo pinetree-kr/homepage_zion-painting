@@ -114,23 +114,14 @@ export default function BoardManagement({
       header: '설정',
       accessor: (row) => (
         <div className="flex flex-wrap gap-1">
-          {row.is_public && (
+          {row.visibility === 'public' && (
             <Badge variant="outline" className="text-xs">공개</Badge>
           )}
-          {row.allow_anonymous && (
-            <Badge variant="outline" className="text-xs">익명</Badge>
+          {row.visibility === 'member' && (
+            <Badge variant="outline" className="text-xs">회원용</Badge>
           )}
-          {row.allow_comment && (
-            <Badge variant="outline" className="text-xs">댓글</Badge>
-          )}
-          {row.allow_file && (
-            <Badge variant="outline" className="text-xs">파일</Badge>
-          )}
-          {row.allow_guest && (
-            <Badge variant="outline" className="text-xs">비회원</Badge>
-          )}
-          {row.allow_secret && (
-            <Badge variant="outline" className="text-xs">비밀글</Badge>
+          {row.visibility === 'owner' && (
+            <Badge variant="outline" className="text-xs">1:1</Badge>
           )}
         </div>
       ),

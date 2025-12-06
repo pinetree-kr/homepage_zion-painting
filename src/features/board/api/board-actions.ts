@@ -525,13 +525,7 @@ export async function createBoard(
         code: board.code,
         name: board.name,
         description: board.description || null,
-        is_public: board.is_public,
-        visibility: board.visibility || (board.is_public ? 'public' : 'member'),
-        allow_anonymous: board.allow_anonymous,
-        allow_comment: board.allow_comment,
-        allow_file: board.allow_file,
-        allow_guest: board.allow_guest,
-        allow_secret: board.allow_secret,
+        visibility: board.visibility || 'public',
       })
       .select()
       .single();
@@ -664,33 +658,9 @@ export async function updateBoard(
       updateData.description = board.description;
       changedFields.push('description');
     }
-    if (board.is_public !== undefined && board.is_public !== oldBoardData.is_public) {
-      updateData.is_public = board.is_public;
-      changedFields.push('is_public');
-    }
     if (board.visibility !== undefined && board.visibility !== oldBoardData.visibility) {
       updateData.visibility = board.visibility;
       changedFields.push('visibility');
-    }
-    if (board.allow_anonymous !== undefined && board.allow_anonymous !== oldBoardData.allow_anonymous) {
-      updateData.allow_anonymous = board.allow_anonymous;
-      changedFields.push('allow_anonymous');
-    }
-    if (board.allow_comment !== undefined && board.allow_comment !== oldBoardData.allow_comment) {
-      updateData.allow_comment = board.allow_comment;
-      changedFields.push('allow_comment');
-    }
-    if (board.allow_file !== undefined && board.allow_file !== oldBoardData.allow_file) {
-      updateData.allow_file = board.allow_file;
-      changedFields.push('allow_file');
-    }
-    if (board.allow_guest !== undefined && board.allow_guest !== oldBoardData.allow_guest) {
-      updateData.allow_guest = board.allow_guest;
-      changedFields.push('allow_guest');
-    }
-    if (board.allow_secret !== undefined && board.allow_secret !== oldBoardData.allow_secret) {
-      updateData.allow_secret = board.allow_secret;
-      changedFields.push('allow_secret');
     }
 
     // 게시판 정보 변경이 있는 경우에만 업데이트
@@ -867,5 +837,59 @@ export async function getProductsUsingAnonymous(
   } catch (error) {
     console.error('제품 목록 조회 중 예외 발생:', error);
     return [];
+  }
+}
+
+/**
+ * board_id를 기반으로 제품 연결 가능 여부 확인
+ * 해당 게시판의 게시글들 중 product_reviews나 product_inquiries가 있는지 확인
+ */
+export async function checkBoardSupportsProductLinking(boardId: string): Promise<boolean> {
+  try {
+    const supabase = await createServerClient();
+
+    // 해당 board_id에 속한 게시글들 조회
+    const { data: postsData, error: postsError } = await supabase
+      .from('posts')
+      .select('id')
+      .eq('board_id', boardId)
+      .is('deleted_at', null)
+      .limit(1);
+
+    if (postsError || !postsData || postsData.length === 0) {
+      return false;
+    }
+
+    const postIds = postsData.map(p => p.id);
+
+    // 해당 board_id의 게시글들 중 product_reviews가 있는지 확인
+    const { data: reviewsInBoard, error: reviewsInBoardError } = await supabase
+      .from('product_reviews')
+      .select('id')
+      .in('post_id', postIds)
+      .is('deleted_at', null)
+      .limit(1);
+
+    if (reviewsInBoardError) {
+      console.error('board product_reviews 조회 오류:', reviewsInBoardError);
+    }
+
+    // 해당 board_id의 게시글들 중 product_inquiries가 있는지 확인
+    const { data: inquiriesInBoard, error: inquiriesInBoardError } = await supabase
+      .from('product_inquiries')
+      .select('id')
+      .in('post_id', postIds)
+      .is('deleted_at', null)
+      .limit(1);
+
+    if (inquiriesInBoardError) {
+      console.error('board product_inquiries 조회 오류:', inquiriesInBoardError);
+    }
+
+    // product_reviews나 product_inquiries가 하나라도 있으면 제품 연결 가능
+    return !!(reviewsInBoard && reviewsInBoard.length > 0) || !!(inquiriesInBoard && inquiriesInBoard.length > 0);
+  } catch (error) {
+    console.error('제품 연결 가능 여부 확인 중 오류:', error);
+    return false;
   }
 }

@@ -18,8 +18,8 @@ export default async function PostCreateButton({ boardId, boardInfo, boardPolici
   let canCreate = false;
 
   if (userRole === null) {
-    // 로그인하지 않은 사용자 - 게시판의 allow_guest 설정 확인
-    canCreate = boardInfo.allow_guest ?? false;
+    // 로그인하지 않은 사용자 - visibility가 'public'일 때만 게시글 작성 가능
+    canCreate = boardInfo.visibility === 'public';
   } else {
     // 로그인한 사용자 - 해당 롤의 권한 정책 확인
     const userPolicy = boardPolicies.find(p => p.role === userRole);
