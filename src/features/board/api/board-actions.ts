@@ -87,6 +87,14 @@ export async function getBoardInfoById(supabase: SupabaseClient<Database>, board
 }
 
 /**
+ * 게시판 정보 조회 (ID로 조회, 일반 사용자용 - 익명 클라이언트)
+ */
+export async function getBoardInfoByIdUsingAnonymous(boardId: string): Promise<Board | null> {
+  const supabase = createAnonymousServerClient();
+  return getBoardInfoById(supabase, boardId);
+}
+
+/**
  * 게시판 정보 조회 (ID로 조회, 관리자용)
  */
 export async function getBoardByIdUsingAdmin(boardId: string): Promise<Board | null> {
@@ -247,6 +255,30 @@ export async function getBoardsUsingAdmin(
 export async function getBoardPolicies(boardId: string): Promise<BoardPolicy[]> {
   try {
     const supabase = await createServerClient();
+
+    const { data, error } = await supabase
+      .from('board_policies')
+      .select('*')
+      .eq('board_id', boardId);
+
+    if (error) {
+      console.error('권한 정책 조회 오류:', error);
+      return [];
+    }
+
+    return (data || []) as BoardPolicy[];
+  } catch (error) {
+    console.error('권한 정책 조회 중 예외 발생:', error);
+    return [];
+  }
+}
+
+/**
+ * 게시판 권한 정책 조회 (일반 사용자용 - 익명 클라이언트)
+ */
+export async function getBoardPoliciesUsingAnonymous(boardId: string): Promise<BoardPolicy[]> {
+  try {
+    const supabase = createAnonymousServerClient();
 
     const { data, error } = await supabase
       .from('board_policies')

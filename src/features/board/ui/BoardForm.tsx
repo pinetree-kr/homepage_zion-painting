@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Trash2, Check } from 'lucide-react';
-import { Board, BoardPolicy, VisibleType, AppRole } from '@/src/entities/board/model/types';
+import { Board, type BoardPolicy, VisibleType, AppRole } from '@/src/entities/board/model/types';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/shared/ui';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
@@ -16,9 +16,10 @@ import { cn } from '@/src/shared/ui';
 
 interface BoardFormProps {
     board?: Board;
+    boardPolicies?: BoardPolicy[];
 }
 
-export default function BoardForm({ board }: BoardFormProps) {
+export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps) {
     const router = useRouter();
     const isEdit = !!board;
 
@@ -41,99 +42,109 @@ export default function BoardForm({ board }: BoardFormProps) {
         member: Omit<BoardPolicy, 'board_id' | 'role' | 'created_at' | 'updated_at'>;
     }>({
         admin: {
-            post_list: true,
-            post_create: true,
-            post_read: true,
-            post_edit: true,
-            post_delete: true,
-            cmt_create: true,
-            cmt_read: true,
-            cmt_edit: true,
-            cmt_delete: true,
-            file_upload: true,
-            file_download: true,
+            post_list: false,
+            post_create: false,
+            post_read: false,
+            post_edit: false,
+            post_delete: false,
+            cmt_create: false,
+            cmt_read: false,
+            cmt_edit: false,
+            cmt_delete: false,
+            file_upload: false,
+            file_download: false,
         },
         member: {
-            post_list: true,
-            post_create: true,
-            post_read: true,
-            post_edit: true,
-            post_delete: true,
-            cmt_create: true,
-            cmt_read: true,
-            cmt_edit: true,
-            cmt_delete: true,
-            file_upload: true,
-            file_download: true,
+            post_list: false,
+            post_create: false,
+            post_read: false,
+            post_edit: false,
+            post_delete: false,
+            cmt_create: false,
+            cmt_read: false,
+            cmt_edit: false,
+            cmt_delete: false,
+            file_upload: false,
+            file_download: false,
         },
     });
+
+    useEffect(() => {
+        if (boardPolicies.length > 0) {
+            setPolicies({
+                admin: boardPolicies.find(p => p.role === 'admin') || policies.admin,
+                member: boardPolicies.find(p => p.role === 'member') || policies.member,
+            });
+        }
+    }, [boardPolicies]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [loadingPolicies, setLoadingPolicies] = useState(false);
+
 
     // 기존 게시판의 권한 정책 로드
-    useEffect(() => {
-        if (isEdit && board?.id) {
-            loadPolicies();
-        }
-    }, [isEdit, board?.id]);
+    // useEffect(() => {
+    //     if (isEdit && board?.id) {
+    //         // loadPolicies();
 
-    const loadPolicies = async () => {
-        if (!board?.id) return;
+    //     }
+    // }, [isEdit, board?.id, boardPolicies]);
 
-        setLoadingPolicies(true);
-        try {
-            const loadedPolicies = await getBoardPolicies(board.id);
-            const adminPolicy = loadedPolicies.find(p => p.role === 'admin');
-            const memberPolicy = loadedPolicies.find(p => p.role === 'member');
+    // const loadPolicies = async () => {
+    //     if (!board?.id) return;
 
-            if (adminPolicy) {
-                setPolicies(prev => ({
-                    ...prev,
-                    admin: {
-                        post_list: adminPolicy.post_list,
-                        post_create: adminPolicy.post_create,
-                        post_read: adminPolicy.post_read,
-                        post_edit: adminPolicy.post_edit,
-                        post_delete: adminPolicy.post_delete,
-                        cmt_create: adminPolicy.cmt_create,
-                        cmt_read: adminPolicy.cmt_read,
-                        cmt_edit: adminPolicy.cmt_edit,
-                        cmt_delete: adminPolicy.cmt_delete,
-                        file_upload: adminPolicy.file_upload,
-                        file_download: adminPolicy.file_download,
-                    },
-                }));
-            }
+    //     setLoadingPolicies(true);
+    //     try {
+    //         const loadedPolicies = await getBoardPolicies(board.id);
+    //         const adminPolicy = loadedPolicies.find(p => p.role === 'admin');
+    //         const memberPolicy = loadedPolicies.find(p => p.role === 'member');
 
-            if (memberPolicy) {
-                setPolicies(prev => ({
-                    ...prev,
-                    member: {
-                        post_list: memberPolicy.post_list,
-                        post_create: memberPolicy.post_create,
-                        post_read: memberPolicy.post_read,
-                        post_edit: memberPolicy.post_edit,
-                        post_delete: memberPolicy.post_delete,
-                        cmt_create: memberPolicy.cmt_create,
-                        cmt_read: memberPolicy.cmt_read,
-                        cmt_edit: memberPolicy.cmt_edit,
-                        cmt_delete: memberPolicy.cmt_delete,
-                        file_upload: memberPolicy.file_upload,
-                        file_download: memberPolicy.file_download,
-                    },
-                }));
-            }
-        } catch (error) {
-            console.error('권한 정책 로드 실패:', error);
-        } finally {
-            setLoadingPolicies(false);
-        }
-    };
+    //         if (adminPolicy) {
+    //             setPolicies(prev => ({
+    //                 ...prev,
+    //                 admin: {
+    //                     post_list: adminPolicy.post_list,
+    //                     post_create: adminPolicy.post_create,
+    //                     post_read: adminPolicy.post_read,
+    //                     post_edit: adminPolicy.post_edit,
+    //                     post_delete: adminPolicy.post_delete,
+    //                     cmt_create: adminPolicy.cmt_create,
+    //                     cmt_read: adminPolicy.cmt_read,
+    //                     cmt_edit: adminPolicy.cmt_edit,
+    //                     cmt_delete: adminPolicy.cmt_delete,
+    //                     file_upload: adminPolicy.file_upload,
+    //                     file_download: adminPolicy.file_download,
+    //                 },
+    //             }));
+    //         }
 
-    const updatePolicy = (role: AppRole, field: keyof typeof policies.admin, value: boolean) => {
+    //         if (memberPolicy) {
+    //             setPolicies(prev => ({
+    //                 ...prev,
+    //                 member: {
+    //                     post_list: memberPolicy.post_list,
+    //                     post_create: memberPolicy.post_create,
+    //                     post_read: memberPolicy.post_read,
+    //                     post_edit: memberPolicy.post_edit,
+    //                     post_delete: memberPolicy.post_delete,
+    //                     cmt_create: memberPolicy.cmt_create,
+    //                     cmt_read: memberPolicy.cmt_read,
+    //                     cmt_edit: memberPolicy.cmt_edit,
+    //                     cmt_delete: memberPolicy.cmt_delete,
+    //                     file_upload: memberPolicy.file_upload,
+    //                     file_download: memberPolicy.file_download,
+    //                 },
+    //             }));
+    //         }
+    //     } catch (error) {
+    //         console.error('권한 정책 로드 실패:', error);
+    //     } finally {
+    //         setLoadingPolicies(false);
+    //     }
+    // };
+
+    const updatePolicy = (role: AppRole, field: keyof BoardPolicy, value: boolean) => {
         setPolicies(prev => ({
             ...prev,
             [role]: {
@@ -171,7 +182,6 @@ export default function BoardForm({ board }: BoardFormProps) {
                 const result = await updateBoard(board.id, form, policiesToSave);
                 if (result.success) {
                     toast.success('게시판이 수정되었습니다.');
-                    router.push('/admin/services/boards/list');
                     router.refresh();
                 } else {
                     toast.error(result.error || '게시판 수정에 실패했습니다.');
@@ -185,7 +195,7 @@ export default function BoardForm({ board }: BoardFormProps) {
                 }, policiesToSave);
                 if (result.success) {
                     toast.success('게시판이 생성되었습니다.');
-                    router.push('/admin/services/boards/list');
+                    router.push('/admin/system/boards/list');
                     router.refresh();
                 } else {
                     toast.error(result.error || '게시판 생성에 실패했습니다.');

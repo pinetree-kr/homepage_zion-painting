@@ -16,6 +16,7 @@ import Comments from '@/src/features/comment/ui/Comments';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user/model/types';
 import { type PostFile } from '../api/post-file-actions';
+import { BoardPolicy } from '@/src/entities/board/model/types';
 
 interface PostDetailProps {
   post: Post;
@@ -24,9 +25,11 @@ interface PostDetailProps {
   boardName: string;
   allowComment: boolean;
   attachedFiles?: PostFile[];
+  boardPolicies: BoardPolicy[];
+  isPublic?: boolean; // 일반 사용자용인지 여부
 }
 
-export default function PostDetail({ post, boardId, boardCode, boardName, allowComment, attachedFiles: initialAttachedFiles = [] }: PostDetailProps) {
+export default function PostDetail({ post, boardId, boardCode, boardName, allowComment, attachedFiles: initialAttachedFiles = [], boardPolicies = [], isPublic = false }: PostDetailProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -89,8 +92,8 @@ export default function PostDetail({ post, boardId, boardCode, boardName, allowC
       const result = await deletePost(post.id, boardId);
       if (result.success) {
         toast.success('게시글이 삭제되었습니다.');
-        // quote는 estimates 경로로 리다이렉트
-        const redirectPath = `/admin/boards/${boardId}`;
+        // 일반 사용자용인지 확인하여 리다이렉트 경로 결정
+        const redirectPath = isPublic ? `/boards?b_id=${boardId}` : `/admin/boards/${boardId}`;
         router.push(redirectPath);
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
@@ -243,7 +246,10 @@ export default function PostDetail({ post, boardId, boardCode, boardName, allowC
                     <DropdownMenuItem
                       onClick={() => {
                         if (post.author_name) {
-                          router.push(`/admin/boards/${boardId}?search=${encodeURIComponent(post.author_name)}`);
+                          const searchPath = isPublic
+                            ? `/boards?b_id=${boardId}&search=${encodeURIComponent(post.author_name)}`
+                            : `/admin/boards/${boardId}?search=${encodeURIComponent(post.author_name)}`;
+                          router.push(searchPath);
                         }
                       }}
                       className="cursor-pointer"
@@ -346,14 +352,16 @@ export default function PostDetail({ post, boardId, boardCode, boardName, allowC
                 <Trash2 className="h-4 w-4" />
                 삭제
               </Button>
-              <Button
-                variant="default"
-                onClick={() => router.push(`/admin/boards/${boardId}/${post.id}/edit`)}
-                className="gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                수정
-              </Button>
+              {!isPublic && (
+                <Button
+                  variant="default"
+                  onClick={() => router.push(`/admin/boards/${boardId}/${post.id}/edit`)}
+                  className="gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  수정
+                </Button>
+              )}
             </div>
           )}
         </CardFooter>

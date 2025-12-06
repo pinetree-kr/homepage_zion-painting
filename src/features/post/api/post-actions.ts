@@ -1,6 +1,7 @@
 'use server';
 
 import { createServerClient } from '@/src/shared/lib/supabase/server';
+import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous';
 import { revalidatePath } from 'next/cache';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/src/shared/lib/supabase-types';
@@ -22,6 +23,21 @@ export async function searchPostsByBoardCodeUsingAdmin(
 }
 
 /**
+ * 게시판 코드로 게시글 목록 조회 (검색 및 페이지네이션 지원, 일반 사용자용 - 익명 클라이언트)
+ */
+export async function searchPostsByBoardCodeUsingAnonymous(
+  boardId: string,
+  searchTerm: string = '',
+  page: number = 1,
+  itemsPerPage: number = 10,
+  sortColumn?: string | null,
+  sortDirection: 'asc' | 'desc' = 'asc'
+): Promise<{ data: Post[]; total: number; totalPages: number }> {
+  const supabase = createAnonymousServerClient();
+  return searchPostsByBoardCode(supabase, boardId, searchTerm, page, itemsPerPage, sortColumn, sortDirection, true);
+}
+
+/**
  * 게시판 코드로 게시글 목록 조회 (검색 및 페이지네이션 지원, supabase 클라이언트 전달)
  */
 export async function searchPostsByBoardCode(
@@ -31,7 +47,8 @@ export async function searchPostsByBoardCode(
   page: number = 1,
   itemsPerPage: number = 10,
   sortColumn?: string | null,
-  sortDirection: 'asc' | 'desc' = 'asc'
+  sortDirection: 'asc' | 'desc' = 'asc',
+  publishedOnly: boolean = false
 ): Promise<{ data: Post[]; total: number; totalPages: number }> {
   try {
 
@@ -40,6 +57,11 @@ export async function searchPostsByBoardCode(
       .select('*', { count: 'exact' })
       .eq('board_id', boardId)
       .is('deleted_at', null);
+
+    // 일반 사용자용인 경우 게시된 게시글만 조회
+    if (publishedOnly) {
+      query = query.eq('status', 'published');
+    }
 
     // 검색어가 있으면 제목과 내용에서 검색
     if (searchTerm.trim()) {
@@ -67,6 +89,11 @@ export async function searchPostsByBoardCode(
       .eq('board_id', boardId)
       .is('deleted_at', null)
       .range(from, to);
+
+    // 일반 사용자용인 경우 게시된 게시글만 조회
+    if (publishedOnly) {
+      dataQuery = dataQuery.eq('status', 'published');
+    }
 
     // 검색어가 있으면 제목과 내용에서 검색
     if (searchTerm.trim()) {
@@ -136,6 +163,36 @@ export async function getPostUsingAdmin(id: string): Promise<Post | null> {
       .select('*')
       .eq('id', id)
       .is('deleted_at', null)
+      .maybeSingle() as {
+        data: Post | null;
+        error: any;
+      };
+
+    if (error) {
+      console.error('게시글 조회 오류:', error);
+      return null;
+    }
+
+    return data || null;
+  } catch (error) {
+    console.error('게시글 조회 중 예외 발생:', error);
+    return null;
+  }
+}
+
+/**
+ * 단일 게시글 조회 (일반 사용자용 - 익명 클라이언트)
+ */
+export async function getPostUsingAnonymous(id: string): Promise<Post | null> {
+  try {
+    const supabase = createAnonymousServerClient();
+
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .eq('status', 'published') // 게시된 게시글만 조회
       .maybeSingle() as {
         data: Post | null;
         error: any;
@@ -310,7 +367,7 @@ export async function savePost(
  */
 export async function deletePost(id: string, boardId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createServerClient(); console.log()
+    const supabase = await createServerClient();
 
     const { error } = await supabase
       .from('posts')

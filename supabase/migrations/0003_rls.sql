@@ -407,16 +407,9 @@ CREATE POLICY "Admin delete access for site_settings" ON site_settings
 -- 19. board_policies 테이블 RLS 정책
 -- ============================================================================
 
--- 관리자는 모든 board_policies 조회 가능
-CREATE POLICY "Admins can view all board_policies" ON board_policies
-  FOR SELECT USING (is_admin(auth.uid()));
-
--- 일반 사용자는 member 역할의 정책만 조회 가능
-CREATE POLICY "Members can view member role policies" ON board_policies
-  FOR SELECT USING (
-    role = 'member'::app_role
-    AND auth.uid() IS NOT NULL
-  );
+-- 모든 사용자(인증/비인증 포함)가 board_policies 조회 가능
+CREATE POLICY "Public read access for board_policies" ON board_policies
+  FOR SELECT USING (true);
 
 -- 관리자만 board_policies 수정 가능
 CREATE POLICY "Admins can manage board_policies" ON board_policies

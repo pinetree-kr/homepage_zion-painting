@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,7 @@ import { LogOut, Settings } from 'lucide-react';
 import { getScrollbarWidth } from '@/src/shared/lib/utils';
 import UserMenu from '@/src/widgets/user/ui/UserMenu';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
+import { getSiteSettings } from '@/src/features/post/api/post-actions';
 
 interface HeaderProps {
   enableScrollAnimation?: boolean;
@@ -18,6 +19,9 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(!enableScrollAnimation);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isCustomerCenterOpen, setIsCustomerCenterOpen] = useState(false);
+  const [defaultBoards, setDefaultBoards] = useState<{ [key: string]: { id: string | null; name: string; display_order: number } | null } | null>(null);
+  const customerCenterRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   // const supabase = useSupabase();
 
@@ -35,6 +39,21 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
       return () => window.removeEventListener('scroll', handleScroll);
     }
   }, [enableScrollAnimation]);
+
+  // default_boards 데이터 가져오기
+  useEffect(() => {
+    const loadDefaultBoards = async () => {
+      try {
+        const siteSettings = await getSiteSettings();
+        setDefaultBoards(siteSettings?.default_boards || null);
+      } catch (error) {
+        console.error('사이트 설정 로드 오류:', error);
+        setDefaultBoards(null);
+      }
+    };
+
+    loadDefaultBoards();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -64,6 +83,23 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
     };
   }, [isMenuOpen]);
 
+  // 고객센터 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (customerCenterRef.current && !customerCenterRef.current.contains(event.target as Node)) {
+        setIsCustomerCenterOpen(false);
+      }
+    };
+
+    if (isCustomerCenterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCustomerCenterOpen]);
+
 
   const navItems = [
     { label: '회사소개', href: '/about' },
@@ -77,12 +113,27 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
     setIsMenuOpen(false);
   };
 
+  // default_boards를 display_order 기준으로 정렬하여 메뉴 아이템 생성
+  const customerCenterItems = useMemo(() => defaultBoards
+    ? Object.entries(defaultBoards || {})
+      .filter(([_, board]) => board && board.id) // id가 있는 게시판만 표시
+      .sort(([_, a], [__, b]) => {
+        const orderA = a?.display_order ?? 999;
+        const orderB = b?.display_order ?? 999;
+        return orderA - orderB;
+      })
+      .map(([_, board]) => ({
+        id: board!.id!,
+        name: board!.name,
+      }))
+    : [], [defaultBoards]);
+
   return (
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-50 ${enableScrollAnimation
-            ? 'transition-colors transition-shadow duration-300'
-            : ''
+          ? 'transition-colors transition-shadow duration-300'
+          : ''
           } ${
           // 스크롤 애니메이션이 비활성화된 경우 항상 배경색과 그림자 표시
           // 스크롤 애니메이션이 활성화된 경우: 모바일/태블릿은 항상 배경색, 데스크톱은 스크롤 시에만 배경색
@@ -139,31 +190,51 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
               ))}
 
               {/* 고객센터 드롭다운 */}
-              <div className="relative group">
-                <button
-                  className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] flex items-center gap-1 ${!enableScrollAnimation || isScrolled ? 'text-[#101828]' : 'text-white'
-                    }`}
+              {customerCenterItems.length > 0 && (
+                <div
+                  ref={customerCenterRef}
+                  className="relative"
                 >
-                  고객센터
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="transition-transform group-hover:rotate-180"
+                  <button
+                    onClick={() => setIsCustomerCenterOpen(!isCustomerCenterOpen)}
+                    className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] flex items-center gap-1 ${!enableScrollAnimation || isScrolled ? 'text-[#101828]' : 'text-white'
+                      }`}
                   >
-                    <path
-                      d="M4 6L8 10L12 6"
-                      stroke="currentColor"
-                      strokeWidth="1.33"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-                {/* 드롭다운 메뉴는 추후 구현 */}
-              </div>
+                    고객센터
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`transition-transform duration-200 ${isCustomerCenterOpen ? 'rotate-180' : ''}`}
+                    >
+                      <path
+                        d="M4 6L8 10L12 6"
+                        stroke="currentColor"
+                        strokeWidth="1.33"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  {/* 드롭다운 메뉴 */}
+                  {isCustomerCenterOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                      {customerCenterItems.map((item) => (
+                        <Link
+                          key={item.id}
+                          href={`/boards?b_id=${item.id}`}
+                          onClick={() => setIsCustomerCenterOpen(false)}
+                          className="block px-4 py-2 text-sm text-[#101828] hover:bg-gray-50 hover:text-[#1A2C6D] transition-colors"
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* 로그인/사용자 메뉴 */}
               <div className="flex min-w-20 items-center justify-center">
@@ -233,22 +304,25 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
             </div>
 
             {/* 고객센터 섹션 */}
-            <div className="mt-4 px-6">
-              <div className="px-6 py-4 text-sm font-medium text-gray-500 uppercase tracking-wider">
-                고객센터
+            {customerCenterItems.length > 0 && (
+              <div className="mt-4 px-6">
+                <div className="px-6 py-4 text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  고객센터
+                </div>
+                <div className="flex flex-col">
+                  {customerCenterItems.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={`/boards?b_id=${item.id}`}
+                      onClick={() => setIsMenuOpen(false)}
+                      className="px-6 py-3 text-left text-base font-normal text-[#101828] hover:bg-gray-50 hover:text-[#1A2C6D] transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-col">
-                <button className="px-6 py-3 text-left text-base font-normal text-[#101828] hover:bg-gray-50 hover:text-[#1A2C6D] transition-colors">
-                  공지사항
-                </button>
-                <button className="px-6 py-3 text-left text-base font-normal text-[#101828] hover:bg-gray-50 hover:text-[#1A2C6D] transition-colors">
-                  Q&A
-                </button>
-                <button className="px-6 py-3 text-left text-base font-normal text-[#101828] hover:bg-gray-50 hover:text-[#1A2C6D] transition-colors">
-                  내 문의내역
-                </button>
-              </div>
-            </div>
+            )}
           </nav>
 
           {/* 사이드 메뉴 푸터 */}

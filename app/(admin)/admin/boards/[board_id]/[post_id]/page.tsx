@@ -1,5 +1,5 @@
 import PostDetail from '@/src/features/post/ui/PostDetail';
-import { getBoardInfoUsingAdminById } from '@/src/features/board/api/board-actions';
+import { getBoardInfoUsingAdminById, getBoardPoliciesUsingAnonymous } from '@/src/features/board/api/board-actions';
 import { getPostUsingAdmin } from '@/src/features/post/api/post-actions';
 import { getPostFiles } from '@/src/features/post/api/post-file-actions';
 import { notFound, redirect } from 'next/navigation';
@@ -17,7 +17,7 @@ interface PostDetailPageProps {
 export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const { post_id, board_id } = await params;
   const boardInfo = await getBoardInfoUsingAdminById(board_id);
-
+  const boardPolicies = await getBoardPoliciesUsingAnonymous(board_id);
   if (!boardInfo) {
     return notFound();
   }
@@ -48,6 +48,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         boardId={boardInfo.id}
         boardCode={boardInfo.code}
         boardName={boardInfo.name}
+        boardPolicies={boardPolicies}
         allowComment={boardInfo.allow_comment}
         attachedFiles={attachedFiles}
       />
