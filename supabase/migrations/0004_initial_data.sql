@@ -10,7 +10,7 @@ INSERT INTO boards (code, name, description, display_order, visibility) VALUES
 ('notices', '공지사항', '공지사항 게시판', 0, 'public'),
 ('qna', 'Q&A', 'Q&A 게시판', 1, 'public'),
 ('quotes', '견적문의', '견적문의 게시판', 2, 'public'),
-('reviews', '고객후기', '고객후기 게시판', 3, 'public')
+('reviews', '고객후기', '고객후기 게시판', 3, 'public'),
 ('pds', '자료실', '자료실 게시판', 4, 'public')
 ON CONFLICT (code) DO NOTHING;
 

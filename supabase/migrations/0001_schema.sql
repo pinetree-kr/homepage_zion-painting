@@ -26,6 +26,9 @@ CREATE TYPE log_type AS ENUM (
   'POST_UPDATE',              -- 게시글 수정
   'POST_DELETE',              -- 게시글 삭제
   'POST_ANSWER',              -- 관리자 답변
+  'COMMENT_CREATE',           -- 댓글 작성
+  'COMMENT_UPDATE',           -- 댓글 수정
+  'COMMENT_DELETE',           -- 댓글 삭제
   'ERROR'                     -- 오류 로그
 );
 

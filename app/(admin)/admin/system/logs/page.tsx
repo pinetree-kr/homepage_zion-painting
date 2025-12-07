@@ -17,7 +17,7 @@ interface LogsPageProps {
   }>;
 }
 
-const ITEMS_PER_PAGE = 50;
+const ITEMS_PER_PAGE = 10;
 
 export default async function ManagementSystemLogsPage({ searchParams }: LogsPageProps) {
   const searchParamsData = await searchParams;

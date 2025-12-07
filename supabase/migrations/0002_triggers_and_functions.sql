@@ -91,7 +91,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 -- 사용자 가입 시 프로필 자동 생성 트리거
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -218,7 +218,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 -- 사용자 가입 트리거 생성
 DROP TRIGGER IF EXISTS on_user_signup ON auth.users;
@@ -265,7 +265,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 -- 관리자 가입 트리거 생성
 DROP TRIGGER IF EXISTS on_admin_signup ON administrators;
@@ -312,7 +312,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 CREATE OR REPLACE FUNCTION log_board_delete()
 RETURNS TRIGGER AS $$
@@ -355,7 +355,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 -- 게시판 트리거 생성
 DROP TRIGGER IF EXISTS on_board_create ON boards;
@@ -425,7 +425,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 CREATE OR REPLACE FUNCTION log_post_update()
 RETURNS TRIGGER AS $$
@@ -521,7 +521,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 CREATE OR REPLACE FUNCTION log_post_delete()
 RETURNS TRIGGER AS $$
@@ -591,7 +591,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 -- 게시글 트리거 생성
 DROP TRIGGER IF EXISTS on_post_create ON posts;
@@ -683,7 +683,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 -- 관리자 답변 트리거 생성
 DROP TRIGGER IF EXISTS on_post_answer ON comments;
@@ -768,7 +768,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 -- pages 테이블 변경 트리거 생성
 DROP TRIGGER IF EXISTS on_page_change ON pages;
@@ -823,7 +823,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 DROP TRIGGER IF EXISTS on_page_create ON pages;
 CREATE TRIGGER on_page_create
@@ -925,7 +925,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 CREATE OR REPLACE FUNCTION log_site_settings_board_connection_change()
 RETURNS TRIGGER AS $$
@@ -1006,7 +1006,7 @@ EXCEPTION
     RAISE WARNING '활동 로그 생성 실패: %', SQLERRM;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
 
 -- site_settings 트리거 생성
 DROP TRIGGER IF EXISTS on_site_settings_contact_change ON site_settings;
@@ -1018,5 +1018,348 @@ DROP TRIGGER IF EXISTS on_site_settings_board_connection_change ON site_settings
 CREATE TRIGGER on_site_settings_board_connection_change
   AFTER UPDATE ON site_settings
   FOR EACH ROW EXECUTE FUNCTION log_site_settings_board_connection_change();
+
+-- ============================================================================
+-- 7. 댓글 작성/수정/삭제 로그 트리거 함수들
+-- ============================================================================
+
+-- 7-1. 댓글 작성 로그 트리거 함수
+CREATE OR REPLACE FUNCTION log_comment_create()
+RETURNS TRIGGER AS $$
+DECLARE
+  user_id_val UUID;
+  user_name_val VARCHAR(255);
+  board_name_val VARCHAR(255);
+  board_code_val VARCHAR(80);
+  post_title_val VARCHAR(255);
+  is_admin_user BOOLEAN;
+BEGIN
+  -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
+  -- 트리거 실행 시 comments 테이블의 RLS 정책으로 인한 오류 방지
+  SET LOCAL row_security = off;
+  
+  -- 작성자 정보
+  user_id_val := NEW.author_id;
+  user_name_val := COALESCE(NEW.author_name, '익명');
+  
+  -- 게시글 및 게시판 정보 가져오기
+  SELECT 
+    b.name, 
+    b.code,
+    p.title
+  INTO 
+    board_name_val, 
+    board_code_val,
+    post_title_val
+  FROM posts p
+  JOIN boards b ON p.board_id = b.id
+  WHERE p.id = NEW.post_id;
+  
+  -- 게시판 정보가 없는 경우 처리
+  IF board_name_val IS NULL THEN
+    board_name_val := '알 수 없음';
+    board_code_val := 'unknown';
+  END IF;
+  
+  IF post_title_val IS NULL THEN
+    post_title_val := '알 수 없음';
+  END IF;
+  
+  -- 작성자가 관리자인지 확인 (관리자 답변은 별도 로그로 기록되므로 제외)
+  IF user_id_val IS NOT NULL THEN
+    SELECT EXISTS (
+      SELECT 1 FROM administrators
+      WHERE id = user_id_val
+      AND deleted_at IS NULL
+    ) INTO is_admin_user;
+    
+    -- 관리자가 아닌 경우에만 일반 댓글 로그 기록
+    -- (관리자 답변은 log_post_answer 트리거에서 처리)
+    IF NOT is_admin_user THEN
+      -- 활동 로그 생성
+      INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
+      VALUES (
+        user_id_val,
+        user_name_val,
+        'COMMENT_CREATE',
+        '댓글 작성',
+        board_name_val || ' 게시글에 댓글 작성',
+        jsonb_build_object(
+          'boardName', board_name_val,
+          'boardCode', board_code_val,
+          'postId', NEW.post_id,
+          'postTitle', post_title_val,
+          'commentId', NEW.id,
+          'parentId', NEW.parent_id
+        ),
+        CASE 
+          WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
+          THEN NEW.author_ip::inet 
+          ELSE NULL 
+        END
+      );
+    END IF;
+  ELSE
+    -- 익명 사용자의 경우에도 로그 기록
+    INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
+    VALUES (
+      NULL,
+      user_name_val,
+      'COMMENT_CREATE',
+      '댓글 작성',
+      board_name_val || ' 게시글에 댓글 작성',
+      jsonb_build_object(
+        'boardName', board_name_val,
+        'boardCode', board_code_val,
+        'postId', NEW.post_id,
+        'postTitle', post_title_val,
+        'commentId', NEW.id,
+        'parentId', NEW.parent_id
+      ),
+      CASE 
+        WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
+        THEN NEW.author_ip::inet 
+        ELSE NULL 
+      END
+    );
+  END IF;
+  
+  RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING '댓글 작성 로그 생성 실패: %', SQLERRM;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
+
+-- 7-2. 댓글 수정 로그 트리거 함수
+CREATE OR REPLACE FUNCTION log_comment_update()
+RETURNS TRIGGER AS $$
+DECLARE
+  user_id_val UUID;
+  user_name_val VARCHAR(255);
+  board_name_val VARCHAR(255);
+  board_code_val VARCHAR(80);
+  post_title_val VARCHAR(255);
+  is_admin_user BOOLEAN;
+BEGIN
+  -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
+  -- 트리거 실행 시 comments 테이블의 RLS 정책으로 인한 오류 방지
+  SET LOCAL row_security = off;
+  
+  -- 내용이 변경된 경우에만 로그 기록
+  IF OLD.context IS DISTINCT FROM NEW.context THEN
+    -- 작성자 정보
+    user_id_val := NEW.author_id;
+    user_name_val := COALESCE(NEW.author_name, '익명');
+    
+    -- 게시글 및 게시판 정보 가져오기
+    SELECT 
+      b.name, 
+      b.code,
+      p.title
+    INTO 
+      board_name_val, 
+      board_code_val,
+      post_title_val
+    FROM posts p
+    JOIN boards b ON p.board_id = b.id
+    WHERE p.id = NEW.post_id;
+    
+    -- 게시판 정보가 없는 경우 처리
+    IF board_name_val IS NULL THEN
+      board_name_val := '알 수 없음';
+      board_code_val := 'unknown';
+    END IF;
+    
+    IF post_title_val IS NULL THEN
+      post_title_val := '알 수 없음';
+    END IF;
+    
+    -- 작성자가 관리자인지 확인
+    IF user_id_val IS NOT NULL THEN
+      SELECT EXISTS (
+        SELECT 1 FROM administrators
+        WHERE id = user_id_val
+        AND deleted_at IS NULL
+      ) INTO is_admin_user;
+      
+      -- 관리자가 아닌 경우에만 일반 댓글 수정 로그 기록
+      IF NOT is_admin_user THEN
+        -- 활동 로그 생성
+        INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
+        VALUES (
+          user_id_val,
+          user_name_val,
+          'COMMENT_UPDATE',
+          '댓글 수정',
+          board_name_val || ' 게시글의 댓글 수정',
+          jsonb_build_object(
+            'boardName', board_name_val,
+            'boardCode', board_code_val,
+            'postId', NEW.post_id,
+            'postTitle', post_title_val,
+            'commentId', NEW.id
+          ),
+          CASE 
+            WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
+            THEN NEW.author_ip::inet 
+            ELSE NULL 
+          END
+        );
+      END IF;
+    ELSE
+      -- 익명 사용자의 경우에도 로그 기록
+      INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
+      VALUES (
+        NULL,
+        user_name_val,
+        'COMMENT_UPDATE',
+        '댓글 수정',
+        board_name_val || ' 게시글의 댓글 수정',
+        jsonb_build_object(
+          'boardName', board_name_val,
+          'boardCode', board_code_val,
+          'postId', NEW.post_id,
+          'postTitle', post_title_val,
+          'commentId', NEW.id
+        ),
+        CASE 
+          WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
+          THEN NEW.author_ip::inet 
+          ELSE NULL 
+        END
+      );
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING '댓글 수정 로그 생성 실패: %', SQLERRM;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
+
+-- 7-3. 댓글 삭제 로그 트리거 함수
+CREATE OR REPLACE FUNCTION log_comment_delete()
+RETURNS TRIGGER AS $$
+DECLARE
+  user_id_val UUID;
+  user_name_val VARCHAR(255);
+  board_name_val VARCHAR(255);
+  board_code_val VARCHAR(80);
+  post_title_val VARCHAR(255);
+  is_admin_user BOOLEAN;
+  comment_author_id UUID;
+  comment_author_name VARCHAR(255);
+BEGIN
+  -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
+  -- 트리거 실행 시 comments 테이블의 RLS 정책으로 인한 오류 방지
+  SET LOCAL row_security = off;
+  
+  -- soft delete인 경우 (deleted_at이 설정된 경우)
+  IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
+    -- 댓글 작성자 정보 저장 (metadata에 포함)
+    comment_author_id := OLD.author_id;
+    comment_author_name := COALESCE(OLD.author_name, '익명');
+    
+    -- 삭제를 시도한 사용자 정보 가져오기 (auth.uid() 사용)
+    user_id_val := auth.uid();
+    
+    IF user_id_val IS NOT NULL THEN
+      -- 시도자 이름 가져오기
+      SELECT name INTO user_name_val
+      FROM profiles
+      WHERE id = user_id_val;
+      
+      IF user_name_val IS NULL OR user_name_val = '' THEN
+        user_name_val := '알 수 없음';
+      END IF;
+      
+      -- 시도자가 관리자인지 확인
+      SELECT EXISTS (
+        SELECT 1 FROM administrators
+        WHERE id = user_id_val
+        AND deleted_at IS NULL
+      ) INTO is_admin_user;
+    ELSE
+      user_name_val := '시스템';
+      is_admin_user := FALSE;
+    END IF;
+    
+    -- 게시글 및 게시판 정보 가져오기
+    SELECT 
+      b.name, 
+      b.code,
+      p.title
+    INTO 
+      board_name_val, 
+      board_code_val,
+      post_title_val
+    FROM posts p
+    JOIN boards b ON p.board_id = b.id
+    WHERE p.id = OLD.post_id;
+    
+    -- 게시판 정보가 없는 경우 처리
+    IF board_name_val IS NULL THEN
+      board_name_val := '알 수 없음';
+      board_code_val := 'unknown';
+    END IF;
+    
+    IF post_title_val IS NULL THEN
+      post_title_val := '알 수 없음';
+    END IF;
+    
+    -- 관리자가 아닌 경우에만 일반 댓글 삭제 로그 기록
+    -- (관리자 답변 삭제는 별도 처리)
+    IF NOT is_admin_user OR comment_author_id IS NULL OR comment_author_id != user_id_val THEN
+      -- 활동 로그 생성 (시도자 정보 기록)
+      INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
+      VALUES (
+        user_id_val,
+        user_name_val,
+        'COMMENT_DELETE',
+        '댓글 삭제',
+        board_name_val || ' 게시글의 댓글 삭제',
+        jsonb_build_object(
+          'boardName', board_name_val,
+          'boardCode', board_code_val,
+          'postId', OLD.post_id,
+          'postTitle', post_title_val,
+          'commentId', OLD.id,
+          'commentAuthorId', comment_author_id,
+          'commentAuthorName', comment_author_name
+        ),
+        NULL  -- IP 주소는 삭제 시도자의 것이므로 NULL (댓글 작성 시 IP와 다를 수 있음)
+      );
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING '댓글 삭제 로그 생성 실패: %', SQLERRM;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public,public;
+
+-- 댓글 트리거 생성
+DROP TRIGGER IF EXISTS on_comment_create ON comments;
+CREATE TRIGGER on_comment_create
+  AFTER INSERT ON comments
+  FOR EACH ROW EXECUTE FUNCTION log_comment_create();
+
+DROP TRIGGER IF EXISTS on_comment_update ON comments;
+CREATE TRIGGER on_comment_update
+  AFTER UPDATE ON comments
+  FOR EACH ROW EXECUTE FUNCTION log_comment_update();
+
+DROP TRIGGER IF EXISTS on_comment_delete ON comments;
+CREATE TRIGGER on_comment_delete
+  AFTER UPDATE ON comments
+  FOR EACH ROW
+  WHEN (NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL)
+  EXECUTE FUNCTION log_comment_delete();
 
 

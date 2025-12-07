@@ -271,9 +271,6 @@ CREATE POLICY "Authenticated users can create comments" ON comments
     )
   );
 
-CREATE POLICY "Authors can update own comments" ON comments
-  FOR UPDATE USING (auth.uid() = author_id);
-
 CREATE POLICY "Authors and admins can update and soft delete own comments" ON comments
   FOR UPDATE USING (
     auth.uid() = author_id OR
