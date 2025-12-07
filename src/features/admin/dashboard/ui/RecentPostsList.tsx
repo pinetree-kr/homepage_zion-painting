@@ -68,7 +68,10 @@ export default function RecentPostsList({
                       {post.authorName && (
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
-                          <span>{post.authorName}</span>
+                          <span>
+                            {post.authorName}
+                            {!post.authorId && (<span className="text-gray-500/50 ml-1">(탈퇴한 회원)</span>)}
+                          </span>
                         </div>
                       )}
                       <div className="flex items-center gap-1">

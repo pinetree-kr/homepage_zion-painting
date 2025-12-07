@@ -8,6 +8,7 @@ export interface RecentPost {
   type: 'qna' | 'quote';
   title: string;
   content: string;
+  authorId: string | null;
   authorName: string | null;
   createdAt: string;
   status: 'published' | 'draft';

@@ -208,7 +208,10 @@ export default function PostDetail({
                           </div>
                         );
                       })()}
-                      <span className="font-medium">{post.author_name || '-'}</span>
+                      <span className="font-medium">
+                        {post.author_name || '-'}
+                        {!post.author_id && post.author_name && <span className="text-gray-500/50 ml-1">(탈퇴한 회원)</span>}
+                      </span>
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-48">

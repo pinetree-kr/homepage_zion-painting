@@ -76,7 +76,7 @@ export default function Comments({ postId, permissions, isAdmin = false, comment
             <div className="relative">
                 <div className="relative inline-block">
                     <div className="bg-[#1A2C6D] text-white rounded-lg px-6 py-2 pb-3 flex flex-col items-center min-w-[80px]">
-                        <span className="text-2xl font-bold">{comments.length}</span>
+                        <span className="text-2xl font-bold">{items.length}</span>
                         <span className="text-xs">댓글</span>
                     </div>
                     <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-2">

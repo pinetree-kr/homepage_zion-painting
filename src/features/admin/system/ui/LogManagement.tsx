@@ -51,6 +51,9 @@ const logTypeLabels: Record<LogType, string> = {
   POST_UPDATE: '게시글 수정',
   POST_CREATE: '게시글 작성',
   POST_ANSWER: '관리자 답변',
+  COMMENT_CREATE: '댓글 작성',
+  COMMENT_UPDATE: '댓글 수정',
+  COMMENT_DELETE: '댓글 삭제',
   ERROR: '오류 로그',
 };
 
@@ -67,6 +70,9 @@ const logTypeIcons: Record<LogType, typeof Activity> = {
   POST_UPDATE: FileText,
   POST_CREATE: MessageSquare,
   POST_ANSWER: MessageSquare,
+  COMMENT_CREATE: MessageSquare,
+  COMMENT_UPDATE: MessageSquare,
+  COMMENT_DELETE: MessageSquare,
   ERROR: AlertTriangle,
 };
 
@@ -83,6 +89,9 @@ const logTypeColors: Record<LogType, string> = {
   POST_UPDATE: 'bg-gray-100 text-gray-800 border-gray-200',
   POST_CREATE: 'bg-cyan-100 text-cyan-800 border-cyan-200',
   POST_ANSWER: 'bg-teal-100 text-teal-800 border-teal-200',
+  COMMENT_CREATE: 'bg-sky-100 text-sky-800 border-sky-200',
+  COMMENT_UPDATE: 'bg-amber-100 text-amber-800 border-amber-200',
+  COMMENT_DELETE: 'bg-orange-100 text-orange-800 border-orange-200',
   ERROR: 'bg-red-100 text-red-800 border-red-200',
 };
 
@@ -443,6 +452,9 @@ export default function LogManagement({
                 <SelectItem value="BOARD_DELETE">게시판 삭제</SelectItem>
                 <SelectItem value="POST_CREATE">게시글 작성</SelectItem>
                 <SelectItem value="POST_ANSWER">관리자 답변</SelectItem>
+                <SelectItem value="COMMENT_CREATE">댓글 작성</SelectItem>
+                <SelectItem value="COMMENT_UPDATE">댓글 수정</SelectItem>
+                <SelectItem value="COMMENT_DELETE">댓글 삭제</SelectItem>
                 <SelectItem value="ERROR">오류 로그</SelectItem>
               </SelectContent>
             </Select>

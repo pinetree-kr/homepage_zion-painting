@@ -31,7 +31,7 @@ interface CommentFormProps {
 export default function CommentForm({ postId, onCommentCreated }: CommentFormProps) {
     const [commentContent, setCommentContent] = useState('');
     const [commentAuthorName, setCommentAuthorName] = useState('');
-    const [showWarning, setShowWarning] = useState(false);
+    // const [showWarning, setShowWarning] = useState(false);
     const [submittingComment, setSubmittingComment] = useState(false);
 
     const submitComment = useCallback(async (postId: string, commentContent: string, commentAuthorName: string | undefined) => {
@@ -49,7 +49,7 @@ export default function CommentForm({ postId, onCommentCreated }: CommentFormPro
                 toast.success('댓글이 등록되었습니다.');
                 setCommentContent('');
                 setCommentAuthorName('');
-                setShowWarning(false);
+                // setShowWarning(false);
                 // 생성된 댓글 데이터를 전달 (부분 업데이트 가능하지만, profile_name이 없으므로 전체 리로드)
                 if (result.data) {
                     const newComment: CommentWithProfile = {
@@ -82,14 +82,14 @@ export default function CommentForm({ postId, onCommentCreated }: CommentFormPro
 
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                        <Checkbox
+                        {/* <Checkbox
                             id="warning"
                             checked={showWarning}
                             onCheckedChange={(checked) => setShowWarning(checked === true)}
                         />
                         <label htmlFor="warning" className="text-sm text-gray-700 cursor-pointer">
                             경고문구
-                        </label>
+                        </label> */}
                     </div>
 
                     <div id="comment-editor" className="mb-4">

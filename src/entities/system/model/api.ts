@@ -184,7 +184,12 @@ async function fetchActivityLogStatsFromDB(): Promise<Record<LogType, number>> {
       'BOARD_UPDATE',
       'BOARD_DELETE',
       'POST_CREATE',
+      'POST_UPDATE',
+      'POST_DELETE',
       'POST_ANSWER',
+      'COMMENT_CREATE',
+      'COMMENT_UPDATE',
+      'COMMENT_DELETE',
       'ERROR',
     ];
 
@@ -251,7 +256,12 @@ function getDefaultStats(): Record<LogType, number> {
     BOARD_UPDATE: 0,
     BOARD_DELETE: 0,
     POST_CREATE: 0,
+    POST_UPDATE: 0,
+    POST_DELETE: 0,
     POST_ANSWER: 0,
+    COMMENT_CREATE: 0,
+    COMMENT_UPDATE: 0,
+    COMMENT_DELETE: 0,
     ERROR: 0,
   };
 }

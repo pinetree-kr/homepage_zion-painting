@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { CircleUser, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
@@ -13,18 +13,14 @@ import type { Comment } from '@/src/entities/comment/model/types';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import { generateUserColor, rgbToCss, formatDateDetailed } from '@/src/shared/lib/utils';
 
-interface CommentWithProfile extends Comment {
-    profile_name?: string | null;
-}
-
 interface CommentItemProps {
-    comment: CommentWithProfile;
+    comment: Comment;
     permissions: {
         cmt_edit: boolean;
         cmt_delete: boolean;
     };
     isAdmin?: boolean;
-    onCommentUpdated?: (updatedComment?: CommentWithProfile, action?: 'update' | 'delete' | 'create') => void;
+    onCommentUpdated?: (updatedComment?: Comment, action?: 'update' | 'delete' | 'create') => void;
 }
 
 export default function CommentItem({ comment, permissions, isAdmin = false, onCommentUpdated }: CommentItemProps) {
@@ -95,9 +91,8 @@ export default function CommentItem({ comment, permissions, isAdmin = false, onC
                 toast.success('댓글이 수정되었습니다.');
                 setShowEditDialog(false);
                 // 수정된 댓글 데이터를 전달 (부분 업데이트)
-                const updatedComment: CommentWithProfile = {
+                const updatedComment: Comment = {
                     ...result.data,
-                    profile_name: comment.profile_name, // 프로필 이름은 유지
                 };
                 onCommentUpdated?.(updatedComment, 'update');
             } else {
@@ -109,11 +104,24 @@ export default function CommentItem({ comment, permissions, isAdmin = false, onC
         } finally {
             setUpdating(false);
         }
-    }, [comment.id, comment.profile_name, editCommentContent, onCommentUpdated]);
+    }, [comment.id, editCommentContent, onCommentUpdated]);
 
-    const displayName = comment.author_id && comment.profile_name
-        ? comment.profile_name
-        : comment.author_name || '익명';
+    const isDeletedUser = useMemo(() => {
+        return !comment.author_id && comment.author_name;
+    }, [comment.author_id, comment.author_name]);
+
+    const isAuthor = useMemo(() => {
+        return currentUserId && comment.author_id === currentUserId;
+    }, [currentUserId, comment.author_id]);
+
+    const displayName = useMemo(() => {
+        return comment.author_name || '익명';
+    }, [comment.author_id, comment.author_name]);
+
+    // // author_id가 null이면 삭제된 사용자로 표시
+    // const displayNameWithDeleted = !comment.author_id && displayName !== '익명'
+    //     ? `${displayName} (탈퇴한 회원)`
+    //     : displayName;
 
     const authorImage = (comment as any).extra_json?.author_image || null;
 
@@ -145,12 +153,20 @@ export default function CommentItem({ comment, permissions, isAdmin = false, onC
                                 )}
 
                             </div>
-                            <span className="text-sm font-semibold text-gray-800">
-                                <span className="font-semibold">{displayName}</span>
-                                {currentUserId && comment.author_id === currentUserId && (
-                                    <span className="text-gray-500/50 ml-1">(본인)</span>
-                                )}
-                            </span>
+                            {
+                                isDeletedUser ? (
+                                    <span className="text-sm text-gray-400/50">
+                                        {displayName} (탈퇴한 회원)
+                                    </span>
+                                ) : (
+                                    <span className="text-sm font-semibold text-gray-800">
+                                        {displayName}
+                                        {isAuthor && (
+                                            <span className="text-gray-500 ml-1">(본인)</span>
+                                        )}
+                                    </span>
+                                )
+                            }
                         </div>
                         <span className="text-xs text-gray-500">
                             {comment.updated_at && comment.updated_at !== comment.created_at
