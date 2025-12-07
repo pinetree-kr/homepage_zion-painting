@@ -16,6 +16,7 @@ import {
 import { saveCompanyHistory } from '../api/company-actions';
 import { toast } from 'sonner';
 import type { CompanyHistory, CompanyHistoryType } from '@/src/entities';
+import dayjs from 'dayjs';
 import {
   DndContext,
   closestCenter,
@@ -166,7 +167,7 @@ export default function CompanyHistories({ items }: CompanyHistoriesProps) {
   const addHistoryItem = () => {
     const newItem: CompanyHistory = {
       id: `temp-${Date.now()}`,
-      year: new Date().getFullYear().toString(),
+      year: dayjs().year().toString(),
       month: '',
       content: '',
       type: 'biz',

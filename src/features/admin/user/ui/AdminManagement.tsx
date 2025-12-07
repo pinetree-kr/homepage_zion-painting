@@ -26,6 +26,7 @@ import {
 } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { DataTable, DataTableColumn, DataTableAction, DataTablePagination, DataTableSearchBar } from '@/src/shared/ui';
+import { formatDateKorean } from '@/src/shared/lib/utils';
 
 interface AdminManagementProps {
   items: Member[];
@@ -88,14 +89,7 @@ export default function AdminManagement({
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateKorean(dateString, true);
   };
 
   const adminColumns: DataTableColumn<Member>[] = [

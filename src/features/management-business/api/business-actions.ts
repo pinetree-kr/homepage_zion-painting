@@ -8,6 +8,7 @@ import { Database } from '@/src/shared/lib/supabase-types';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
 import { logSectionSettingChange } from '@/src/entities';
+import { getCurrentISOString, getCurrentDateString } from '@/src/shared/lib/utils';
 
 /**
  * 사업소개 정보 로드
@@ -561,7 +562,7 @@ export async function saveBusinessAchievement(achievement: Omit<Achievement, 'id
     const updateData: any = {
       title: achievement.title || '',
       content: achievement.content || '',
-      achievement_date: achievement.achievement_date || new Date().toISOString().split('T')[0],
+      achievement_date: achievement.achievement_date || getCurrentDateString(),
       category_id: achievement.category_id || null,
       thumbnail_url: achievement.thumbnail_url || null,
       content_summary: contentSummary || null,
@@ -614,7 +615,7 @@ export async function deleteBusinessAchievement(id: string): Promise<{ success: 
 
     const { error } = await supabase
       .from('business_achievements')
-      .update({ deleted_at: new Date().toISOString() })
+      .update({ deleted_at: getCurrentISOString() })
       .eq('id', id);
 
     if (error) {

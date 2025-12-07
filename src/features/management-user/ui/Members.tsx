@@ -11,6 +11,7 @@ import {
   deleteUser,
 } from '../api/user-actions';
 import Link from 'next/link';
+import { formatDateSimple } from '@/src/shared/lib/utils';
 
 interface MembersProps {
   items: Profile[];
@@ -93,11 +94,10 @@ export default function Members({
       header: '최근 로그인',
       accessor: (row) => {
         if (!row.last_login) return '-';
-        const date = new Date(row.last_login);
         return (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Calendar className="h-3.5 w-3.5 text-gray-400" />
-            {date.toLocaleDateString('ko-KR')}
+            {formatDateSimple(row.last_login)}
           </div>
         );
       },
@@ -109,10 +109,9 @@ export default function Members({
       header: '가입일',
       accessor: (row) => {
         if (!row.created_at) return '-';
-        const date = new Date(row.created_at);
         return (
           <div className="text-sm text-gray-600">
-            {date.toLocaleDateString('ko-KR')}
+            {formatDateSimple(row.created_at)}
           </div>
         );
       },

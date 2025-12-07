@@ -18,6 +18,7 @@ import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user/model/types';
 import { FileUploader, type UploadedFile } from '@/src/shared/ui';
 import { getPostFiles, savePostFiles, deletePostFile, type PostFile } from '../api/post-file-actions';
+import { getCurrentDateString } from '@/src/shared/lib/utils';
 import { getProductsUsingAdmin } from '@/src/features/board/api/board-actions';
 import Image from 'next/image';
 
@@ -455,7 +456,7 @@ export default function PostForm({
               rating: 0,
               pros: '',
               cons: '',
-              purchase_date: new Date().toISOString().split('T')[0],
+              purchase_date: getCurrentDateString(),
             });
             if (!reviewResult.success) {
               console.error('리뷰 정보 저장 오류:', reviewResult.error);

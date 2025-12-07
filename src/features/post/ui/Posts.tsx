@@ -8,6 +8,7 @@ import { DataTable, DataTableColumn, DataTableSearchBar, DataTablePagination } f
 import { Badge } from '@/src/shared/ui';
 import { Post } from '@/src/entities/post/model/types';
 import Link from 'next/link';
+import { formatDateSimple } from '@/src/shared/lib/utils';
 
 interface PostsProps {
   boardId: string;
@@ -111,11 +112,10 @@ export default function Posts({
       header: '작성일',
       accessor: (row) => {
         if (!row.created_at) return '-';
-        const date = new Date(row.created_at);
         return (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Calendar className="h-3.5 w-3.5 text-gray-400" />
-            {date.toLocaleDateString('ko-KR')}
+            {formatDateSimple(row.created_at)}
           </div>
         );
       },

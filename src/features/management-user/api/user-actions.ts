@@ -5,6 +5,7 @@ import type { Profile } from '@/src/entities/user/model/types';
 import { revalidatePath } from 'next/cache';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/src/shared/lib/supabase-types';
+import { getCurrentISOString } from '@/src/shared/lib/utils';
 
 /**
  * 회원 목록 조회 (검색 및 페이지네이션 지원, 관리자용)
@@ -152,7 +153,7 @@ export async function deleteUser(id: string): Promise<{ success: boolean; error?
 
     const { error } = await supabase
       .from('profiles')
-      .update({ deleted_at: new Date().toISOString() })
+      .update({ deleted_at: getCurrentISOString() })
       .eq('id', id);
 
     if (error) {

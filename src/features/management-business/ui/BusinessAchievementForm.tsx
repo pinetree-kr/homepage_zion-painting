@@ -18,6 +18,7 @@ import {
   saveBusinessAchievement,
   deleteBusinessAchievement,
 } from '../api/business-actions';
+import { getCurrentDateString } from '@/src/shared/lib/utils';
 
 interface BusinessAchievementFormProps {
   achievementId?: string;
@@ -163,7 +164,7 @@ export default function BusinessAchievementForm({
     return {
       title: '',
       content: '',
-      achievement_date: new Date().toISOString().split('T')[0],
+      achievement_date: getCurrentDateString(),
       category_id: null,
       status: 'draft',
     };

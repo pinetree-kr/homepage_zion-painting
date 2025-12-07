@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { Profile } from '@/src/entities';
+import { formatDateKorean } from '@/src/shared/lib/utils';
 import {
   deleteUser,
 } from '../api/user-actions';
@@ -42,15 +43,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
   };
 
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateKorean(dateString, true);
   };
 
   return (

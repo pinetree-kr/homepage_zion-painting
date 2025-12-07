@@ -10,6 +10,7 @@ import type { Board, BoardPolicy, VisibleType, AppRole } from '@/src/entities/bo
 import { logBoardPermissionChange, logBoardUpdate } from '@/src/entities/system';
 import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
 import { headers } from 'next/headers';
+import { getCurrentISOString } from '@/src/shared/lib/utils';
 
 /**
  * 게시판 정보 조회 (관리자용)
@@ -762,7 +763,7 @@ export async function deleteBoard(id: string): Promise<{ success: boolean; error
 
     const { error } = await supabase
       .from('boards')
-      .update({ deleted_at: new Date().toISOString() })
+      .update({ deleted_at: getCurrentISOString() })
       .eq('id', id);
 
     if (error) {

@@ -35,6 +35,7 @@ import {
 } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { DataTable, DataTableColumn, DataTablePagination } from '@/src/shared/ui';
+import { formatDateDetailed, getCurrentDateString } from '@/src/shared/lib/utils';
 
 
 const logTypeLabels: Record<LogType, string> = {
@@ -170,7 +171,7 @@ export default function LogManagement({
   //   const link = document.createElement('a');
   //   const url = URL.createObjectURL(blob);
   //   link.setAttribute('href', url);
-  //   link.setAttribute('download', `logs_${new Date().toISOString().split('T')[0]}.csv`);
+  //   link.setAttribute('download', `logs_${getCurrentDateString()}.csv`);
   //   link.style.visibility = 'hidden';
   //   document.body.appendChild(link);
   //   link.click();
@@ -180,15 +181,7 @@ export default function LogManagement({
   // };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+    return formatDateDetailed(dateString);
   };
 
   const renderMetadata = (log: ActivityLog) => {

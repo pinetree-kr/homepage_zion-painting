@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/src/s
 import { RecentPost } from '@/src/entities/dashboard';
 import { Calendar, User, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { formatDateSimple } from '@/src/shared/lib/utils';
 
 interface RecentPostsListProps {
   title: string;
@@ -19,15 +20,7 @@ export default function RecentPostsList({
   emptyMessage = '최근 게시글이 없습니다.',
 }: RecentPostsListProps) {
   const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}.${month}.${day}`;
-    } catch {
-      return dateString;
-    }
+    return formatDateSimple(dateString);
   };
 
   return (

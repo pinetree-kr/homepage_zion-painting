@@ -2,6 +2,7 @@
 
 import { createServerClient } from '@/src/shared/lib/supabase/server';
 import type { DashboardStats, RecentPost, EmptyInfo } from './types';
+import { getDaysAgoStartISOString } from '@/src/shared/lib/utils';
 
 /**
  * 대시보드 통계 조회
@@ -21,9 +22,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     }
 
     // 최근 일주일 가입자 수
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    const oneWeekAgoISO = oneWeekAgo.toISOString();
+    const oneWeekAgoISO = getDaysAgoStartISOString(7);
 
     const { count: recentCount, error: recentError } = await supabase
       .from('profiles')

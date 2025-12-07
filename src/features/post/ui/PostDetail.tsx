@@ -12,11 +12,12 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { toast } from 'sonner';
 import { Post } from '@/src/entities/post/model/types';
 import { deletePost } from '../api/post-actions';
-import Comments from '@/src/features/comment/ui/Comments';
+import Comments, { type CommentWithProfile } from '@/src/features/comment/ui/Comments';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import type { Profile } from '@/src/entities/user/model/types';
 import { type PostFile } from '../api/post-file-actions';
 import { BoardPolicy } from '@/src/entities/board/model/types';
+import { generateUserColor, rgbToCss, formatDateKorean } from '@/src/shared/lib/utils';
 
 interface PostDetailProps {
   post: Post;
@@ -28,6 +29,7 @@ interface PostDetailProps {
   isAdmin?: boolean; // 관리자 여부
   isAuthor?: boolean; // 작성자 여부
   permissions?: Omit<BoardPolicy, 'board_id' | 'role' | 'post_list' | 'post_create' | 'file_upload' | 'created_at' | 'updated_at'>; // 권한 정보
+  comments?: CommentWithProfile[]; // 서버에서 가져온 초기 댓글 데이터
 }
 
 export default function PostDetail({
@@ -47,7 +49,8 @@ export default function PostDetail({
     cmt_edit: false,
     cmt_delete: false,
     file_download: false,
-  }
+  },
+  comments = []
 }: PostDetailProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -95,15 +98,7 @@ export default function PostDetail({
   }, [post.id, boardId, isPublic, router]);
 
   const formatDate = useCallback((dateString: string | null | undefined) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateKorean(dateString, true);
   }, []);
 
   /**
@@ -185,29 +180,34 @@ export default function PostDetail({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 hover:text-gray-900 transition-colors cursor-pointer">
-                      <div className="relative h-6 w-6 rounded-full overflow-hidden bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] text-white flex items-center justify-center hover:opacity-80 transition-opacity outline-none">
-                        {(() => {
-                          // extra_json에서 author_image 확인 (나중에 author_image 필드가 추가될 수 있음)
-                          const authorImage = post.extra_json?.author_image || null;
+                      {(() => {
+                        // extra_json에서 author_image 확인 (나중에 author_image 필드가 추가될 수 있음)
+                        const authorImage = post.extra_json?.author_image || null;
+                        const authorName = post.author_name || '익명';
+                        // 사용자 ID를 기준으로 색상 생성
+                        const userColor = generateUserColor(post.author_id);
+                        const backgroundColor = rgbToCss(userColor);
 
-                          if (authorImage) {
-                            return (
+                        return (
+                          <div 
+                            className="relative h-6 w-6 rounded-full overflow-hidden text-white flex items-center border border-gray-50/80 justify-center hover:opacity-80 transition-opacity outline-none"
+                            style={{ backgroundColor }}
+                          >
+                            {authorImage ? (
                               <Image
                                 src={authorImage}
-                                alt={post.author_name || '사용자'}
+                                alt={authorName}
                                 fill
                                 className="object-cover"
                               />
-                            );
-                          } else if (post.author_name) {
-                            return (
-                              <span className="text-[10px] font-medium">{post.author_name.charAt(0)}</span>
-                            );
-                          } else {
-                            return <CircleUser className="h-3 w-3" />;
-                          }
-                        })()}
-                      </div>
+                            ) : authorName ? (
+                              <span className="text-[10px] font-medium">{authorName.charAt(0).toUpperCase()}</span>
+                            ) : (
+                              <CircleUser className="h-3 w-3" />
+                            )}
+                          </div>
+                        );
+                      })()}
                       <span className="font-medium">{post.author_name || '-'}</span>
                     </button>
                   </DropdownMenuTrigger>
@@ -363,12 +363,17 @@ export default function PostDetail({
 
 
       {/* 댓글 섹션 */}
-      {allowComment && <Comments postId={post.id} permissions={{
-        cmt_create: permissions?.cmt_create,
-        cmt_read: permissions?.cmt_read,
-        cmt_edit: permissions?.cmt_edit,
-        cmt_delete: permissions?.cmt_delete,
-      }} />}
+      {allowComment && <Comments 
+        postId={post.id} 
+        permissions={{
+          cmt_create: permissions?.cmt_create,
+          cmt_read: permissions?.cmt_read,
+          cmt_edit: permissions?.cmt_edit,
+          cmt_delete: permissions?.cmt_delete,
+        }} 
+        isAdmin={isAdmin}
+        comments={comments}
+      />}
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>

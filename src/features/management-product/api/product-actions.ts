@@ -6,6 +6,7 @@ import type { Product, ProductCategory, ProductInfo } from '@/src/entities/produ
 import { revalidatePath } from 'next/cache';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/src/shared/lib/supabase-types';
+import { getCurrentISOString } from '@/src/shared/lib/utils';
 
 /**
  * 제품 카테고리 목록 로드
@@ -433,7 +434,7 @@ export async function deleteProduct(id: string): Promise<{ success: boolean; err
 
     const { error } = await supabase
       .from('products')
-      .update({ deleted_at: new Date().toISOString() })
+      .update({ deleted_at: getCurrentISOString() })
       .eq('id', id);
 
     if (error) {

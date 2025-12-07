@@ -6,7 +6,7 @@ import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous
 import type { CompanyInfo, CompanyHistory, CompanyHistoryType, OrganizationMember, CompanyAbout, CompanyStrength, CompanyValue } from '@/src/entities/company/model/types';
 import type { ContactInfo } from '@/src/entities/contact/model/types';
 import type { SiteSetting } from '@/src/entities/site-setting/model/types';
-import { formatPhoneForDisplay } from '@/src/shared/lib/utils';
+import { formatPhoneForDisplay, getCurrentISOString } from '@/src/shared/lib/utils';
 import { logSectionSettingChange } from '@/src/entities/system';
 import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
 
@@ -308,7 +308,7 @@ export async function saveCompanyHistory(history: CompanyHistory[]): Promise<{ s
         type: item.type || 'biz',
         display_order: item.display_order || index + 1,
         created_at: item.created_at || null,
-        updated_at: item.updated_at || new Date().toISOString(),
+        updated_at: item.updated_at || getCurrentISOString(),
       }))
       .sort((a, b) => a.display_order - b.display_order);
 
@@ -425,7 +425,7 @@ export async function saveCompanyOrganizationMembers(members: OrganizationMember
         image_url: item.image_url || null,
         display_order: item.display_order || index + 1,
         created_at: item.created_at || null,
-        updated_at: item.updated_at || new Date().toISOString(),
+        updated_at: item.updated_at || getCurrentISOString(),
       }))
       .sort((a, b) => a.display_order - b.display_order);
 

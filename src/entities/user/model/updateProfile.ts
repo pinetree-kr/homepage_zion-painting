@@ -1,6 +1,7 @@
 // import { supabase } from '@/src/shared/lib/supabase/client';
 import type { Profile } from './types';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
+import { getCurrentISOString } from '@/src/shared/lib/utils';
 
 /**
  * 프로필 정보 업데이트
@@ -17,7 +18,7 @@ export async function updateProfile(
     .from('profiles')
     .update({
       name: data.name,
-      updated_at: new Date().toISOString(),
+      updated_at: getCurrentISOString(),
     })
     .eq('id', userId)
     .select('id, name, email, last_login, phone, created_at, updated_at')

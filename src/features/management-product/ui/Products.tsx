@@ -12,6 +12,7 @@ import {
   deleteProduct,
 } from '../api/product-actions';
 import Link from 'next/link';
+import { formatDateSimple } from '@/src/shared/lib/utils';
 
 interface ProductsProps {
   categories: ProductCategory[];
@@ -133,10 +134,9 @@ export default function Products({
       header: '등록일',
       accessor: (row) => {
         if (!row.created_at) return '-';
-        const date = new Date(row.created_at);
         return (
           <div className="text-sm text-gray-600">
-            {date.toLocaleDateString('ko-KR')}
+            {formatDateSimple(row.created_at)}
           </div>
         );
       },

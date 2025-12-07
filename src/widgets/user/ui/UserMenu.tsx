@@ -7,8 +7,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { LogOut, Settings, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { supabaseClient } from "@/src/shared/lib/supabase/client";
+import { generateUserColor, rgbToCss } from "@/src/shared/lib/utils";
 
 {/* 사용자 드롭다운 메뉴 */ }
 export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
@@ -63,6 +64,14 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
     const router = useRouter();
     const pathname = usePathname();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+
+    // 사용자 ID를 기준으로 색상 생성
+    const backgroundColor = useMemo(() => {
+        const userId = user?.id;
+        const userColor = generateUserColor(userId);
+        return rgbToCss(userColor);
+    }, [user?.id]);
 
 
     // DropdownMenu 열림/닫힘 상태에 따른 스크롤바 쉬프팅 방지
@@ -173,7 +182,10 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                <button className="relative h-10 w-10 rounded-full bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] text-white flex items-center justify-center hover:opacity-80 transition-opacity outline-none">
+                <button 
+                    className="relative h-10 w-10 rounded-full text-white flex items-center border border-gray-50/80 justify-center hover:opacity-80 transition-opacity outline-none"
+                    style={{ backgroundColor }}
+                >
                     <span className="text-sm font-medium">{user.name?.charAt(0)}</span>
                 </button>
             </DropdownMenuTrigger>

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import type { User } from '@/src/entities/user';
 import { User as UserIcon } from 'lucide-react';
+import { generateUserColor, rgbToCss } from '@/src/shared/lib/utils';
 
 interface ProfileFormProps {
   user: User;
@@ -40,9 +41,21 @@ export default function ProfileForm({ user, onUpdate }: ProfileFormProps) {
         <div className="space-y-6">
           {/* 프로필 아바타 */}
           <div className="flex items-start gap-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-b from-[#1A2C6D] to-[#2CA7DB] flex items-center justify-center text-white text-2xl font-normal flex-shrink-0">
-              {name.charAt(0) || user.name?.charAt(0) || 'U'}
-            </div>
+            {(() => {
+              const displayName = name || user.name || user.email || 'U';
+              // 사용자 ID를 기준으로 색상 생성
+              const userColor = generateUserColor(user.id);
+              const backgroundColor = rgbToCss(userColor);
+              
+              return (
+                <div 
+                  className="w-20 h-20 rounded-full flex  border border-gray-50/80 items-center justify-center text-white text-2xl font-normal flex-shrink-0"
+                  style={{ backgroundColor }}
+                >
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              );
+            })()}
             <div className="flex-1 pt-2">
               <p className="text-sm text-[#4D4D4D]">
                 프로필 사진은 이름의 첫 글자로 표시됩니다

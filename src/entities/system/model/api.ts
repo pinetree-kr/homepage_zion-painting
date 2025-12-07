@@ -1,6 +1,8 @@
 "use server"
 
 import { createServerClient } from '@/src/shared/lib/supabase/server';
+import dayjs from 'dayjs';
+import { getTodayStartISOString, getDaysAgoStartISOString } from '@/src/shared/lib/utils';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/src/shared/lib/supabase-types';
 import type { ActivityLog, LogType } from './types';
@@ -73,26 +75,23 @@ export async function getActivityLogs(
 
     // 날짜 필터
     if (dateFilter !== 'all') {
-      const now = new Date();
-      let startDate: Date;
+      let startDateISO: string;
 
       switch (dateFilter) {
         case 'today':
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          startDateISO = getTodayStartISOString();
           break;
         case 'week':
-          startDate = new Date(now);
-          startDate.setDate(startDate.getDate() - 7);
+          startDateISO = getDaysAgoStartISOString(7);
           break;
         case 'month':
-          startDate = new Date(now);
-          startDate.setDate(startDate.getDate() - 30);
+          startDateISO = getDaysAgoStartISOString(30);
           break;
         default:
-          startDate = new Date(0);
+          startDateISO = dayjs(0).toISOString();
       }
 
-      query = query.gte('created_at', startDate.toISOString());
+      query = query.gte('created_at', startDateISO);
     }
 
     // 검색어 필터 (사용자명, 작업, 상세 내용에서 검색)
@@ -128,26 +127,23 @@ export async function getActivityLogs(
     }
 
     if (dateFilter !== 'all') {
-      const now = new Date();
-      let startDate: Date;
+      let startDateISO: string;
 
       switch (dateFilter) {
         case 'today':
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          startDateISO = getTodayStartISOString();
           break;
         case 'week':
-          startDate = new Date(now);
-          startDate.setDate(startDate.getDate() - 7);
+          startDateISO = getDaysAgoStartISOString(7);
           break;
         case 'month':
-          startDate = new Date(now);
-          startDate.setDate(startDate.getDate() - 30);
+          startDateISO = getDaysAgoStartISOString(30);
           break;
         default:
-          startDate = new Date(0);
+          startDateISO = dayjs(0).toISOString();
       }
 
-      dataQuery = dataQuery.gte('created_at', startDate.toISOString());
+      dataQuery = dataQuery.gte('created_at', startDateISO);
     }
 
     if (searchQuery.trim()) {

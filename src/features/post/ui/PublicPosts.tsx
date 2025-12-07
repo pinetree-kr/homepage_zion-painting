@@ -9,6 +9,7 @@ import { BoardPolicy } from '@/src/entities/board/model/types';
 import { useEffect, useState } from 'react';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { formatDateSimple } from '@/src/shared/lib/utils';
 
 interface PublicPostsProps {
   boardId: string;
@@ -96,11 +97,10 @@ export default function PublicPosts({
       header: '작성일',
       accessor: (row) => {
         if (!row.created_at) return '-';
-        const date = new Date(row.created_at);
         return (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Calendar className="h-3.5 w-3.5 text-gray-400" />
-            {date.toLocaleDateString('ko-KR')}
+            {formatDateSimple(row.created_at)}
           </div>
         );
       },

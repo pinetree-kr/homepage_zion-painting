@@ -22,6 +22,7 @@ import {
 import { toast } from 'sonner';
 import { DataTable, DataTableColumn, DataTablePagination, DataTableSearchBar } from '@/src/shared/ui';
 import { deleteBoard } from '../api/board-actions';
+import { formatDateSimple } from '@/src/shared/lib/utils';
 
 interface BoardManagementProps {
   items: Board[];
@@ -61,13 +62,7 @@ export default function BoardManagement({
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
+    return formatDateSimple(dateString || undefined);
   };
 
   const boardColumns: DataTableColumn<Board>[] = [

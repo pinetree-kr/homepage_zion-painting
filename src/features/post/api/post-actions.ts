@@ -7,6 +7,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/src/shared/lib/supabase-types';
 import type { Post } from '@/src/entities/post/model/types';
 import type { SiteSetting } from '@/src/entities/site-setting/model/types';
+import { getCurrentISOString, getCurrentDateString } from '@/src/shared/lib/utils';
 
 /**
  * 게시판 ID로 게시글 목록 조회 (검색 및 페이지네이션 지원, 관리자용)
@@ -394,7 +395,7 @@ export async function deletePost(id: string, boardId: string): Promise<{ success
 
     const { error } = await supabase
       .from('posts')
-      .update({ deleted_at: new Date().toISOString() })
+      .update({ deleted_at: getCurrentISOString() })
       .eq('id', id);
 
     if (error) {
@@ -441,7 +442,7 @@ export async function saveProductReview(
       rating: reviewData.rating || 0,
       pros: reviewData.pros || '',
       cons: reviewData.cons || '',
-      purchase_date: reviewData.purchase_date || new Date().toISOString().split('T')[0],
+      purchase_date: reviewData.purchase_date || getCurrentDateString(),
     };
 
     if (existingReview) {
