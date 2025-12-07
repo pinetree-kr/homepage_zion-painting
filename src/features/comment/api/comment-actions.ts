@@ -32,10 +32,10 @@ export async function getCommentsByPostId(postId: string): Promise<(Comment & { 
 
     // profiles 조인 결과를 평탄화 (profiles는 단일 객체 또는 배열일 수 있음)
     return (data || []).map((comment: any) => {
-      const profile = Array.isArray(comment.profiles) 
-        ? comment.profiles[0] 
+      const profile = Array.isArray(comment.profiles)
+        ? comment.profiles[0]
         : comment.profiles;
-      
+
       return {
         ...comment,
         profile_name: profile?.name || null,
@@ -69,7 +69,7 @@ export async function createComment(
         .select('name')
         .eq('id', user.id)
         .single();
-      
+
       profileName = profile?.name || null;
     }
 
@@ -101,7 +101,7 @@ export async function createComment(
 }
 
 /**
- * 댓글 삭제 (관리자 또는 작성자만 가능)
+ * 댓글 삭제 (관리자 또는 작성자만 가능, board_policies의 cmt_delete 권한 확인)
  */
 export async function deleteComment(
   commentId: string
@@ -114,10 +114,10 @@ export async function deleteComment(
       return { success: false, error: '로그인이 필요합니다.' };
     }
 
-    // 댓글 정보 조회
+    // 댓글 정보 조회 (post_id 포함)
     const { data: comment, error: commentError } = await supabase
       .from('comments')
-      .select('author_id')
+      .select('author_id, post_id')
       .eq('id', commentId)
       .is('deleted_at', null)
       .single();
@@ -125,6 +125,19 @@ export async function deleteComment(
     if (commentError || !comment) {
       return { success: false, error: '댓글을 찾을 수 없습니다.' };
     }
+
+    // 게시글에서 게시판 ID 가져오기
+    const { data: post, error: postError } = await supabase
+      .from('posts')
+      .select('board_id')
+      .eq('id', comment.post_id)
+      .single();
+
+    if (postError || !post) {
+      return { success: false, error: '게시글 정보를 찾을 수 없습니다.' };
+    }
+
+    const boardId = post.board_id!;
 
     // 관리자 여부 확인
     const { data: adminData } = await supabase
@@ -137,10 +150,55 @@ export async function deleteComment(
     const isAdmin = adminData !== null;
     const isAuthor = comment.author_id === user.id;
 
-    // 권한 확인: 관리자 또는 작성자만 삭제 가능
+    // 관리자가 아닌 경우, board_policies의 cmt_delete 권한 확인
+    // if (!isAdmin) {
+    //   // 일반 사용자는 member 역할로 권한 확인
+    //   // board_policies에서 cmt_delete 권한 확인
+    //   const { data: policy, error: policyError } = await supabase
+    //     .from('board_policies')
+    //     .select('cmt_delete')
+    //     .eq('board_id', boardId)
+    //     .eq('role', 'member')
+    //     .maybeSingle();
+
+    //   if (policyError || !policy) {
+    //     // 정책이 없으면 기본적으로 허용하지 않음
+    //     return { success: false, error: '댓글 삭제 권한이 없습니다.' };
+    //   }
+
+    //   // cmt_delete 권한이 false이면 삭제 불가
+    //   if (!policy.cmt_delete) {
+    //     return { success: false, error: '댓글 삭제 권한이 없습니다.' };
+    //   }
+
+    //   // 작성자가 아니면 삭제 불가 (일반 사용자는 자신의 댓글만 삭제 가능)
+    //   if (!isAuthor) {
+    //     return { success: false, error: '댓글을 삭제할 권한이 없습니다.' };
+    //   }
+    // }
+
     if (!isAdmin && !isAuthor) {
-      return { success: false, error: '댓글을 삭제할 권한이 없습니다.' };
+      return { success: false, error: '댓글 삭제 권한이 없습니다.' };
     }
+
+    const { data: policy, error: policyError } = await supabase
+      .from('board_policies')
+      .select('cmt_delete')
+      .eq('board_id', boardId)
+      .eq('role', isAdmin ? 'admin' : 'member')
+      .maybeSingle();
+
+    if (policyError || !policy) {
+      // 정책이 없으면 기본적으로 허용하지 않음
+      return { success: false, error: '댓글 삭제 권한이 없습니다.' };
+    }
+
+    // cmt_delete 권한이 false이면 삭제 불가
+    if (!policy.cmt_delete) {
+      return { success: false, error: '댓글 삭제 권한이 없습니다.' };
+    }
+
+    console.log('댓글 삭제 권한 확인 완료');
 
     // 소프트 삭제
     const { error: deleteError } = await supabase

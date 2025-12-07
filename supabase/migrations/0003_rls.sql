@@ -240,7 +240,6 @@ CREATE POLICY "Authors and admins can update post_files" ON post_files
 
 CREATE POLICY "Public read access for comments on published posts" ON comments
   FOR SELECT USING (
-    deleted_at IS NULL AND
     EXISTS (
       SELECT 1 FROM posts 
       WHERE posts.id = comments.post_id 
