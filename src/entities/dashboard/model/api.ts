@@ -153,8 +153,10 @@ export async function getEmptyInfo(): Promise<EmptyInfo[]> {
 
     // 회사 정보 체크
     const { data: companyInfo, error: companyError } = await supabase
-      .from('company_info')
-      .select('*')
+      .from('pages')
+      .select('metadata->>introduction, metadata->>vision, metadata->>greetings, metadata->>mission, metadata->>strengths, metadata->>values, metadata->>histories, metadata->>organization_members')
+      .eq('code', 'company_intro')
+      .eq('status', 'published')
       .maybeSingle();
 
     if (!companyError && companyInfo) {
@@ -188,21 +190,17 @@ export async function getEmptyInfo(): Promise<EmptyInfo[]> {
     }
 
     // 사업 분야 체크
-    const { count: businessAreasCount, error: businessAreasError } = await supabase
-      .from('business_info')
-      .select('areas', { count: 'exact', head: true });
+    const { data: businessAreasInfo, error: businessAreasError } = await supabase
+      .from('pages')
+      .select('metadata->>areas', { count: 'exact', head: true })
+      .eq('code', 'business_areas')
+      .eq('status', 'published')
+      .maybeSingle();
 
-    if (!businessAreasError && (!businessAreasCount || businessAreasCount === 0)) {
-      emptyInfo.push({ type: 'business', field: 'areas', label: '사업 분야' });
-    }
-
-    // 사업 실적 체크
-    const { count: businessAchievementsCount, error: businessAchievementsError } = await supabase
-      .from('business_achievements')
-      .select('*', { count: 'exact', head: true });
-
-    if (!businessAchievementsError && (!businessAchievementsCount || businessAchievementsCount === 0)) {
-      emptyInfo.push({ type: 'business', field: 'achievements', label: '사업 실적' });
+    if (!businessAreasError && businessAreasInfo) {
+      if (!businessAreasInfo.areas || businessAreasInfo.areas.trim() === '') {
+        emptyInfo.push({ type: 'business', field: 'areas', label: '사업 분야' });
+      }
     }
 
     // 연락처 정보 체크 (site_settings에서)

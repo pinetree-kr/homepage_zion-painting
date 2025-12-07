@@ -41,14 +41,8 @@ export default async function AdminLayoutWrapper({
   // default_boards 가져오기
   const defaultBoards = siteSettings?.default_boards || null;
 
-  // Map을 일반 객체로 변환 (직렬화 가능하도록)
-  const boardIdToCodeObj: { [key: string]: string } = {};
-  boardIdToCode.forEach((value, key) => {
-    boardIdToCodeObj[key] = value;
-  });
-
   return (
-    <AdminLayout defaultBoards={defaultBoards} boardIdToCode={boardIdToCodeObj}>
+    <AdminLayout defaultBoards={defaultBoards}>
       {children}
     </AdminLayout>
   );

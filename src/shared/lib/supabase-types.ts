@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -307,8 +287,7 @@ export type Database = {
       comments: {
         Row: {
           author_id: string | null
-          author_ip: string | null
-          author_name: string | null
+          author_metadata: Json | null
           context: string
           created_at: string | null
           deleted_at: string | null
@@ -320,8 +299,7 @@ export type Database = {
         }
         Insert: {
           author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
+          author_metadata?: Json | null
           context?: string
           created_at?: string | null
           deleted_at?: string | null
@@ -333,8 +311,7 @@ export type Database = {
         }
         Update: {
           author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
+          author_metadata?: Json | null
           context?: string
           created_at?: string | null
           deleted_at?: string | null
@@ -447,11 +424,8 @@ export type Database = {
       }
       posts: {
         Row: {
-          author_email: string | null
           author_id: string | null
-          author_ip: string | null
-          author_name: string | null
-          author_phone: string | null
+          author_metadata: Json | null
           board_id: string | null
           category_id: string | null
           comment_count: number
@@ -471,11 +445,8 @@ export type Database = {
           view_count: number
         }
         Insert: {
-          author_email?: string | null
           author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
-          author_phone?: string | null
+          author_metadata?: Json | null
           board_id?: string | null
           category_id?: string | null
           comment_count?: number
@@ -495,11 +466,8 @@ export type Database = {
           view_count?: number
         }
         Update: {
-          author_email?: string | null
           author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
-          author_phone?: string | null
+          author_metadata?: Json | null
           board_id?: string | null
           category_id?: string | null
           comment_count?: number
@@ -834,6 +802,9 @@ export type Database = {
         | "POST_UPDATE"
         | "POST_DELETE"
         | "POST_ANSWER"
+        | "COMMENT_CREATE"
+        | "COMMENT_UPDATE"
+        | "COMMENT_DELETE"
         | "ERROR"
       visible_type: "public" | "member" | "owner"
     }
@@ -961,9 +932,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       admin_role: ["system", "contents"],
@@ -985,10 +953,12 @@ export const Constants = {
         "POST_UPDATE",
         "POST_DELETE",
         "POST_ANSWER",
+        "COMMENT_CREATE",
+        "COMMENT_UPDATE",
+        "COMMENT_DELETE",
         "ERROR",
       ],
       visible_type: ["public", "member", "owner"],
     },
   },
 } as const
-

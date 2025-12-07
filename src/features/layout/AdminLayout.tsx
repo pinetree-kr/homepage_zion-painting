@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import UserMenu from '@/src/widgets/user/ui/UserMenu';
 import { FileIcon } from 'lucide-react';
+import { SiteSetting } from '@/src/entities/site-setting/model/types';
 
 // Icon Components
 const Building2Icon = ({ className }: { className?: string }) => (
@@ -188,14 +189,10 @@ const ImageIcon = ({ className }: { className?: string }) => (
 //   reviewBoardCode: string | null;
 // }
 
-interface DefaultBoards {
-  [key: string]: { id: string | null; name: string; display_order: number } | null;
-}
-
 interface AdminLayoutProps {
   children: React.ReactNode;
   // boardConnections?: BoardConnections;
-  defaultBoards?: DefaultBoards | null;
+  defaultBoards: SiteSetting['default_boards'];
 }
 
 export default function AdminLayout({ children, defaultBoards }: AdminLayoutProps) {
@@ -230,8 +227,8 @@ export default function AdminLayout({ children, defaultBoards }: AdminLayoutProp
       // TODO
 
 
-      const defaultBoardKey = Object.entries(defaultBoards || {}).find(([key, board]: [string, { id: string | null; name: string; display_order: number } | null]) => {
-        return board?.id === boardId;
+      const defaultBoardKey = Object.entries(defaultBoards || {}).find(([key, board]: [string, { id: string | null; name: string | null; display_order: number | null } | null]) => {
+        return board?.id === boardId && board?.name !== null;
       })?.[0] ?? null;
 
       if (defaultBoardKey) {

@@ -85,7 +85,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         isAdmin={isAdmin}
         isAuthor={isAuthor}
         permissions={permissions}
-        initialComments={initialComments}
+        comments={initialComments}
       />
     </div>
   );

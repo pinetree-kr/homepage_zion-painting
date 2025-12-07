@@ -191,10 +191,7 @@ CREATE TABLE IF NOT EXISTS posts (
   content TEXT NOT NULL,
   content_summary VARCHAR(50) NOT NULL DEFAULT '',
   author_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  author_name VARCHAR(255),
-  author_email VARCHAR(255),
-  author_phone VARCHAR(50),
-  author_ip VARCHAR(46),
+  author_metadata JSONB DEFAULT '{}'::jsonb, -- 작성자 메타데이터 (name, email, phone, ip 등)
   status document_status NOT NULL DEFAULT 'draft',
   is_pinned BOOLEAN NOT NULL DEFAULT FALSE, -- 고정 게시글 여부
   is_secret BOOLEAN NOT NULL DEFAULT FALSE, -- 비밀 게시글 여부
@@ -214,6 +211,7 @@ CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id);
 CREATE INDEX IF NOT EXISTS idx_posts_category_id ON posts(category_id);
 CREATE INDEX IF NOT EXISTS idx_posts_deleted_at ON posts(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_posts_author_metadata ON posts USING GIN (author_metadata);
 
 -- 2-13. post_files 테이블
 CREATE TABLE IF NOT EXISTS post_files (
@@ -235,8 +233,7 @@ CREATE TABLE IF NOT EXISTS comments (
   post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
   parent_id UUID REFERENCES comments(id) ON DELETE SET NULL,
   author_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  author_name VARCHAR(255),
-  author_ip VARCHAR(46),
+  author_metadata JSONB DEFAULT '{}'::jsonb, -- 작성자 메타데이터 (name, ip 등)
   context TEXT NOT NULL DEFAULT '',
   status document_status NOT NULL DEFAULT 'draft',
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -249,6 +246,7 @@ CREATE INDEX IF NOT EXISTS idx_comments_author_id ON comments(author_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON comments(parent_id);
 CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_comments_deleted_at ON comments(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_comments_author_metadata ON comments USING GIN (author_metadata);
 
 -- ============================================================================
 -- 3. product_reviews 및 product_inquiries 테이블 생성

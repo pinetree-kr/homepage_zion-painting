@@ -378,6 +378,7 @@ DECLARE
   user_name_val VARCHAR(255);
   board_name_val VARCHAR(255);
   board_code_val VARCHAR(80);
+  author_ip_val VARCHAR(46);
 BEGIN
   -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
   -- 트리거 실행 시 posts 테이블의 RLS 정책으로 인한 오류 방지
@@ -394,9 +395,10 @@ BEGIN
     board_code_val := 'unknown';
   END IF;
   
-  -- 작성자 정보
+  -- 작성자 정보 (author_metadata에서 읽기)
   user_id_val := NEW.author_id;
-  user_name_val := COALESCE(NEW.author_name, '익명');
+  user_name_val := COALESCE(NEW.author_metadata->>'name', '익명');
+  author_ip_val := NEW.author_metadata->>'ip';
   
   -- 활동 로그 생성
   INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
@@ -413,8 +415,8 @@ BEGIN
       'postTitle', NEW.title
     ),
     CASE 
-      WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
-      THEN NEW.author_ip::inet 
+      WHEN author_ip_val IS NOT NULL AND author_ip_val != '' 
+      THEN author_ip_val::inet 
       ELSE NULL 
     END
   );
@@ -435,6 +437,7 @@ DECLARE
   board_name_val VARCHAR(255);
   board_code_val VARCHAR(80);
   changed_fields TEXT[];
+  author_ip_val VARCHAR(46);
 BEGIN
   -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
   -- 트리거 실행 시 posts 테이블의 RLS 정책으로 인한 오류 방지
@@ -460,10 +463,10 @@ BEGIN
     WHERE id = user_id_val;
     
     IF user_name_val IS NULL OR user_name_val = '' THEN
-      user_name_val := COALESCE(NEW.author_name, '익명');
+      user_name_val := COALESCE(NEW.author_metadata->>'name', '익명');
     END IF;
   ELSE
-    user_name_val := COALESCE(NEW.author_name, '익명');
+    user_name_val := COALESCE(NEW.author_metadata->>'name', '익명');
   END IF;
   
   -- 변경된 필드 확인
@@ -493,6 +496,8 @@ BEGIN
   
   -- 변경사항이 있는 경우에만 로그 기록
   IF array_length(changed_fields, 1) > 0 THEN
+    author_ip_val := NEW.author_metadata->>'ip';
+    
     INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
     VALUES (
       user_id_val,
@@ -508,8 +513,8 @@ BEGIN
         'changedFields', changed_fields
       ),
       CASE 
-        WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
-        THEN NEW.author_ip::inet 
+        WHEN author_ip_val IS NOT NULL AND author_ip_val != '' 
+        THEN author_ip_val::inet 
         ELSE NULL 
       END
     );
@@ -530,6 +535,7 @@ DECLARE
   user_name_val VARCHAR(255);
   board_name_val VARCHAR(255);
   board_code_val VARCHAR(80);
+  author_ip_val VARCHAR(46);
 BEGIN
   -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
   -- 트리거 실행 시 posts 테이블의 RLS 정책으로 인한 오류 방지
@@ -557,11 +563,13 @@ BEGIN
       WHERE id = user_id_val;
       
       IF user_name_val IS NULL OR user_name_val = '' THEN
-        user_name_val := COALESCE(OLD.author_name, '익명');
+        user_name_val := COALESCE(OLD.author_metadata->>'name', '익명');
       END IF;
     ELSE
-      user_name_val := COALESCE(OLD.author_name, '익명');
+      user_name_val := COALESCE(OLD.author_metadata->>'name', '익명');
     END IF;
+    
+    author_ip_val := OLD.author_metadata->>'ip';
     
     -- 활동 로그 생성
     INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
@@ -578,8 +586,8 @@ BEGIN
         'postTitle', OLD.title
       ),
       CASE 
-        WHEN OLD.author_ip IS NOT NULL AND OLD.author_ip != '' 
-        THEN OLD.author_ip::inet 
+        WHEN author_ip_val IS NOT NULL AND author_ip_val != '' 
+        THEN author_ip_val::inet 
         ELSE NULL 
       END
     );
@@ -620,6 +628,7 @@ DECLARE
   board_name_val VARCHAR(255);
   board_code_val VARCHAR(80);
   is_admin_user BOOLEAN;
+  author_ip_val VARCHAR(46);
 BEGIN
   -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
   -- 트리거 실행 시 posts 테이블의 RLS 정책으로 인한 오류 방지
@@ -652,8 +661,10 @@ BEGIN
         WHERE id = user_id_val;
         
         IF user_name_val IS NULL OR user_name_val = '' THEN
-          user_name_val := COALESCE(NEW.author_name, '관리자');
+          user_name_val := COALESCE(NEW.author_metadata->>'name', '관리자');
         END IF;
+        
+        author_ip_val := NEW.author_metadata->>'ip';
         
         -- 활동 로그 생성
         INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
@@ -668,8 +679,8 @@ BEGIN
             'postId', NEW.post_id
           ),
           CASE 
-            WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
-            THEN NEW.author_ip::inet 
+            WHEN author_ip_val IS NOT NULL AND author_ip_val != '' 
+            THEN author_ip_val::inet 
             ELSE NULL 
           END
         );
@@ -1033,14 +1044,16 @@ DECLARE
   board_code_val VARCHAR(80);
   post_title_val VARCHAR(255);
   is_admin_user BOOLEAN;
+  author_ip_val VARCHAR(46);
 BEGIN
   -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
   -- 트리거 실행 시 comments 테이블의 RLS 정책으로 인한 오류 방지
   SET LOCAL row_security = off;
   
-  -- 작성자 정보
+  -- 작성자 정보 (author_metadata에서 읽기)
   user_id_val := NEW.author_id;
-  user_name_val := COALESCE(NEW.author_name, '익명');
+  user_name_val := COALESCE(NEW.author_metadata->>'name', '익명');
+  author_ip_val := NEW.author_metadata->>'ip';
   
   -- 게시글 및 게시판 정보 가져오기
   SELECT 
@@ -1093,8 +1106,8 @@ BEGIN
           'parentId', NEW.parent_id
         ),
         CASE 
-          WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
-          THEN NEW.author_ip::inet 
+          WHEN author_ip_val IS NOT NULL AND author_ip_val != '' 
+          THEN author_ip_val::inet 
           ELSE NULL 
         END
       );
@@ -1117,8 +1130,8 @@ BEGIN
         'parentId', NEW.parent_id
       ),
       CASE 
-        WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
-        THEN NEW.author_ip::inet 
+        WHEN author_ip_val IS NOT NULL AND author_ip_val != '' 
+        THEN author_ip_val::inet 
         ELSE NULL 
       END
     );
@@ -1141,17 +1154,28 @@ DECLARE
   board_name_val VARCHAR(255);
   board_code_val VARCHAR(80);
   post_title_val VARCHAR(255);
-  is_admin_user BOOLEAN;
+  author_ip_val VARCHAR(46);
 BEGIN
   -- RLS 우회: SECURITY DEFINER 함수 내에서 RLS를 비활성화하여
   -- 트리거 실행 시 comments 테이블의 RLS 정책으로 인한 오류 방지
   SET LOCAL row_security = off;
   
-  -- 내용이 변경된 경우에만 로그 기록
+  -- context가 변경된 경우에만 로그 기록
   IF OLD.context IS DISTINCT FROM NEW.context THEN
-    -- 작성자 정보
-    user_id_val := NEW.author_id;
-    user_name_val := COALESCE(NEW.author_name, '익명');
+    -- 현재 사용자 정보 가져오기
+    user_id_val := auth.uid();
+    
+    IF user_id_val IS NOT NULL THEN
+      SELECT name INTO user_name_val
+      FROM profiles
+      WHERE id = user_id_val;
+      
+      IF user_name_val IS NULL OR user_name_val = '' THEN
+        user_name_val := COALESCE(NEW.author_metadata->>'name', '익명');
+      END IF;
+    ELSE
+      user_name_val := COALESCE(NEW.author_metadata->>'name', '익명');
+    END IF;
     
     -- 게시글 및 게시판 정보 가져오기
     SELECT 
@@ -1176,61 +1200,30 @@ BEGIN
       post_title_val := '알 수 없음';
     END IF;
     
-    -- 작성자가 관리자인지 확인
-    IF user_id_val IS NOT NULL THEN
-      SELECT EXISTS (
-        SELECT 1 FROM administrators
-        WHERE id = user_id_val
-        AND deleted_at IS NULL
-      ) INTO is_admin_user;
-      
-      -- 관리자가 아닌 경우에만 일반 댓글 수정 로그 기록
-      IF NOT is_admin_user THEN
-        -- 활동 로그 생성
-        INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
-        VALUES (
-          user_id_val,
-          user_name_val,
-          'COMMENT_UPDATE',
-          '댓글 수정',
-          board_name_val || ' 게시글의 댓글 수정',
-          jsonb_build_object(
-            'boardName', board_name_val,
-            'boardCode', board_code_val,
-            'postId', NEW.post_id,
-            'postTitle', post_title_val,
-            'commentId', NEW.id
-          ),
-          CASE 
-            WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
-            THEN NEW.author_ip::inet 
-            ELSE NULL 
-          END
-        );
-      END IF;
-    ELSE
-      -- 익명 사용자의 경우에도 로그 기록
-      INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
-      VALUES (
-        NULL,
-        user_name_val,
-        'COMMENT_UPDATE',
-        '댓글 수정',
-        board_name_val || ' 게시글의 댓글 수정',
-        jsonb_build_object(
-          'boardName', board_name_val,
-          'boardCode', board_code_val,
-          'postId', NEW.post_id,
-          'postTitle', post_title_val,
-          'commentId', NEW.id
-        ),
-        CASE 
-          WHEN NEW.author_ip IS NOT NULL AND NEW.author_ip != '' 
-          THEN NEW.author_ip::inet 
-          ELSE NULL 
-        END
-      );
-    END IF;
+    author_ip_val := NEW.author_metadata->>'ip';
+    
+    -- 활동 로그 생성
+    INSERT INTO activity_logs (user_id, user_name, log_type, action, details, metadata, ip_address)
+    VALUES (
+      user_id_val,
+      user_name_val,
+      'COMMENT_UPDATE',
+      '댓글 수정',
+      board_name_val || ' 게시글의 댓글 수정',
+      jsonb_build_object(
+        'boardName', board_name_val,
+        'boardCode', board_code_val,
+        'postId', NEW.post_id,
+        'postTitle', post_title_val,
+        'commentId', NEW.id,
+        'parentId', NEW.parent_id
+      ),
+      CASE 
+        WHEN author_ip_val IS NOT NULL AND author_ip_val != '' 
+        THEN author_ip_val::inet 
+        ELSE NULL 
+      END
+    );
   END IF;
   
   RETURN NEW;
@@ -1262,7 +1255,7 @@ BEGIN
   IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
     -- 댓글 작성자 정보 저장 (metadata에 포함)
     comment_author_id := OLD.author_id;
-    comment_author_name := COALESCE(OLD.author_name, '익명');
+    comment_author_name := COALESCE(OLD.author_metadata->>'name', '익명');
     
     -- 삭제를 시도한 사용자 정보 가져오기 (auth.uid() 사용)
     user_id_val := auth.uid();

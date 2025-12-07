@@ -7,7 +7,7 @@ export async function upsertCompanyInfo(companyInfo: Partial<Omit<CompanyInfo, '
     try {
         const supabase = await createServerClient();
 
-        const { data: existingInfo, error: existingInfoError } = await supabase.from('company_info').select('id').limit(1).maybeSingle() as { data: { id: string } | null; error: any };
+        const { data: existingInfo, error: existingInfoError } = await supabase.from('pages').select('id').eq('code', 'company_intro').eq('status', 'published').limit(1).maybeSingle() as { data: { id: string } | null; error: any };
 
         if (existingInfoError) {
             console.error('회사 정보 조회 오류:', existingInfoError);
@@ -49,8 +49,15 @@ export async function upsertCompanyInfo(companyInfo: Partial<Omit<CompanyInfo, '
 
         // new Record
         if (!existingInfo) {
-            const { error: newInfoError } = await supabase.from('company_info')
-                .insert(updateBody)
+            const { error: newInfoError } = await supabase.from('pages')
+                .insert({
+                    code: 'company_intro',
+                    page: 'about',
+                    section_type: 'rich_text',
+                    display_order: 0,
+                    status: 'published',
+                    metadata: updateBody,
+                })
                 ;
 
             if (newInfoError) {
@@ -60,9 +67,12 @@ export async function upsertCompanyInfo(companyInfo: Partial<Omit<CompanyInfo, '
 
             return true;
         } else {
-            const { error: updatedInfoError } = await supabase.from('company_info')
-                .update(updateBody)
-                .eq('id', existingInfo.id)
+            const { error: updatedInfoError } = await supabase.from('pages')
+                .update({
+                    metadata: updateBody,
+                })
+                .eq('code', 'company_intro')
+                .eq('status', 'published')
                 ;
 
             if (updatedInfoError) {
