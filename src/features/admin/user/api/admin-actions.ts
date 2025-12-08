@@ -1,6 +1,8 @@
 'use server';
 
 import { createServerClient } from '@/src/shared/lib/supabase/server';
+import { createServiceRoleClient } from '@/src/shared/lib/supabase/service';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { revalidatePath } from 'next/cache';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/src/shared/lib/supabase-types';
@@ -181,6 +183,201 @@ export async function searchAdmins(
   } catch (error) {
     console.error('관리자 검색 중 예외 발생:', error);
     return { data: [], total: 0, totalPages: 0 };
+  }
+}
+
+/**
+ * 관리자 계정 생성
+ * Secret Key를 사용하여 RLS 정책을 우회합니다.
+ * 기존 관리자 존재 여부 체크 없이 새로운 관리자를 추가합니다.
+ */
+export async function createAdminAccount(
+  name: string,
+  email: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    // 서비스 롤 클라이언트로 회원가입 (auth.users에 사용자 생성)
+    const supabase = await createServiceRoleClient(env.SUPABASE_SECRET_KEY);
+
+    // 이메일 중복 확인 (profiles 테이블에서 확인)
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (existingProfile) {
+      return { success: false, error: '이미 존재하는 이메일입니다.' };
+    }
+
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // 이메일 인증 없이 바로 활성화
+      user_metadata: {
+        name,
+      },
+    });
+
+    if (authError) {
+      return {
+        success: false,
+        error: authError.message || '관리자 계정 생성에 실패했습니다.'
+      };
+    }
+
+    if (!authData.user) {
+      return { success: false, error: '관리자 계정 생성에 실패했습니다.' };
+    }
+
+    // profiles 테이블은 트리거(handle_new_user)에 의해 자동 생성됨
+    // 트리거가 auth.users에 새 사용자가 생성될 때 자동으로 profiles 레코드를 생성합니다
+    // 트리거가 생성한 후 잠시 대기 후 업데이트
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const { error: profileUpdateError } = await supabase
+      .from('profiles')
+      .update({
+        name: name,
+        email: email,
+      })
+      .eq('id', authData.user.id);
+
+    if (profileUpdateError) {
+      console.error('프로필 업데이트 오류:', profileUpdateError);
+      // 프로필 업데이트 실패해도 계속 진행
+    }
+
+    // administrators 테이블에 관리자 레코드 생성
+    const { error: adminError } = await supabase
+      .from('administrators')
+      .insert({
+        id: authData.user.id,
+        role: 'system', // 기본값: system 관리자
+      });
+
+    if (adminError) {
+      console.error('관리자 레코드 생성 오류:', adminError);
+      return {
+        success: false,
+        error: '관리자 레코드 생성에 실패했습니다: ' + adminError.message
+      };
+    }
+
+    // 화면 업데이트를 위한 캐시 무효화
+    revalidatePath('/admin/system/administrators');
+
+    return { success: true };
+  } catch (error) {
+    console.error('관리자 계정 생성 중 오류 발생:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '관리자 계정 생성 중 오류가 발생했습니다.'
+    };
+  }
+}
+
+/**
+ * 관리자 정보 업데이트
+ * Secret Key를 사용하여 RLS 정책을 우회합니다.
+ * 이메일은 변경할 수 없습니다.
+ */
+export async function updateAdminAccount(
+  id: string,
+  name: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const supabase = await createServiceRoleClient(env.SUPABASE_SECRET_KEY);
+
+    // auth.users의 user_metadata 업데이트
+    const { error: authUpdateError } = await supabase.auth.admin.updateUserById(id, {
+      user_metadata: {
+        name: name,
+      },
+    });
+
+    if (authUpdateError) {
+      console.error('인증 정보 업데이트 오류:', authUpdateError);
+      // user_metadata 업데이트 실패해도 계속 진행
+    }
+
+    // profiles 테이블 업데이트 (이메일은 변경하지 않음)
+    const { error: profileUpdateError } = await supabase
+      .from('profiles')
+      .update({
+        name: name,
+      })
+      .eq('id', id);
+
+    if (profileUpdateError) {
+      return {
+        success: false,
+        error: '프로필 업데이트에 실패했습니다: ' + profileUpdateError.message
+      };
+    }
+
+    // 화면 업데이트를 위한 캐시 무효화
+    revalidatePath('/admin/system/administrators');
+
+    return { success: true };
+  } catch (error) {
+    console.error('관리자 정보 업데이트 중 오류 발생:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '관리자 정보 업데이트 중 오류가 발생했습니다.'
+    };
+  }
+}
+
+/**
+ * 관리자 패스워드 초기화 이메일 발송
+ * Secret Key를 사용하여 RLS 정책을 우회합니다.
+ * Supabase를 통해 패스워드 리셋 링크가 포함된 이메일을 발송합니다.
+ */
+export async function sendPasswordResetEmail(
+  email: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const supabase = await createServiceRoleClient(env.SUPABASE_SECRET_KEY);
+
+    // 패스워드 리셋 링크 생성
+    // generateLink를 호출하면 Supabase가 자동으로 이메일을 발송합니다
+    // (Supabase 설정에 따라 자동 발송 여부가 결정됩니다)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const { data, error } = await supabase.auth.admin.generateLink({
+      type: 'recovery',
+      email: email,
+      options: {
+        redirectTo: `${siteUrl}/auth/reset-password`,
+      },
+    });
+
+    if (error) {
+      return {
+        success: false,
+        error: '패스워드 초기화 이메일 발송에 실패했습니다: ' + error.message
+      };
+    }
+
+    if (!data) {
+      return {
+        success: false,
+        error: '패스워드 초기화 링크 생성에 실패했습니다.'
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('패스워드 초기화 이메일 발송 중 오류 발생:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '패스워드 초기화 이메일 발송 중 오류가 발생했습니다.'
+    };
   }
 }
 

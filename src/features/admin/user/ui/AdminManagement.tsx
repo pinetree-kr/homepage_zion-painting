@@ -9,7 +9,8 @@ import {
   Mail,
   Trash2,
   Edit,
-  Calendar
+  Calendar,
+  Key
 } from 'lucide-react';
 import { Card } from '@/src/shared/ui';
 import { Button } from '@/src/shared/ui';
@@ -26,7 +27,9 @@ import {
 } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { DataTable, DataTableColumn, DataTableAction, DataTablePagination, DataTableSearchBar } from '@/src/shared/ui';
-import { formatDateKorean } from '@/src/shared/lib/utils';
+import { formatDateKorean, formatDateSimple, generateUserColor, rgbToCss } from '@/src/shared/lib/utils';
+import SetupForm from '@/src/features/setup/ui/SetupForm';
+import { createAdminAccount, updateAdminAccount, sendPasswordResetEmail } from '../api/admin-actions';
 
 interface AdminManagementProps {
   items: Member[];
@@ -46,37 +49,85 @@ export default function AdminManagement({
   searchTerm,
 }: AdminManagementProps) {
   const router = useRouter();
-  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState<Member | null>(null);
+  const [adminToResetPassword, setAdminToResetPassword] = useState<Member | null>(null);
   const [editingAdmin, setEditingAdmin] = useState<Member | null>(null);
-  const [inviteForm, setInviteForm] = useState({ name: '', email: '' });
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const refreshPage = () => {
     router.refresh();
   };
 
-  const handleInvite = () => {
-    if (!inviteForm.name || !inviteForm.email) {
-      toast.error('모든 필드를 입력해주세요');
-      return;
-    }
-
-    // TODO: 실제 API 호출로 변경 필요
-    setInviteForm({ name: '', email: '' });
-    setShowInviteDialog(false);
-    toast.success('관리자 초대장이 발송되었습니다');
+  const handleCreateSuccess = () => {
+    setShowCreateDialog(false);
     refreshPage();
   };
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (!editingAdmin) return;
 
-    // TODO: 실제 API 호출로 변경 필요
-    setEditingAdmin(null);
-    setShowEditDialog(false);
-    toast.success('관리자 정보가 수정되었습니다');
-    refreshPage();
+    if (!editingAdmin.name) {
+      toast.error('이름을 입력해주세요');
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      // 이름 업데이트
+      const result = await updateAdminAccount(
+        editingAdmin.id,
+        editingAdmin.name
+      );
+
+      if (!result.success) {
+        toast.error(result.error || '관리자 정보 수정에 실패했습니다');
+        setIsUpdating(false);
+        return;
+      }
+
+      toast.success('관리자 정보가 수정되었습니다');
+      setEditingAdmin(null);
+      setShowEditDialog(false);
+      refreshPage();
+    } catch (error) {
+      console.error('관리자 정보 수정 중 오류 발생:', error);
+      toast.error('관리자 정보 수정 중 오류가 발생했습니다');
+    }
+    finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!adminToResetPassword?.email) {
+      toast.error('이메일 정보가 없습니다');
+      return;
+    }
+
+    setIsResettingPassword(true);
+
+    try {
+      const result = await sendPasswordResetEmail(adminToResetPassword.email);
+      
+      if (!result.success) {
+        toast.error(result.error || '패스워드 초기화 이메일 발송에 실패했습니다');
+        setIsResettingPassword(false);
+        return;
+      }
+
+      toast.success('패스워드 초기화 이메일이 발송되었습니다');
+      setAdminToResetPassword(null);
+    } catch (error) {
+      console.error('패스워드 초기화 이메일 발송 중 오류 발생:', error);
+      toast.error('패스워드 초기화 이메일 발송 중 오류가 발생했습니다');
+      setIsResettingPassword(false);
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   const handleDelete = () => {
@@ -96,20 +147,29 @@ export default function AdminManagement({
     {
       id: 'name',
       header: '이름',
-      accessor: (row) => (
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] flex items-center justify-center text-white text-sm flex-shrink-0">
-            {row.name?.charAt(0)}
-          </div>
+      accessor: (row) => {
+        // 사용자 ID를 기준으로 색상 생성
+        const userColor = generateUserColor(row.id);
+        const backgroundColor = rgbToCss(userColor);
+
+        return (
           <div className="flex items-center gap-2">
-            <span>{row.name ?? '-'}</span>
-            <Badge variant="outline" className="text-xs">
-              <Shield className="h-3 w-3 mr-1" />
-              관리자
-            </Badge>
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 border border-gray-50/80"
+              style={{ backgroundColor }}
+            >
+              {row.name?.charAt(0)?.toUpperCase() || '-'}
+            </div>
+            <div className="flex items-center gap-2">
+              <span>{row.name ?? '-'}</span>
+              <Badge variant="outline" className="text-xs">
+                <Shield className="h-3 w-3 mr-1" />
+                관리자
+              </Badge>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
       sortable: true,
       width: '25%'
     },
@@ -125,24 +185,13 @@ export default function AdminManagement({
       sortable: true,
       width: '25%'
     },
-    // {
-    //   id: 'status',
-    //   header: '상태',
-    //   accessor: (row) => (
-    //     <Badge variant={row.status === 'active' ? 'default' : 'secondary'} className="text-xs">
-    //       {row.status === 'active' ? '활성' : '비활성'}
-    //     </Badge>
-    //   ),
-    //   sortable: true,
-    //   width: '15%'
-    // },
     {
       id: 'created_at',
       header: '등록일',
       accessor: (row) => (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Calendar className="h-3 w-3" />
-          {formatDate(row.created_at ?? '')}
+          {formatDateSimple(row.created_at ?? '')}
         </div>
       ),
       sortable: true,
@@ -171,6 +220,12 @@ export default function AdminManagement({
       }
     },
     {
+      label: '패스워드 초기화',
+      icon: <Key className="h-4 w-4" />,
+      onClick: setAdminToResetPassword,
+      variant: 'default'
+    },
+    {
       label: '삭제',
       icon: <Trash2 className="h-4 w-4" />,
       onClick: setAdminToDelete,
@@ -183,9 +238,9 @@ export default function AdminManagement({
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-gray-900 text-lg font-semibold">관리자 목록</h3>
-          <Button onClick={() => setShowInviteDialog(true)} className="gap-2">
+          <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
             <UserPlus className="h-4 w-4" />
-            관리자 초대
+            관리자 생성
           </Button>
         </div>
 
@@ -215,43 +270,22 @@ export default function AdminManagement({
         )}
       </Card>
 
-      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-        <DialogContent>
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>관리자 초대</DialogTitle>
+            <DialogTitle>관리자 계정 생성</DialogTitle>
             <DialogDescription>
-              새로운 관리자를 초대합니다. 초대 이메일이 발송됩니다.
+              새로운 관리자 계정을 생성합니다.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="invite-name">이름</Label>
-              <Input
-                id="invite-name"
-                value={inviteForm.name}
-                onChange={(e) => setInviteForm({ ...inviteForm, name: e.target.value })}
-                placeholder="관리자 이름"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="invite-email">이메일</Label>
-              <Input
-                id="invite-email"
-                type="email"
-                value={inviteForm.email}
-                onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                placeholder="admin@example.com"
-              />
-            </div>
+          <div className="py-4">
+            <SetupForm
+              isModal={true}
+              onSuccess={handleCreateSuccess}
+              onCancel={() => setShowCreateDialog(false)}
+              onCreateAccount={createAdminAccount}
+            />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
-              취소
-            </Button>
-            <Button onClick={handleInvite} className="bg-gradient-to-r from-[#1A2C6D] to-[#2CA7DB]">
-              초대장 발송
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -279,21 +313,59 @@ export default function AdminManagement({
                   id="edit-email"
                   type="email"
                   value={editingAdmin.email ?? ''}
-                  onChange={(e) => setEditingAdmin({ ...editingAdmin, email: e.target.value })}
+                  readOnly
+                  disabled
+                  className="bg-gray-50 cursor-not-allowed"
                 />
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowEditDialog(false)}
+              disabled={isUpdating}
+            >
               취소
             </Button>
-            <Button onClick={handleEdit} className="bg-gradient-to-r from-[#1A2C6D] to-[#2CA7DB]">
-              저장
+            <Button
+              onClick={handleEdit}
+              disabled={isUpdating}
+            >
+              {isUpdating ? '저장 중...' : '저장'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {adminToResetPassword && (
+        <Dialog open={!!adminToResetPassword} onOpenChange={() => setAdminToResetPassword(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>패스워드 초기화 이메일 발송</DialogTitle>
+              <DialogDescription>
+                {adminToResetPassword.name} 관리자에게 패스워드 초기화 링크가 포함된 이메일을 발송하시겠습니까?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setAdminToResetPassword(null)}
+                disabled={isResettingPassword}
+              >
+                취소
+              </Button>
+              <Button 
+                onClick={handlePasswordReset} 
+                disabled={isResettingPassword}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-600 disabled:bg-yellow-300 disabled:cursor-not-allowed"
+              >
+                {isResettingPassword ? '발송 중...' : '발송'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {adminToDelete && (
         <Dialog open={!!adminToDelete} onOpenChange={() => setAdminToDelete(null)}>
