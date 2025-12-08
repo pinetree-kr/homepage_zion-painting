@@ -1,14 +1,14 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/src/shared/ui';
-import { RecentPost } from '@/src/entities/dashboard';
+import { Post } from '@/src/entities/post/model/types';
 import { Calendar, User, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { formatDateSimple } from '@/src/shared/lib/utils';
 
 interface RecentPostsListProps {
   title: string;
-  posts: RecentPost[];
+  posts: Omit<Post, 'like_count' | 'comment_count' | 'thumbnail_url' | 'extra_json' | 'deleted_at' | 'is_pinned' | 'is_secret' | 'view_count' | 'updated_at'>[];
   viewAllLink: string;
   emptyMessage?: string;
 }
@@ -44,7 +44,7 @@ export default function RecentPostsList({
             {posts.map((post) => (
               <Link
                 key={post.id}
-                href={`/admin/customer/${post.type === 'qna' ? 'qna' : 'estimates'}`}
+                href={`/admin/customer/${post.board_id === 'qna' ? 'qna' : 'estimates'}`}
                 className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -65,22 +65,22 @@ export default function RecentPostsList({
                       {post.content.length > 100 ? '...' : ''}
                     </p>
                     <div className="flex items-center gap-4 text-xs text-gray-500">
-                      {post.authorName && (
+                      {post.author_name && (
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
                           <span>
-                            {post.authorName}
-                            {!post.authorId && (<span className="text-gray-500/50 ml-1">(탈퇴한 회원)</span>)}
+                            {post.author_name}
+                            {!post.author_id && (<span className="text-gray-500/50 ml-1">(탈퇴한 회원)</span>)}
                           </span>
                         </div>
                       )}
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        <span>{formatDate(post.createdAt)}</span>
+                        <span>{formatDate(post.created_at || '')}</span>
                       </div>
-                      {post.category && (
+                      {post.category_id && (
                         <Badge variant="outline" className="text-xs">
-                          {post.category}
+                          {post.category_id}
                         </Badge>
                       )}
                     </div>

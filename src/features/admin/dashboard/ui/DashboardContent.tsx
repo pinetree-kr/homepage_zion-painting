@@ -1,15 +1,16 @@
 'use client';
 
-import { DashboardStats, RecentPost, EmptyInfo } from '@/src/entities/dashboard';
+import { DashboardStats, EmptyInfo } from '@/src/entities/dashboard';
 import StatsCard from './StatsCard';
 import RecentPostsList from './RecentPostsList';
 import EmptyInfoAlert from './EmptyInfoAlert';
 import { Users, UserPlus } from 'lucide-react';
+import { Post } from '@/src/entities/post/model/types';
 
 interface DashboardContentProps {
   stats: DashboardStats;
-  recentQnA: RecentPost[];
-  recentQuotes: RecentPost[];
+  recentQnA: Omit<Post, 'like_count' | 'comment_count' | 'thumbnail_url' | 'extra_json' | 'deleted_at' | 'is_pinned' | 'is_secret' | 'view_count' | 'updated_at'>[];
+  recentQuotes: Omit<Post, 'like_count' | 'comment_count' | 'thumbnail_url' | 'extra_json' | 'deleted_at' | 'is_pinned' | 'is_secret' | 'view_count' | 'updated_at'>[];
   emptyInfo: EmptyInfo[];
 }
 

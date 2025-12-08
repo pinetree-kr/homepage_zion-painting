@@ -1005,7 +1005,7 @@ export async function saveSiteSettings(
         boardIdsToFetch.push(settings.pds_board_id);
       }
 
-      let boardsMap: Map<string, { id: string; name: string }> = new Map();
+      const boardsMap: Map<string, { id: string; name: string }> = new Map();
       if (boardIdsToFetch.length > 0) {
         const { data: boardsData } = await supabase
           .from('boards')

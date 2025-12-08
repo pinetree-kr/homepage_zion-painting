@@ -10,6 +10,7 @@ import { getScrollbarWidth } from '@/src/shared/lib/utils';
 import UserMenu from '@/src/widgets/user/ui/UserMenu';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import { getSiteSettings } from '@/src/features/post/api/post-actions';
+import { SiteSetting } from '@/src/entities/site-setting/model/types';
 
 interface HeaderProps {
   enableScrollAnimation?: boolean;
@@ -20,7 +21,7 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(!enableScrollAnimation);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isCustomerCenterOpen, setIsCustomerCenterOpen] = useState(false);
-  const [defaultBoards, setDefaultBoards] = useState<{ [key: string]: { id: string | null; name: string; display_order: number } | null } | null>(null);
+  const [defaultBoards, setDefaultBoards] = useState<SiteSetting["default_boards"] | null>(null);
   const customerCenterRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   // const supabase = useSupabase();
