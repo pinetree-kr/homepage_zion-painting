@@ -381,47 +381,6 @@ export type Database = {
         }
         Relationships: []
       }
-      post_files: {
-        Row: {
-          created_at: string | null
-          file_name: string
-          file_size: number
-          file_url: string
-          id: string
-          mime_type: string
-          post_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          file_name: string
-          file_size: number
-          file_url: string
-          id?: string
-          mime_type: string
-          post_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          file_name?: string
-          file_size?: number
-          file_url?: string
-          id?: string
-          mime_type?: string
-          post_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "post_files_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       posts: {
         Row: {
           author_id: string | null
@@ -430,16 +389,15 @@ export type Database = {
           category_id: string | null
           comment_count: number
           content: string
-          content_summary: string
+          content_metadata: Json | null
           created_at: string | null
           deleted_at: string | null
           extra_json: string | null
+          files: Json | null
           id: string
           is_pinned: boolean
-          is_secret: boolean
           like_count: number
           status: Database["public"]["Enums"]["document_status"]
-          thumbnail_url: string | null
           title: string
           updated_at: string | null
           view_count: number
@@ -451,16 +409,15 @@ export type Database = {
           category_id?: string | null
           comment_count?: number
           content: string
-          content_summary?: string
+          content_metadata?: Json | null
           created_at?: string | null
           deleted_at?: string | null
           extra_json?: string | null
+          files?: Json | null
           id?: string
           is_pinned?: boolean
-          is_secret?: boolean
           like_count?: number
           status?: Database["public"]["Enums"]["document_status"]
-          thumbnail_url?: string | null
           title: string
           updated_at?: string | null
           view_count?: number
@@ -472,16 +429,15 @@ export type Database = {
           category_id?: string | null
           comment_count?: number
           content?: string
-          content_summary?: string
+          content_metadata?: Json | null
           created_at?: string | null
           deleted_at?: string | null
           extra_json?: string | null
+          files?: Json | null
           id?: string
           is_pinned?: boolean
-          is_secret?: boolean
           like_count?: number
           status?: Database["public"]["Enums"]["document_status"]
-          thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
           view_count?: number

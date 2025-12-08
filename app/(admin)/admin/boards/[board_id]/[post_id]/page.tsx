@@ -1,13 +1,13 @@
 import PostDetail from '@/src/features/post/ui/PostDetail';
 import { getBoardInfoUsingAdminById, getBoardPoliciesUsingAnonymous } from '@/src/features/board/api/board-actions';
 import { getPostUsingAdmin } from '@/src/features/post/api/post-actions';
-import { getPostFiles } from '@/src/features/post/api/post-file-actions';
 import { getCommentsByPostId } from '@/src/features/comment/api/comment-actions';
 import { getUserRole } from '@/src/entities/user/model/checkPermission';
 import { notFound, redirect } from 'next/navigation';
 import { Button } from '@/src/shared/ui/Button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import type { PostFile } from '@/src/entities/post/model/types';
 
 interface PostDetailPageProps {
   params: Promise<{
@@ -56,8 +56,8 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
     file_download: true,
   };
 
-  // 첨부 파일 목록 가져오기
-  const attachedFiles = await getPostFiles(post_id);
+  // 첨부 파일 목록 가져오기 (posts 테이블의 files 컬럼에서)
+  const attachedFiles: PostFile[] = (post.files || []) as PostFile[];
 
   // 댓글 목록 가져오기 (서버사이드)
   const initialComments = permissions.cmt_read ? await getCommentsByPostId(post_id) : [];

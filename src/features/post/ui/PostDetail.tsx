@@ -10,12 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Badge } from '@/src/shared/ui';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/src/shared/ui';
 import { toast } from 'sonner';
-import { Post } from '@/src/entities/post/model/types';
+import { Post, PostFile } from '@/src/entities/post/model/types';
 import { deletePost } from '../api/post-actions';
 import Comments, { type CommentWithProfile } from '@/src/features/comment/ui/Comments';
-import { supabaseClient } from '@/src/shared/lib/supabase/client';
-import type { Profile } from '@/src/entities/user/model/types';
-import { type PostFile } from '../api/post-file-actions';
 import { BoardPolicy } from '@/src/entities/board/model/types';
 import { generateUserColor, rgbToCss, formatDateKorean } from '@/src/shared/lib/utils';
 
@@ -183,13 +180,13 @@ export default function PostDetail({
                       {(() => {
                         // extra_json에서 author_image 확인 (나중에 author_image 필드가 추가될 수 있음)
                         const authorImage = post.extra_json?.author_image || null;
-                        const authorName = post.author_name || '익명';
+                        const authorName = post.author_metadata?.name || '익명';
                         // 사용자 ID를 기준으로 색상 생성
                         const userColor = generateUserColor(post.author_id);
                         const backgroundColor = rgbToCss(userColor);
 
                         return (
-                          <div 
+                          <div
                             className="relative h-6 w-6 rounded-full overflow-hidden text-white flex items-center border border-gray-50/80 justify-center hover:opacity-80 transition-opacity outline-none"
                             style={{ backgroundColor }}
                           >
@@ -209,8 +206,8 @@ export default function PostDetail({
                         );
                       })()}
                       <span className="font-medium">
-                        {post.author_name || '-'}
-                        {!post.author_id && post.author_name && <span className="text-gray-500/50 ml-1">(탈퇴한 회원)</span>}
+                        {post.author_metadata?.name || '-'}
+                        {!post.author_id && post.author_metadata?.name && <span className="text-gray-500/50 ml-1">(탈퇴한 회원)</span>}
                       </span>
                     </button>
                   </DropdownMenuTrigger>
@@ -222,9 +219,9 @@ export default function PostDetail({
                       <UserCircle className="h-4 w-4 mr-2" />
                       프로필
                     </DropdownMenuItem>
-                    {post.author_email && (
+                    {post.author_metadata?.email && (
                       <DropdownMenuItem
-                        onClick={() => window.location.href = `mailto:${post.author_email}`}
+                        onClick={() => window.location.href = `mailto:${post.author_metadata?.email}`}
                         className="cursor-pointer"
                       >
                         <Mail className="h-4 w-4 mr-2" />
@@ -234,15 +231,15 @@ export default function PostDetail({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => {
-                        if (post.author_name) {
+                        if (post.author_metadata?.name) {
                           const searchPath = isPublic
-                            ? `/boards/${boardId}&search=${encodeURIComponent(post.author_name)}`
-                            : `/admin/boards/${boardId}?search=${encodeURIComponent(post.author_name)}`;
+                            ? `/boards/${boardId}&search=${encodeURIComponent(post.author_metadata?.name)}`
+                            : `/admin/boards/${boardId}?search=${encodeURIComponent(post.author_metadata?.name)}`;
                           router.push(searchPath);
                         }
                       }}
                       className="cursor-pointer"
-                      disabled={!post.author_name}
+                      disabled={!post.author_metadata?.name}
                     >
                       <Search className="h-4 w-4 mr-2" />
                       작성글검색
@@ -282,7 +279,7 @@ export default function PostDetail({
 
                     return (
                       <div
-                        key={file.id}
+                        key={file.file_url}
                         className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         {/* 이미지 미리보기 또는 아이콘 */}
@@ -332,17 +329,21 @@ export default function PostDetail({
             )}
           </div>
         </CardContent>
-        <CardFooter className="justify-end">
-          {canEdit && (
+        {(canEdit || canDelete) && (
+          <CardFooter className="justify-end">
             <div className="flex items-center justify-end gap-3">
-              <Button
-                variant="destructive"
-                onClick={() => setShowDeleteDialog(true)}
-                className="gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                삭제
-              </Button>
+              {
+                canDelete && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    삭제
+                  </Button>
+                )
+              }
               {canEdit && (
                 <Button
                   variant="default"
@@ -359,21 +360,22 @@ export default function PostDetail({
                 </Button>
               )}
             </div>
-          )}
-        </CardFooter>
+          </CardFooter>
+        )}
+
       </Card>
 
 
 
       {/* 댓글 섹션 */}
-      {allowComment && <Comments 
-        postId={post.id} 
+      {allowComment && <Comments
+        postId={post.id}
         permissions={{
           cmt_create: permissions?.cmt_create,
           cmt_read: permissions?.cmt_read,
           cmt_edit: permissions?.cmt_edit,
           cmt_delete: permissions?.cmt_delete,
-        }} 
+        }}
         isAdmin={isAdmin}
         comments={comments}
       />}

@@ -89,7 +89,7 @@ export async function searchPostsByBoardId(
 
     // 검색어가 있으면 제목과 내용에서 검색
     if (searchTerm.trim()) {
-      query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,content_summary.ilike.%${searchTerm}%`);
+      query = query.or(`title.ilike.%${searchTerm}%,author_metadata->>name.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,content_metadata->>summary.ilike.%${searchTerm}%`);
     }
 
     // 전체 개수 조회
@@ -121,7 +121,7 @@ export async function searchPostsByBoardId(
 
     // 검색어가 있으면 제목과 내용에서 검색
     if (searchTerm.trim()) {
-      dataQuery = dataQuery.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,content_summary.ilike.%${searchTerm}%`);
+      dataQuery = dataQuery.or(`title.ilike.%${searchTerm}%,author_metadata->>name.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,content_metadata->>summary.ilike.%${searchTerm}%`);
     }
 
     // 정렬 적용
@@ -132,7 +132,7 @@ export async function searchPostsByBoardId(
       // 컬럼 ID를 DB 컬럼명으로 매핑
       const columnMapping: Record<string, string> = {
         'title': 'title',
-        'author': 'author_name',
+        'author': 'author_metadata.name',
         'status': 'status',
         'created_at': 'created_at',
         'view_count': 'view_count',
@@ -312,23 +312,30 @@ export async function savePost(
       return { success: false, error: '게시판을 찾을 수 없습니다.' };
     }
 
-    // content_summary 자동 생성
+    // content_metadata 자동 생성
     const contentSummary = stripHtmlAndTruncate(post.content || '', 50);
+    const existingThumbnailUrl = post.content_metadata?.thumbnail_url || null;
+    const isSecret = post.content_metadata?.is_secret || false;
 
     const postData: any = {
       board_id: board.id,
       category_id: post.category_id || null,
       title: post.title || '',
       content: post.content || '',
-      content_summary: contentSummary,
+      content_metadata: {
+        thumbnail_url: existingThumbnailUrl,
+        summary: contentSummary,
+        is_secret: isSecret,
+      },
       author_id: user.id,
-      author_name: post.author_name || profile?.name || null,
-      author_email: post.author_email || profile?.email || null,
-      author_phone: post.author_phone || profile?.phone || null,
+      author_metadata: {
+        name: post.author_metadata?.name || profile?.name || null,
+        email: post.author_metadata?.email || profile?.email || null,
+        phone: post.author_metadata?.phone || profile?.phone || null,
+      },
       status: post.status || 'draft',
       is_pinned: post.is_pinned || false,
-      is_secret: post.is_secret || false,
-      thumbnail_url: post.thumbnail_url || null,
+      files: post.files || [],
       extra_json: post.extra_json || null,
     };
 

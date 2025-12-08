@@ -1,8 +1,8 @@
 import { notFound, redirect } from 'next/navigation';
 import { getBoardInfoByIdUsingAnonymous, getBoardPoliciesUsingAnonymous } from '@/src/features/board/api/board-actions';
 import { getPostUsingAnonymous } from '@/src/features/post/api/post-actions';
-import { getPostFiles } from '@/src/features/post/api/post-file-actions';
 import { getCommentsByPostId } from '@/src/features/comment/api/comment-actions';
+import type { PostFile } from '@/src/entities/post/model/types';
 import PostDetail from '@/src/features/post/ui/PostDetail';
 import { Button } from '@/src/shared/ui/Button';
 import { ArrowLeft } from 'lucide-react';
@@ -85,8 +85,8 @@ export default async function BoardsPage({ params, searchParams }: BoardsPagePro
     return notFound();
   }
 
-  // 첨부 파일 목록 가져오기
-  const attachedFiles = await getPostFiles(post_id);
+  // 첨부 파일 목록 가져오기 (posts 테이블의 files 컬럼에서)
+  const attachedFiles: PostFile[] = (post.files || []) as PostFile[];
 
   // 댓글 목록 가져오기 (서버사이드)
   const comments = appliedPolicy.cmt_read ? await getCommentsByPostId(post_id) : [];

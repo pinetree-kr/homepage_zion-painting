@@ -41,7 +41,7 @@ export default function PublicPosts({
       accessor: (row) => {
         return (
           <div className="flex items-center gap-2">
-            {row.thumbnail_url && (
+            {row.content_metadata?.thumbnail_url && (
               <ImageIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
             )}
             {row.is_pinned && (
@@ -65,8 +65,8 @@ export default function PublicPosts({
       accessor: (row) => (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <UserIcon className="h-3.5 w-3.5 text-gray-400" />
-          {row.author_name || '-'}
-          {!row.author_id && row.author_name && <span className="text-gray-500/50 ml-1">(탈퇴한 회원)</span>}
+          {row.author_metadata?.name || '-'}
+          {!row.author_id && row.author_metadata?.name && <span className="text-gray-500/50 ml-1">(탈퇴한 회원)</span>}
         </div>
       ),
       sortable: true,

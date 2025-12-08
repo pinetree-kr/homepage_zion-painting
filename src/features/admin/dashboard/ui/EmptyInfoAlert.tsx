@@ -17,6 +17,8 @@ const getInfoTypeLabel = (type: EmptyInfo['type']) => {
       return '사업 정보';
     case 'contact':
       return '연락처 정보';
+    case 'settings':
+      return '게시판 연결 설정';
     default:
       return '정보';
   }
@@ -37,6 +39,8 @@ const getInfoTypeLink = (type: EmptyInfo['type'], field: string) => {
     return '/admin/site-settings/business';
   } else if (type === 'contact') {
     return '/admin/site-settings/default/contact';
+  } else if (type === 'settings') {
+    return '/admin/system/board-connections';
   }
   return '/admin';
 };

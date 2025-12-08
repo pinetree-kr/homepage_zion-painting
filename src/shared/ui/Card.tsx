@@ -20,6 +20,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       className={cn(
         'grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 pt-6',
+        // 'grid items-start gap-1.5 px-6 pt-6',
         className,
       )}
       {...props}

@@ -43,9 +43,10 @@ export default async function NewPostPage({ params }: NewPostPageProps) {
         boardCode={boardInfo.code}
         boardId={boardInfo.id}
         boardName={boardInfo.name}
-        allowGuest={allowGuest}
+        allowGuest={false}
         allowProductLink={allowProductLink}
         boardPolicies={boardPolicies}
+        hideStatusField={true}
       />
     </div>
   )

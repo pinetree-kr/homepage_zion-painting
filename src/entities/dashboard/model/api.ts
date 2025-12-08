@@ -1,9 +1,8 @@
 "use server"
 
 import { createServerClient } from '@/src/shared/lib/supabase/server';
-import type { DashboardStats, EmptyInfo } from './types';
+import type { DashboardStats, EmptyInfo, RecentPosts } from './types';
 import { getDaysAgoStartISOString } from '@/src/shared/lib/utils';
-import { Post } from '../../post/model/types';
 
 /**
  * 대시보드 통계 조회
@@ -48,15 +47,35 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   }
 }
 
+
+
 /**
  * 최근 문의글 조회 (최대 5개)
  */
-export async function getRecentQnA(limit: number = 5): Promise<Omit<Post,
-  'like_count' | 'comment_count' | 'thumbnail_url' | 'extra_json' | 'deleted_at'
-  | 'is_pinned' | 'is_secret' | 'view_count' | 'updated_at'
->[]> {
+export async function getRecentQnA(limit: number = 5): Promise<RecentPosts> {
   try {
     const supabase = await createServerClient();
+
+    const { data: settingData, error: settingDataError } = await supabase
+      .from('site_settings')
+      .select('inquiry_board_id:default_boards->inquiry->id')
+      .maybeSingle();
+
+    if (settingDataError) {
+      console.error('일반 문의글 게시판 조회 오류:', settingDataError);
+      return {
+        board_id: null,
+        items: [],
+      };
+    }
+
+    if (!settingData?.inquiry_board_id) {
+      console.log('일반 문의글 게시판 설정이 안되어 있습니다.');
+      return {
+        board_id: null,
+        items: [],
+      };
+    }
 
     const { data, error } = await supabase
       .from('posts')
@@ -64,7 +83,7 @@ export async function getRecentQnA(limit: number = 5): Promise<Omit<Post,
         id,
         title,
         content,
-        content_summary,
+        content_metadata,
         status,
         category:board_categories!inner (
           title
@@ -75,21 +94,22 @@ export async function getRecentQnA(limit: number = 5): Promise<Omit<Post,
       `)
       .is('deleted_at', null)
       .eq('status', 'published')
+      .eq('board_id', settingData.inquiry_board_id as string)
       .order('created_at', { ascending: false })
       .limit(limit);
 
     if (error) {
-      console.error('최근 문의글 조회 오류:', error);
+      console.error('최근 일반 문의글 조회 오류:', error);
       throw error;
     }
 
-    return (data || []).map((post: any) => ({
+    const items = (data || []).map((post: any) => ({
       id: post.id,
       board_id: post.board_id,
       category_id: post.category_id || null,
       title: post.title,
       content: post.content,
-      content_summary: post.content_summary || '',
+      content_metadata: post.content_metadata || { thumbnail_url: null, summary: '' },
       author_id: post.author_id || null,
       author_name: post.author_metadata?.name || null,
       author_email: post.author_metadata?.email || null,
@@ -97,21 +117,47 @@ export async function getRecentQnA(limit: number = 5): Promise<Omit<Post,
       status: post.status as 'published' | 'draft',
       created_at: post.created_at || null,
     }));
+
+    return {
+      board_id: settingData.inquiry_board_id as string,
+      items,
+    }
   } catch (error) {
-    console.error('최근 문의글 조회 오류:', error);
-    return [];
+    console.error('최근 일반 문의글 조회 오류:', error);
+    return {
+      board_id: null,
+      items: [],
+    };
   }
 }
 
 /**
  * 최근 견적글 조회 (최대 5개)
  */
-export async function getRecentQuotes(limit: number = 5): Promise<Omit<Post,
-  'like_count' | 'comment_count' | 'thumbnail_url' | 'extra_json' | 'deleted_at'
-  | 'is_pinned' | 'is_secret' | 'view_count' | 'updated_at'
->[]> {
+export async function getRecentQuotes(limit: number = 5): Promise<RecentPosts> {
   try {
     const supabase = await createServerClient();
+
+    const { data: settingData, error: settingDataError } = await supabase
+      .from('site_settings')
+      .select('quote_board_id:default_boards->quote->id')
+      .maybeSingle();
+
+    if (settingDataError) {
+      console.error('견적 문의글 게시판 조회 오류:', settingDataError);
+      return {
+        board_id: null,
+        items: [],
+      };
+    }
+
+    if (!settingData?.quote_board_id) {
+      console.log('견적 문의글 게시판 설정이 안되어 있습니다.');
+      return {
+        board_id: null,
+        items: [],
+      };
+    }
 
     const { data, error } = await supabase
       .from('posts')
@@ -119,7 +165,7 @@ export async function getRecentQuotes(limit: number = 5): Promise<Omit<Post,
         id,
         title,
         content,
-        content_summary,
+        content_metadata,
         status,
         category:board_categories!inner (
           title
@@ -130,21 +176,24 @@ export async function getRecentQuotes(limit: number = 5): Promise<Omit<Post,
       `)
       .is('deleted_at', null)
       .eq('status', 'published')
+      .eq('board_id', settingData.quote_board_id as string)
       .order('created_at', { ascending: false })
       .limit(limit);
 
     if (error) {
-      console.error('최근 견적글 조회 오류:', error);
+      console.error('최근 견적 문의글 조회 오류:', error);
       throw error;
     }
 
-    return (data || []).map((post: any) => ({
+
+
+    const items = (data || []).map((post: any) => ({
       id: post.id,
       board_id: post.board_id,
       category_id: post.category_id || null,
       title: post.title,
       content: post.content,
-      content_summary: post.content_summary || '',
+      content_metadata: post.content_metadata || { thumbnail_url: null, summary: '' },
       author_id: post.author_id || null,
       author_name: post.author_metadata?.name || null,
       author_email: post.author_metadata?.email || null,
@@ -152,9 +201,17 @@ export async function getRecentQuotes(limit: number = 5): Promise<Omit<Post,
       status: post.status as 'published' | 'draft',
       created_at: post.created_at || null,
     }));
+
+    return {
+      board_id: settingData.quote_board_id as string,
+      items,
+    }
   } catch (error) {
-    console.error('최근 견적글 조회 오류:', error);
-    return [];
+    console.error('최근 견적 문의글 조회 오류:', error);
+    return {
+      board_id: null,
+      items: [],
+    };
   }
 }
 
@@ -221,7 +278,7 @@ export async function getEmptyInfo(): Promise<EmptyInfo[]> {
     // 연락처 정보 체크 (site_settings에서)
     const { data: contactInfo, error: contactError } = await supabase
       .from('site_settings')
-      .select('contact')
+      .select('contact, default_boards')
       .is('deleted_at', null)
       .maybeSingle();
 
@@ -236,9 +293,39 @@ export async function getEmptyInfo(): Promise<EmptyInfo[]> {
       if (!contact.phone_primary || contact.phone_primary.trim() === '') {
         emptyInfo.push({ type: 'contact', field: 'phone_primary', label: '대표 전화' });
       }
+
+      // 게시판 연결 설정 체크 (default_boards에서)
+      const defaultBoards = (contactInfo.default_boards as any) || {};
+
+      // notice 게시판 체크
+      if (!defaultBoards.notice || !defaultBoards.notice.id) {
+        emptyInfo.push({ type: 'settings', field: 'notice', label: defaultBoards.notice?.name || '공지사항 게시판' });
+      }
+
+      // quote 게시판 체크
+      if (!defaultBoards.quote || !defaultBoards.quote.id) {
+        emptyInfo.push({ type: 'settings', field: 'quote', label: defaultBoards.quote?.name || '견적문의 게시판' });
+      }
+
+      // inquiry 게시판 체크
+      if (!defaultBoards.inquiry || !defaultBoards.inquiry.id) {
+        emptyInfo.push({ type: 'settings', field: 'inquiry', label: defaultBoards.inquiry?.name || 'Q&A 게시판' });
+      }
+
+      // review 게시판 체크
+      if (!defaultBoards.review || !defaultBoards.review.id) {
+        emptyInfo.push({ type: 'settings', field: 'review', label: defaultBoards.review?.name || '고객후기 게시판' });
+      }
+
+      // pds 게시판 체크
+      if (!defaultBoards.pds || !defaultBoards.pds.id) {
+        emptyInfo.push({ type: 'settings', field: 'pds', label: defaultBoards.pds?.name || '자료실 게시판' });
+      }
     } else {
       // 연락처 정보가 아예 없는 경우
       emptyInfo.push({ type: 'contact', field: 'all', label: '연락처 정보 전체' });
+      // 게시판 연결 설정도 없는 경우
+      emptyInfo.push({ type: 'settings', field: 'all', label: '게시판 연결 설정 전체' });
     }
 
     return emptyInfo;

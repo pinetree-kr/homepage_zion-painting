@@ -5,7 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { cookies } from "next/headers";
 
 import type { Database } from '../supabase-types';
-import { supabaseUrl, supabasePublishableKey } from './config';
+import { supabaseUrl, supabasePublishableKey, supabaseProjectId } from './config';
 
 /**
  * 서버 사이드용 Supabase 클라이언트 생성 함수
@@ -21,12 +21,29 @@ import { supabaseUrl, supabasePublishableKey } from './config';
  * const { data, error } = await supabase.from('users').select('*');
  * ```
  */
+
+
 export async function createServerClient(): Promise<SupabaseClient<Database>> {
   const cookieStore = await cookies();
   return createClient<Database>(supabaseUrl, supabasePublishableKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
+      },
+      setAll(cookies) {
+        if (supabaseProjectId) {
+          cookies.forEach(cookie => {
+            if (cookie.name == supabaseProjectId) {
+              cookieStore.set(cookie.name, cookie.value, cookie.options);
+            }
+          });
+        } else {
+          cookies.forEach(cookie => {
+            if (cookie.name.startsWith("sb-") && cookie.name.endsWith("-auth-token")) {
+              cookieStore.set(cookie.name, cookie.value, cookie.options);
+            }
+          });
+        }
       },
     },
   });

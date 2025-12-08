@@ -26,7 +26,7 @@ export default async function PostEditPage({ params }: PostEditPageProps) {
 
   const boardPolicies = await getBoardPolicies(board_id);
   // 서버 사이드에서 visibility 확인: 'public'이면 비로그인 사용자도 게시글 작성 가능
-  const allowGuest = boardInfo.visibility === 'public';
+  // const allowGuest = boardInfo.visibility === 'public';
   // 서버 사이드에서 board_id 기반으로 제품 연결 가능 여부 확인
   const allowProductLink = await checkBoardSupportsProductLinking(board_id);
 
@@ -35,11 +35,12 @@ export default async function PostEditPage({ params }: PostEditPageProps) {
       boardCode={boardInfo.code}
       boardId={boardInfo.id}
       boardName={boardInfo.name}
-      allowGuest={allowGuest}
+      allowGuest={false}
       allowProductLink={allowProductLink}
       boardPolicies={boardPolicies}
       postId={post_id}
       data={post}
+      hideStatusField={true}
     />
   );
 }
