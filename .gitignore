@@ -47,4 +47,5 @@ next-env.d.ts
 .mcp.json
 
 supabase/.env*
+supabase/.temp
 supabase/functions/.env*

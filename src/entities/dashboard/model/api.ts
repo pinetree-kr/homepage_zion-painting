@@ -1,8 +1,9 @@
 "use server"
 
 import { createServerClient } from '@/src/shared/lib/supabase/server';
-import type { DashboardStats, RecentPost, EmptyInfo } from './types';
+import type { DashboardStats, EmptyInfo } from './types';
 import { getDaysAgoStartISOString } from '@/src/shared/lib/utils';
+import { Post } from '../../post/model/types';
 
 /**
  * 대시보드 통계 조회
@@ -50,7 +51,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 /**
  * 최근 문의글 조회 (최대 5개)
  */
-export async function getRecentQnA(limit: number = 5): Promise<RecentPost[]> {
+export async function getRecentQnA(limit: number = 5): Promise<Omit<Post,
+  'like_count' | 'comment_count' | 'thumbnail_url' | 'extra_json' | 'deleted_at'
+  | 'is_pinned' | 'is_secret' | 'view_count' | 'updated_at'
+>[]> {
   try {
     const supabase = await createServerClient();
 
@@ -58,18 +62,19 @@ export async function getRecentQnA(limit: number = 5): Promise<RecentPost[]> {
       .from('posts')
       .select(`
         id,
-        type,
         title,
         content,
-        created_at,
+        content_summary,
         status,
-        category,
+        category:board_categories!inner (
+          title
+        ),
         author_id,
-        profiles:author_id (
-          name
-        )
+        author_metadata,
+        created_at
       `)
-      .eq('type', 'qna')
+      .is('deleted_at', null)
+      .eq('status', 'published')
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -80,14 +85,17 @@ export async function getRecentQnA(limit: number = 5): Promise<RecentPost[]> {
 
     return (data || []).map((post: any) => ({
       id: post.id,
-      type: 'qna' as const,
+      board_id: post.board_id,
+      category_id: post.category_id || null,
       title: post.title,
       content: post.content,
-      authorId: post.author_id || null,
-      authorName: post.profiles?.name || null,
-      createdAt: post.created_at || '',
+      content_summary: post.content_summary || '',
+      author_id: post.author_id || null,
+      author_name: post.author_metadata?.name || null,
+      author_email: post.author_metadata?.email || null,
+      author_phone: post.author_metadata?.phone || null,
       status: post.status as 'published' | 'draft',
-      category: post.category,
+      created_at: post.created_at || null,
     }));
   } catch (error) {
     console.error('최근 문의글 조회 오류:', error);
@@ -98,7 +106,10 @@ export async function getRecentQnA(limit: number = 5): Promise<RecentPost[]> {
 /**
  * 최근 견적글 조회 (최대 5개)
  */
-export async function getRecentQuotes(limit: number = 5): Promise<RecentPost[]> {
+export async function getRecentQuotes(limit: number = 5): Promise<Omit<Post,
+  'like_count' | 'comment_count' | 'thumbnail_url' | 'extra_json' | 'deleted_at'
+  | 'is_pinned' | 'is_secret' | 'view_count' | 'updated_at'
+>[]> {
   try {
     const supabase = await createServerClient();
 
@@ -106,18 +117,19 @@ export async function getRecentQuotes(limit: number = 5): Promise<RecentPost[]> 
       .from('posts')
       .select(`
         id,
-        type,
         title,
         content,
-        created_at,
+        content_summary,
         status,
-        category,
+        category:board_categories!inner (
+          title
+        ),
         author_id,
-        profiles:author_id (
-          name
-        )
+        author_metadata,
+        created_at
       `)
-      .eq('type', 'quote')
+      .is('deleted_at', null)
+      .eq('status', 'published')
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -128,14 +140,17 @@ export async function getRecentQuotes(limit: number = 5): Promise<RecentPost[]> 
 
     return (data || []).map((post: any) => ({
       id: post.id,
-      type: 'quote' as const,
+      board_id: post.board_id,
+      category_id: post.category_id || null,
       title: post.title,
       content: post.content,
-      authorId: post.author_id || null,
-      authorName: post.profiles?.name || null,
-      createdAt: post.created_at || '',
+      content_summary: post.content_summary || '',
+      author_id: post.author_id || null,
+      author_name: post.author_metadata?.name || null,
+      author_email: post.author_metadata?.email || null,
+      author_phone: post.author_metadata?.phone || null,
       status: post.status as 'published' | 'draft',
-      category: post.category,
+      created_at: post.created_at || null,
     }));
   } catch (error) {
     console.error('최근 견적글 조회 오류:', error);
