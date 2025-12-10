@@ -182,7 +182,7 @@ export default function PostForm({
             author_id: profile.id,
             author_name: profile.name || '',
             author_email: profile.email || '',
-            author_phone: profile.phone || '',
+            author_phone: (profile.metadata as { phone?: string } | null)?.phone || '',
           }));
         }
 

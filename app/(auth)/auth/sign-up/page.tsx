@@ -8,6 +8,7 @@ import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
+import { checkEmailConfirmed } from '@/src/features/auth/api/auth-actions';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -50,6 +51,17 @@ export default function SignUpPage() {
     try {
       // Supabase 회원가입
       const supabase = createBrowserClient();
+
+      const { success, error } = await checkEmailConfirmed(formData.email);
+
+      // 이미 인증완료된 계정시
+      if (success) {
+        setError('이메일이 이미 사용중입니다.');
+        setLoading(false);
+        return;
+      }
+
+      // 인증완료되지 않은 계정시
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -57,6 +69,7 @@ export default function SignUpPage() {
           data: {
             name: formData.name,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
@@ -72,11 +85,8 @@ export default function SignUpPage() {
         return;
       }
 
-      // profiles 테이블은 트리거(handle_new_user)에 의해 자동 생성됨
-      // 트리거가 auth.users에 새 사용자가 생성될 때 자동으로 profiles 레코드를 생성합니다
+      router.push(`/auth/callback?email=${encodeURIComponent(formData.email)}&requested=true`);
 
-      // 회원가입 성공 시 이메일 인증 안내 페이지로 이동
-      router.push(`/auth/callback?email=${encodeURIComponent(formData.email)}&verified=false`);
     } catch (err) {
       console.error('회원가입 중 오류 발생:', err);
       setError('회원가입 중 오류가 발생했습니다');
@@ -221,7 +231,7 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-10 bg-teal-500 hover:bg-teal-600 disabled:bg-teal-300 disabled:cursor-not-allowed text-white rounded-md px-4 py-2 flex items-center justify-center gap-2 transition-colors"
+            className="w-full h-10 bg-teal-500 hover:bg-gray-800 disabled:bg-teal-300 disabled:cursor-not-allowed text-white rounded-md px-4 py-2 flex items-center justify-center gap-2 transition-colors mt-8"
           >
             {loading ? '회원가입 중...' : '회원가입'}
             {!loading && (

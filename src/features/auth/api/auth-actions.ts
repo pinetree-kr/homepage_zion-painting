@@ -3,6 +3,9 @@
 import { headers } from 'next/headers';
 import { logAdminLogin, logLoginFailed } from '@/src/entities/system';
 import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
+import { createSecretClient } from '@/src/shared/lib/supabase/service';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous';
 
 /**
  * 클라이언트 IP 주소 가져오기
@@ -67,3 +70,44 @@ export async function recordLoginFailed(email: string): Promise<{ success: boole
   }
 }
 
+
+export async function checkEmailConfirmed(email: string): Promise<{ success: boolean, error?: string }> {
+  const { env } = await getCloudflareContext({ async: true });
+  const supabase = await createSecretClient(env.SUPABASE_SECRET_KEY);
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, email, verified:metadata->verified')
+    .eq('email', email)
+    .is('deleted_at', null)
+    .maybeSingle();
+
+  if (error) {
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+
+  if (!data) {
+    return { success: false, error: 'email not found' };
+  }
+
+  if (!data.verified) {
+    return { success: false, error: 'email not confirmed' };
+  }
+
+  return { success: data.verified as boolean };
+}
+
+export async function verifyTokenHash(token_hash: string, type: string): Promise<{ success: boolean, error?: string }> {
+  const supabase = createAnonymousServerClient();
+  const { data, error } = await supabase.auth.verifyOtp({
+    token_hash,
+    type: type as any,
+  })
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}

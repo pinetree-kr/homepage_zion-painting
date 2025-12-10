@@ -84,11 +84,12 @@ export default function SetupForm({
         onSuccess();
       } else if (isInitialSetup) {
         // 초기 설정 페이지에서 사용하는 경우
-        router.push('/auth/sign-in');
+        // router.push('/auth/sign-in');
       }
     } catch (err) {
       console.error('관리자 계정 생성 중 오류 발생:', err);
       setError('관리자 계정 생성 중 오류가 발생했습니다');
+    } finally {
       setLoading(false);
     }
   };

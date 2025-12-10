@@ -672,9 +672,8 @@ export type Database = {
           deleted_at: string | null
           email: string | null
           id: string
-          last_login: string | null
+          metadata: Json | null
           name: string | null
-          phone: string | null
           updated_at: string | null
         }
         Insert: {
@@ -682,9 +681,8 @@ export type Database = {
           deleted_at?: string | null
           email?: string | null
           id: string
-          last_login?: string | null
+          metadata?: Json | null
           name?: string | null
-          phone?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -692,9 +690,8 @@ export type Database = {
           deleted_at?: string | null
           email?: string | null
           id?: string
-          last_login?: string | null
+          metadata?: Json | null
           name?: string | null
-          phone?: string | null
           updated_at?: string | null
         }
         Relationships: []

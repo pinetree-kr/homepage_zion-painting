@@ -46,7 +46,7 @@ export default async function SetupPage() {
   // 관리자 계정이 없으면 생성 폼 표시
   return (
     <div className="flex-1 flex items-center justify-center p-8">
-      <SetupForm />
+      <SetupForm isInitialSetup={true} />
     </div>
   );
 }

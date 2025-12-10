@@ -297,7 +297,7 @@ export async function savePost(
     // 프로필 정보 가져오기
     const { data: profile } = await supabase
       .from('profiles')
-      .select('name, email, phone')
+      .select('name, email, metadata')
       .eq('id', user.id)
       .single();
 
@@ -331,7 +331,7 @@ export async function savePost(
       author_metadata: {
         name: post.author_metadata?.name || profile?.name || null,
         email: post.author_metadata?.email || profile?.email || null,
-        phone: post.author_metadata?.phone || profile?.phone || null,
+        phone: post.author_metadata?.phone || (profile?.metadata as { phone?: string } | null)?.phone || null,
       },
       status: post.status || 'draft',
       is_pinned: post.is_pinned || false,

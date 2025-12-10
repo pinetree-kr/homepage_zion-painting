@@ -200,11 +200,15 @@ export default function AdminManagement({
     {
       id: 'last_login',
       header: '최근 접속',
-      accessor: (row) => (
-        <span className="text-sm text-gray-600">
-          {row.last_login ? formatDate(row.last_login ?? '') : '-'}
-        </span>
-      ),
+      accessor: (row) => {
+        const metadata = row.metadata as { last_login?: string } | null;
+        const lastLogin = metadata?.last_login;
+        return (
+          <span className="text-sm text-gray-600">
+            {lastLogin ? formatDate(lastLogin) : '-'}
+          </span>
+        );
+      },
       sortable: true,
       width: '17.5%'
     }

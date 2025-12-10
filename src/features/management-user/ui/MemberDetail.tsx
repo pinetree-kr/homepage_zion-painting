@@ -88,7 +88,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
               <label className="text-sm font-medium text-gray-500">전화번호</label>
               <div className="flex items-center gap-2 text-base">
                 <Phone className="h-4 w-4 text-gray-400" />
-                <span>{member.phone || '-'}</span>
+                <span>{(member.metadata as { phone?: string } | null)?.phone || '-'}</span>
               </div>
             </div>
 
@@ -111,7 +111,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
               <label className="text-sm font-medium text-gray-500">최근 로그인</label>
               <div className="flex items-center gap-2 text-base">
                 <Calendar className="h-4 w-4 text-gray-400" />
-                <span>{formatDate(member.last_login)}</span>
+                <span>{formatDate((member.metadata as { last_login?: string } | null)?.last_login || '')}</span>
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 "use server"
 
-import { createServiceRoleClient } from '@/src/shared/lib/supabase/service';
+import { createSecretClient } from '@/src/shared/lib/supabase/service';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 /**
@@ -11,14 +11,14 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 export async function checkAdminExists(): Promise<boolean> {
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const supabase = await createServiceRoleClient(env.SUPABASE_SECRET_KEY);
+    const supabase = await createSecretClient(env.SUPABASE_SECRET_KEY);
 
     // administrators 테이블에서 관리자 계정이 있는지 확인
     const { count, error } = await supabase
       .from('administrators')
       .select('*', { count: 'exact', head: true })
       .is('deleted_at', null);
-    
+
     if (error) {
       console.error('관리자 계정 확인 오류:', error);
       return false;
@@ -49,7 +49,7 @@ export async function createAdminAccount(
 
     const { env } = await getCloudflareContext({ async: true });
     // 서비스 롤 클라이언트로 회원가입 (auth.users에 사용자 생성)
-    const supabase = await createServiceRoleClient(env.SUPABASE_SECRET_KEY);
+    const supabase = await createSecretClient(env.SUPABASE_SECRET_KEY);
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
@@ -57,6 +57,8 @@ export async function createAdminAccount(
       email_confirm: true, // 이메일 인증 없이 바로 활성화
       user_metadata: {
         name,
+        verified: true,
+        // email_verified: true,
       },
     });
 
@@ -76,7 +78,7 @@ export async function createAdminAccount(
     // 관리자의 경우 status를 'approved'로 업데이트해야 할 수 있음
     // 트리거가 생성한 후 잠시 대기 후 업데이트
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     const { error: profileUpdateError } = await supabase
       .from('profiles')
       .update({

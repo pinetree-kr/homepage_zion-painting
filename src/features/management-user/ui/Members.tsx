@@ -81,23 +81,30 @@ export default function Members({
     {
       id: 'phone',
       header: '전화번호',
-      accessor: (row) => (
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Phone className="h-3.5 w-3.5 text-gray-400" />
-          {row.phone || '-'}
-        </div>
-      ),
-      width: '20%'
+      accessor: (row) => {
+        const metadata = row.metadata as { phone?: string } | null;
+        const phone = metadata?.phone;
+        return (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Phone className="h-3.5 w-3.5 text-gray-400" />
+            {phone || '-'}
+          </div>
+        );
+      },
+      width: '20%',
+      sortable: true
     },
     {
       id: 'last_login',
       header: '최근 로그인',
       accessor: (row) => {
-        if (!row.last_login) return '-';
+        const metadata = row.metadata as { last_login?: string } | null;
+        const lastLogin = metadata?.last_login;
+        if (!lastLogin) return '-';
         return (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Calendar className="h-3.5 w-3.5 text-gray-400" />
-            {formatDateSimple(row.last_login)}
+            {formatDateSimple(lastLogin)}
           </div>
         );
       },

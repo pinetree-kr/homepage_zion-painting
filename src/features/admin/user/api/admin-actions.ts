@@ -42,7 +42,7 @@ export async function searchAdmins(
         .select('id')
         .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
         .is('deleted_at', null);
-      
+
       if (profiles && profiles.length > 0) {
         adminIds = profiles.map(p => p.id);
       } else {
@@ -126,7 +126,7 @@ export async function searchAdmins(
     const adminIdList = admins.map(a => a.id);
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, name, email, phone, last_login, created_at, updated_at')
+      .select('id, name, email, metadata, created_at, updated_at')
       .in('id', adminIdList)
       .is('deleted_at', null);
 
@@ -136,12 +136,12 @@ export async function searchAdmins(
     // 데이터 변환: 관리자와 프로필 데이터 결합
     const members: Member[] = admins.map((admin: any) => {
       const profile = profileMap.get(admin.id);
+      const metadata = profile?.metadata as { phone?: string; last_login?: string; verified?: boolean; signup_provider?: string } | null;
       return {
         id: admin.id,
         name: profile?.name || null,
         email: profile?.email || null,
-        phone: profile?.phone || null,
-        last_login: profile?.last_login || null,
+        metadata: metadata || null,
         created_at: admin.created_at || null,
         updated_at: admin.updated_at || null,
       };
@@ -160,8 +160,10 @@ export async function searchAdmins(
           aValue = a.email;
           bValue = b.email;
         } else if (sortColumn === 'last_login') {
-          aValue = a.last_login || null;
-          bValue = b.last_login || null;
+          const aMetadata = a.metadata as { last_login?: string } | null;
+          const bMetadata = b.metadata as { last_login?: string } | null;
+          aValue = aMetadata?.last_login || null;
+          bValue = bMetadata?.last_login || null;
         }
 
         const aStr = aValue || '';
@@ -222,6 +224,8 @@ export async function createAdminAccount(
       },
     });
 
+    console.log({ authData, authError })
+
     if (authError) {
       return {
         success: false,
@@ -237,7 +241,7 @@ export async function createAdminAccount(
     // 트리거가 auth.users에 새 사용자가 생성될 때 자동으로 profiles 레코드를 생성합니다
     // 트리거가 생성한 후 잠시 대기 후 업데이트
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     const { error: profileUpdateError } = await supabase
       .from('profiles')
       .update({

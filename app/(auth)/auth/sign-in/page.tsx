@@ -39,6 +39,10 @@ export default function SignInPage() {
             console.error('로그인 실패 로그 기록 오류:', logError);
           }
         }
+        else if (authError.code === 'email_not_confirmed') {
+          // setError('이메일이 인증되지 않았습니다. 이메일을 확인해주세요.');
+          router.push(`/auth/callback?email=${encodeURIComponent(email)}&verified=false`);
+        }
         else {
           setError(authError.message);
         }
@@ -52,14 +56,27 @@ export default function SignInPage() {
         return;
       }
 
-      // 로그인 성공 시 last_login 업데이트
-      const { error: updateError } = await (supabaseClient
-        .from('profiles'))
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', authData.user.id);
+      // 로그인 성공 시 last_login 업데이트 (metadata에 저장)
+      const { data: currentProfile } = await supabaseClient
+        .from('profiles')
+        .select('metadata')
+        .eq('id', authData.user.id)
+        .single();
 
-      if (updateError) {
-        console.error('last_login 업데이트 실패:', updateError);
+      if (currentProfile) {
+        const updatedMetadata = {
+          ...(currentProfile.metadata as object || {}),
+          last_login: new Date().toISOString()
+        };
+
+        const { error: updateError } = await supabaseClient
+          .from('profiles')
+          .update({ metadata: updatedMetadata })
+          .eq('id', authData.user.id);
+
+        if (updateError) {
+          console.error('last_login 업데이트 실패:', updateError);
+        }
       }
 
       // administrators 테이블에서 관리자 여부 확인

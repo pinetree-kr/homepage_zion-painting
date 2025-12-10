@@ -38,9 +38,9 @@ export async function searchUsers(
       .select('*', { count: 'exact' })
       .is('deleted_at', null);
 
-    // 검색어가 있으면 이름, 이메일, 전화번호에서 검색
+    // 검색어가 있으면 이름, 이메일에서 검색 (phone은 metadata에 있으므로 별도 처리)
     if (searchTerm.trim()) {
-      query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+      query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
     }
 
     // 전체 개수 조회
@@ -64,9 +64,9 @@ export async function searchUsers(
       .is('deleted_at', null)
       .range(from, to);
 
-    // 검색어가 있으면 이름, 이메일, 전화번호에서 검색
+    // 검색어가 있으면 이름, 이메일에서 검색 (phone은 metadata에 있으므로 별도 처리)
     if (searchTerm.trim()) {
-      dataQuery = dataQuery.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+      dataQuery = dataQuery.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
     }
 
     // 정렬 적용
@@ -75,9 +75,8 @@ export async function searchUsers(
       const columnMapping: Record<string, string> = {
         'name': 'name',
         'email': 'email',
-        'phone': 'phone',
-        'last_login': 'last_login',
         'created_at': 'created_at',
+        // phone과 last_login은 metadata에 있으므로 클라이언트 사이드 정렬
       };
 
       const dbColumn = columnMapping[sortColumn];
@@ -104,8 +103,37 @@ export async function searchUsers(
       return { data: [], total: 0, totalPages: 0 };
     }
 
+    // phone과 last_login은 metadata에 있으므로 클라이언트 사이드 정렬
+    let sortedData = data || [];
+    if (sortColumn && ['phone', 'last_login'].includes(sortColumn)) {
+      sortedData = [...sortedData].sort((a, b) => {
+        const aMetadata = a.metadata as { phone?: string; last_login?: string } | null;
+        const bMetadata = b.metadata as { phone?: string; last_login?: string } | null;
+        
+        let aValue: string | null = null;
+        let bValue: string | null = null;
+        
+        if (sortColumn === 'phone') {
+          aValue = aMetadata?.phone || null;
+          bValue = bMetadata?.phone || null;
+        } else if (sortColumn === 'last_login') {
+          aValue = aMetadata?.last_login || null;
+          bValue = bMetadata?.last_login || null;
+        }
+        
+        const aStr = aValue || '';
+        const bStr = bValue || '';
+        
+        if (sortDirection === 'asc') {
+          return aStr.localeCompare(bStr);
+        } else {
+          return bStr.localeCompare(aStr);
+        }
+      });
+    }
+
     return {
-      data: data || [],
+      data: sortedData,
       total,
       totalPages
     };
