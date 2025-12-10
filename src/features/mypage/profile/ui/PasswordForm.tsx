@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/src/shared/ui';
+import { CardHeader, CardTitle, CardDescription } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Lock as LockIcon } from 'lucide-react';
 
@@ -68,17 +68,17 @@ export default function PasswordForm({ onUpdate }: PasswordFormProps) {
   };
 
   return (
-    <Card className="border border-[#E2E8F0] rounded-2xl">
-      <CardHeader className="px-6 pt-6 pb-0">
-        <CardTitle className="flex items-center gap-2 text-base font-normal text-[#1A1A1A]">
-          <LockIcon className="w-5 h-5" />
-          비밀번호 변경
-        </CardTitle>
-        <CardDescription className="text-base text-[#4D4D4D] mt-2">
-          비밀번호를 변경하려면 아래 필드를 모두 입력하세요
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="px-6 pb-6 pt-6">
+    <div className="space-y-6">
+      <div>
+        <CardHeader className="px-0 pt-0 pb-4">
+          <CardTitle className="flex items-center gap-2 text-base font-normal text-[#1A1A1A]">
+            <LockIcon className="w-5 h-5" />
+            비밀번호 변경
+          </CardTitle>
+          <CardDescription className="text-base text-[#4D4D4D] mt-2">
+            비밀번호를 변경하려면 아래 필드를 모두 입력하세요
+          </CardDescription>
+        </CardHeader>
         <div className="space-y-4">
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
@@ -240,8 +240,8 @@ export default function PasswordForm({ onUpdate }: PasswordFormProps) {
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

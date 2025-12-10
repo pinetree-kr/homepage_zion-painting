@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Container, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
+import { Container, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/src/shared/ui';
 import ProfileForm from '@/src/features/mypage/profile/ui/ProfileForm';
 import PasswordForm from '@/src/features/mypage/profile/ui/PasswordForm';
 import type { Profile } from '@/src/entities/user';
@@ -118,47 +118,53 @@ export default function ProfilePage() {
     return null;
   }
 
+  // provider 확인 (이메일 가입자인지 확인)
+  const provider = user.metadata?.signup_provider || 'email';
+  const isEmailProvider = provider === 'email';
+
   return (
-    <div className="">
-      <Container className="lg:max-w-4xl mx-auto">
-        {/* 헤더 */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-normal text-[#101828]">내 정보</h1>
-            <p className="text-base text-[#4D4D4D]">
-              프로필 정보 및 비밀번호를 변경할 수 있습니다
+    <>
+      <Container className="lg:max-w-6xl mx-auto">
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-normal text-[#101828]">프로필</h1>
+            <p className="text-base text-[#4D4D4D] mt-2">
+              회원님의 정보를 수정할 수 있습니다
             </p>
           </div>
-        </div>
-
-        {/* 구분선 */}
-        <div className="h-px bg-[#E2E8F0] mb-6" />
-
-        {/* 폼 섹션 */}
-        <div className="space-y-6">
-          <ProfileForm user={user} onUpdate={handleProfileUpdate} />
-          <PasswordForm onUpdate={handlePasswordUpdate} />
-
-          {/* 버튼 그룹 */}
-          <div className="flex justify-end gap-3 pt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              className="h-9 px-4 py-2 border border-[#E2E8F0] rounded-[10px] text-sm text-[#1A1A1A] bg-white hover:bg-gray-50"
-            >
-              취소
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="h-9 px-4 py-2 bg-gradient-to-b from-[#1A2C6D] to-[#2CA7DB] rounded-[10px] text-sm text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <Save className="w-4 h-4" />
-              저장
-            </Button>
-          </div>
+          {/* 폼 섹션 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl font-normal text-[#101828]">기본 정보</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <ProfileForm user={user} onUpdate={handleProfileUpdate} />
+                {isEmailProvider && <PasswordForm onUpdate={handlePasswordUpdate} />}
+              </div>
+            </CardContent>
+            <CardFooter className="justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                size="lg"
+                className="h-[42px] gap-2"
+              >
+                취소
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving}
+                size="lg"
+                className="h-[42px] gap-2"
+              >
+                <Save className="h-4 w-4" />
+                {isSaving ? '저장 중...' : '저장'}
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       </Container>
 
@@ -195,7 +201,7 @@ export default function ProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 
