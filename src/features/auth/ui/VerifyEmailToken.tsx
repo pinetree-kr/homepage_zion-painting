@@ -8,12 +8,12 @@ import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button } from '@/src/shared/ui';
 import { verifyTokenHash } from '../api/auth-actions';
 
-interface VerifyTokenProps {
-    token: string;
+interface VerifyEmailTokenProps {
+    token_hash: string;
     email: string;
 }
 
-function VerifyTokenContent({ token, email }: VerifyTokenProps) {
+function VerifyEmailTokenContent({ email, token_hash }: VerifyEmailTokenProps) {
     const router = useRouter();
     const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'pending'>('loading');
     const [message, setMessage] = useState('');
@@ -74,12 +74,12 @@ function VerifyTokenContent({ token, email }: VerifyTokenProps) {
     }, [email]);
 
     useEffect(() => {
-        if (token) {
-            verifyTokenHash(token, 'signup').then(({ success, error }) => {
+        if (token_hash) {
+            verifyTokenHash(token_hash, 'signup').then(({ success, error }) => {
                 // 회원가입 후 이메일 인증 대기 상태
                 if (!success || error) {
                     setStatus('pending');
-                    setMessage('인증에 실패하였습니다. 링크가 만료되었거나 유효하지 않습니다.');
+                    setMessage('링크가 만료되었거나 유효하지 않습니다.');
                     return;
                 }
 
@@ -95,7 +95,7 @@ function VerifyTokenContent({ token, email }: VerifyTokenProps) {
                 setMessage('인증에 실패했습니다. 링크가 만료되었거나 유효하지 않습니다.');
             });
         }
-    }, [token, router]);
+    }, [token_hash, router]);
 
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
@@ -168,7 +168,7 @@ function VerifyTokenContent({ token, email }: VerifyTokenProps) {
                                     </svg>
                                 </div>
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">이메일 확인 필요</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">이메일 인증 실패</h2>
                             <p className="text-gray-600 mb-4">{message}</p>
                             <p className="text-sm text-gray-500 mb-6">
                                 이메일을 확인하고 인증 링크를 클릭해주세요.
@@ -225,7 +225,7 @@ function VerifyTokenContent({ token, email }: VerifyTokenProps) {
     );
 }
 
-export default function VerifyToken({ token, email }: VerifyTokenProps) {
+export default function VerifyEmailToken({ email, token_hash }: VerifyEmailTokenProps) {
     return (
         <Suspense
             fallback={
@@ -244,7 +244,7 @@ export default function VerifyToken({ token, email }: VerifyTokenProps) {
                 </div>
             }
         >
-            <VerifyTokenContent token={token} email={email} />
+            <VerifyEmailTokenContent email={email} token_hash={token_hash} />
         </Suspense>
     );
 }

@@ -36,22 +36,24 @@ BEGIN
   -- Supabase는 auth.identities 테이블에 provider 정보를 저장합니다
   -- 트리거 실행 시점에 identities가 아직 생성되지 않았을 수 있으므로
   -- 기본값으로 'email'을 설정하고, 나중에 애플리케이션에서 업데이트할 수 있습니다
-  BEGIN
-    SELECT provider INTO signup_provider
-    FROM auth.identities
-    WHERE user_id = NEW.id
-    ORDER BY created_at ASC
-    LIMIT 1;
+  -- BEGIN
+  --   SELECT provider INTO signup_provider
+  --   FROM auth.identities
+  --   WHERE user_id = NEW.id
+  --   ORDER BY created_at ASC
+  --   LIMIT 1;
     
-    -- provider를 찾지 못한 경우 기본값 사용
-    IF signup_provider IS NULL THEN
-      signup_provider := 'email';
-    END IF;
-  EXCEPTION
-    WHEN OTHERS THEN
-      -- auth.identities 접근 실패 시 기본값 사용
-      signup_provider := 'email';
-  END;
+  --   -- provider를 찾지 못한 경우 기본값 사용
+  --   IF signup_provider IS NULL THEN
+  --     signup_provider := 'email';
+  --   END IF;
+  -- EXCEPTION
+  --   WHEN OTHERS THEN
+  --     -- auth.identities 접근 실패 시 기본값 사용
+  --     signup_provider := 'email';
+  -- END;
+
+  signup_provider := COALESCE(NEW.raw_app_meta_data->>'provider', 'email');
   
   -- phone 정보 추출
   user_phone := COALESCE(

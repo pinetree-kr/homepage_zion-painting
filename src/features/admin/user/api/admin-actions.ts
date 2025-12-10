@@ -352,7 +352,7 @@ export async function sendPasswordResetEmail(
     // 패스워드 리셋 링크 생성
     // generateLink를 호출하면 Supabase가 자동으로 이메일을 발송합니다
     // (Supabase 설정에 따라 자동 발송 여부가 결정됩니다)
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:8080';
     const { data, error } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email: email,

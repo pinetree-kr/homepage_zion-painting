@@ -186,7 +186,7 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
                     className="relative h-10 w-10 rounded-full text-white flex items-center border border-gray-50/80 justify-center hover:opacity-80 transition-opacity outline-none"
                     style={{ backgroundColor }}
                 >
-                    <span className="text-sm font-medium">{user.name?.charAt(0)}</span>
+                    <span className="text-sm font-medium">{user.name?.charAt(0)?.toUpperCase()}</span>
                 </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
