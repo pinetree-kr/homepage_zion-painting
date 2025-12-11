@@ -6,6 +6,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { revalidatePath } from 'next/cache';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/src/shared/lib/supabase-types';
+import { getCurrentISOString } from '@/src/shared/lib/utils';
 import type { Member } from '@/src/entities';
 
 /**
@@ -78,7 +79,7 @@ export async function searchAdmins(
 
     let dataQuery = supabase
       .from('administrators')
-      .select('id, role, created_at, updated_at')
+      .select('id, role, metadata, created_at, updated_at')
       .is('deleted_at', null)
       .range(from, to);
 
@@ -136,12 +137,20 @@ export async function searchAdmins(
     // 데이터 변환: 관리자와 프로필 데이터 결합
     const members: Member[] = admins.map((admin: any) => {
       const profile = profileMap.get(admin.id);
-      const metadata = profile?.metadata as { phone?: string; last_login?: string; verified?: boolean; signup_provider?: string } | null;
+      const profileMetadata = profile?.metadata as { phone?: string; last_login?: string; verified?: boolean; signup_provider?: string } | null;
+      const adminMetadata = admin.metadata as { verified?: boolean } | null;
+
+      // administrators.metadata.verified를 profile metadata에 추가
+      const combinedMetadata = {
+        ...profileMetadata,
+        admin_verified: adminMetadata?.verified ?? true, // 기본값은 true (기존 관리자)
+      };
+
       return {
         id: admin.id,
         name: profile?.name || null,
         email: profile?.email || null,
-        metadata: metadata || null,
+        metadata: combinedMetadata || null,
         created_at: admin.created_at || null,
         updated_at: admin.updated_at || null,
       };
@@ -221,6 +230,7 @@ export async function createAdminAccount(
       email_confirm: true, // 이메일 인증 없이 바로 활성화
       user_metadata: {
         name,
+        role: 'system', // 관리자 역할 (트리거에서 administrators 레코드 자동 생성)
       },
     });
 
@@ -255,21 +265,8 @@ export async function createAdminAccount(
       // 프로필 업데이트 실패해도 계속 진행
     }
 
-    // administrators 테이블에 관리자 레코드 생성
-    const { error: adminError } = await supabase
-      .from('administrators')
-      .insert({
-        id: authData.user.id,
-        role: 'system', // 기본값: system 관리자
-      });
-
-    if (adminError) {
-      console.error('관리자 레코드 생성 오류:', adminError);
-      return {
-        success: false,
-        error: '관리자 레코드 생성에 실패했습니다: ' + adminError.message
-      };
-    }
+    // administrators 레코드는 트리거(handle_new_user)에 의해 자동 생성됨
+    // user_metadata에 role: 'system'이 있으면 트리거가 자동으로 administrators 레코드를 생성함
 
     // 화면 업데이트를 위한 캐시 무효화
     revalidatePath('/admin/system/administrators');
@@ -343,22 +340,15 @@ export async function updateAdminAccount(
  * Supabase를 통해 패스워드 리셋 링크가 포함된 이메일을 발송합니다.
  */
 export async function sendPasswordResetEmail(
-  email: string
+  email: string,
+  redirectTo: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { env } = await getCloudflareContext({ async: true });
     const supabase = await createServiceRoleClient(env.SUPABASE_SECRET_KEY);
 
-    // 패스워드 리셋 링크 생성
-    // generateLink를 호출하면 Supabase가 자동으로 이메일을 발송합니다
-    // (Supabase 설정에 따라 자동 발송 여부가 결정됩니다)
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:8080';
-    const { data, error } = await supabase.auth.admin.generateLink({
-      type: 'recovery',
-      email: email,
-      options: {
-        redirectTo: `${siteUrl}/auth/reset-password`,
-      },
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${redirectTo}?type=recovery`,
     });
 
     if (error) {
@@ -382,6 +372,134 @@ export async function sendPasswordResetEmail(
       success: false,
       error: error instanceof Error ? error.message : '패스워드 초기화 이메일 발송 중 오류가 발생했습니다.'
     };
+  }
+}
+
+/**
+ * 관리자 초대 이메일 발송
+ * Secret Key를 사용하여 RLS 정책을 우회합니다.
+ * Supabase를 통해 관리자 초대 링크가 포함된 이메일을 발송합니다.
+ * 초대 링크를 통해 계정을 생성한 사용자는 관리자 권한을 부여받습니다.
+ */
+export async function sendAdminInviteEmail(
+  email: string,
+  redirectTo: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const supabase = await createServiceRoleClient(env.SUPABASE_SECRET_KEY);
+
+    // 이메일 중복 확인 (profiles 테이블에서 확인)
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (existingProfile) {
+      return { success: false, error: '이미 존재하는 이메일입니다.' };
+    }
+
+    const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${redirectTo}?type=invite`,
+      data: {
+        role: 'system',
+        password_required: true, // 첫 암호 설정 필수 플래그
+        invite_pending: true, // 초대 중 플래그 (트리거에서 profiles metadata에 복사됨)
+      },
+    });
+
+    if (error) {
+      return {
+        success: false,
+        error: '관리자 초대 이메일 발송에 실패했습니다: ' + error.message
+      };
+    }
+
+    if (!data || !data.user) {
+      return {
+        success: false,
+        error: '관리자 초대 링크 생성에 실패했습니다.'
+      };
+    }
+
+    // administrators 레코드와 profiles metadata의 invite_pending은 
+    // 트리거(handle_new_user)에 의해 자동으로 처리됨
+    // user_metadata에 role: 'system'과 invite_pending: true가 있으면
+    // 트리거가 자동으로 administrators 레코드를 생성하고 profiles metadata에 invite_pending을 추가함
+
+    return { success: true };
+  } catch (error) {
+    console.error('관리자 초대 이메일 발송 중 오류 발생:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '관리자 초대 이메일 발송 중 오류가 발생했습니다.'
+    };
+  }
+}
+
+/**
+ * 관리자 삭제 (soft delete)
+ */
+export async function deleteAdmin(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createServerClient();
+
+    // 사용자 인증 상태 확인
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: '인증되지 않은 사용자입니다.' };
+    }
+
+    // 관리자 여부 확인
+    const { data: adminData, error: adminError } = await supabase
+      .from('administrators')
+      .select('id')
+      .eq('id', user.id)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (adminError || !adminData) {
+      return { success: false, error: '관리자 권한이 필요합니다.' };
+    }
+
+
+    const { data: forDeleteAdminData, error: forDeleteAdminError } = await supabase
+      .from('administrators')
+      .select('id')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (forDeleteAdminError || !forDeleteAdminData) {
+      return { success: false, error: '관리자를 찾을 수 없습니다.' };
+    }
+
+    // 자기 자신을 삭제하려는 경우 방지
+    if (forDeleteAdminData.id === user.id) {
+      return { success: false, error: '자기 자신을 삭제할 수 없습니다.' };
+    }
+
+    // soft delete: deleted_at 필드 업데이트
+    const { error } = await supabase
+      .from('administrators')
+      .update({ deleted_at: getCurrentISOString() })
+      .eq('id', id)
+      .is('deleted_at', null); // 이미 삭제된 것은 제외
+
+    if (error) {
+      console.error('관리자 삭제 오류:', error);
+      return { success: false, error: error.message || '관리자 삭제에 실패했습니다.' };
+    }
+
+    // 화면 업데이트를 위한 캐시 무효화
+    revalidatePath('/admin/system/administrators');
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('관리자 삭제 중 예외 발생:', error);
+    return { success: false, error: error.message || '알 수 없는 오류가 발생했습니다.' };
   }
 }
 

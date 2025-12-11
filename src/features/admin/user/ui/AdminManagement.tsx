@@ -10,7 +10,8 @@ import {
   Trash2,
   Edit,
   Calendar,
-  Key
+  Key,
+  UserRoundPlus
 } from 'lucide-react';
 import { Card } from '@/src/shared/ui';
 import { Button } from '@/src/shared/ui';
@@ -29,7 +30,7 @@ import { toast } from 'sonner';
 import { DataTable, DataTableColumn, DataTableAction, DataTablePagination, DataTableSearchBar } from '@/src/shared/ui';
 import { formatDateKorean, formatDateSimple, generateUserColor, rgbToCss } from '@/src/shared/lib/utils';
 import SetupForm from '@/src/features/setup/ui/SetupForm';
-import { createAdminAccount, updateAdminAccount, sendPasswordResetEmail } from '../api/admin-actions';
+import { createAdminAccount, updateAdminAccount, sendPasswordResetEmail, sendAdminInviteEmail, deleteAdmin } from '../api/admin-actions';
 
 interface AdminManagementProps {
   items: Member[];
@@ -56,6 +57,9 @@ export default function AdminManagement({
   const [editingAdmin, setEditingAdmin] = useState<Member | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
 
   const refreshPage = () => {
     router.refresh();
@@ -111,8 +115,9 @@ export default function AdminManagement({
     setIsResettingPassword(true);
 
     try {
-      const result = await sendPasswordResetEmail(adminToResetPassword.email);
-      
+      const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/auth/callback/set-password`;
+      const result = await sendPasswordResetEmail(adminToResetPassword.email, redirectTo);
+
       if (!result.success) {
         toast.error(result.error || '패스워드 초기화 이메일 발송에 실패했습니다');
         setIsResettingPassword(false);
@@ -130,12 +135,60 @@ export default function AdminManagement({
     }
   };
 
-  const handleDelete = () => {
-    if (adminToDelete) {
-      // TODO: 실제 API 호출로 변경 필요
+  const handleDelete = async () => {
+    if (!adminToDelete) return;
+
+    try {
+      const result = await deleteAdmin(adminToDelete.id);
+      console.log('result', result);
+      if (!result.success) {
+        toast.error(result.error || '관리자 삭제에 실패했습니다');
+        return;
+      }
+
       toast.success('관리자가 삭제되었습니다');
       setAdminToDelete(null);
       refreshPage();
+    } catch (error) {
+      console.error('관리자 삭제 중 오류 발생:', error);
+      toast.error('관리자 삭제 중 오류가 발생했습니다');
+    }
+  };
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) {
+      toast.error('이메일을 입력해주세요');
+      return;
+    }
+
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(inviteEmail.trim())) {
+      toast.error('올바른 이메일 형식을 입력해주세요');
+      return;
+    }
+
+    setIsSendingInvite(true);
+
+    try {
+      const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/auth/callback/set-password`;
+      const result = await sendAdminInviteEmail(inviteEmail.trim(), redirectTo);
+
+      if (!result.success) {
+        toast.error(result.error || '관리자 초대 이메일 발송에 실패했습니다');
+        setIsSendingInvite(false);
+        return;
+      }
+
+      toast.success('관리자 초대 이메일이 발송되었습니다');
+      setInviteEmail('');
+      setShowInviteDialog(false);
+    } catch (error) {
+      console.error('관리자 초대 이메일 발송 중 오류 발생:', error);
+      toast.error('관리자 초대 이메일 발송 중 오류가 발생했습니다');
+      setIsSendingInvite(false);
+    } finally {
+      setIsSendingInvite(false);
     }
   };
 
@@ -186,6 +239,24 @@ export default function AdminManagement({
       width: '25%'
     },
     {
+      id: 'status',
+      header: '상태',
+      accessor: (row) => {
+        const metadata = row.metadata as { admin_verified?: boolean } | null;
+        const isVerified = metadata?.admin_verified ?? true;
+        return (
+          <Badge
+            variant={isVerified ? "default" : "secondary"}
+            className={isVerified ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"}
+          >
+            {isVerified ? '인증 완료' : '초대 대기'}
+          </Badge>
+        );
+      },
+      sortable: false,
+      width: '12%'
+    },
+    {
       id: 'created_at',
       header: '등록일',
       accessor: (row) => (
@@ -195,7 +266,7 @@ export default function AdminManagement({
         </div>
       ),
       sortable: true,
-      width: '17.5%'
+      width: '15%'
     },
     {
       id: 'last_login',
@@ -210,7 +281,7 @@ export default function AdminManagement({
         );
       },
       sortable: true,
-      width: '17.5%'
+      width: '15%'
     }
   ];
 
@@ -242,10 +313,20 @@ export default function AdminManagement({
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-gray-900 text-lg font-semibold">관리자 목록</h3>
-          <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
-            <UserPlus className="h-4 w-4" />
-            관리자 생성
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowInviteDialog(true)}
+              variant="outline"
+              className="gap-2"
+            >
+              <UserRoundPlus className="h-4 w-4" />
+              관리자 초대
+            </Button>
+            <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              관리자 생성
+            </Button>
+          </div>
         </div>
 
         <div className="mb-4">
@@ -352,15 +433,15 @@ export default function AdminManagement({
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setAdminToResetPassword(null)}
                 disabled={isResettingPassword}
               >
                 취소
               </Button>
-              <Button 
-                onClick={handlePasswordReset} 
+              <Button
+                onClick={handlePasswordReset}
                 disabled={isResettingPassword}
                 className="bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-600 disabled:bg-yellow-300 disabled:cursor-not-allowed"
               >
@@ -391,6 +472,54 @@ export default function AdminManagement({
           </DialogContent>
         </Dialog>
       )}
+
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>관리자 초대</DialogTitle>
+            <DialogDescription>
+              초대할 관리자의 이메일 주소를 입력하세요. 초대 링크가 포함된 이메일이 발송됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="invite-email">이메일</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                placeholder="admin@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !isSendingInvite) {
+                    handleInvite();
+                  }
+                }}
+                disabled={isSendingInvite}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowInviteDialog(false);
+                setInviteEmail('');
+              }}
+              disabled={isSendingInvite}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleInvite}
+              disabled={isSendingInvite}
+              className="gap-2"
+            >
+              {isSendingInvite ? '발송 중...' : '초대 이메일 발송'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

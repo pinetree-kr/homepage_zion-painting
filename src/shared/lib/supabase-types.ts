@@ -58,6 +58,7 @@ export type Database = {
           created_at: string | null
           deleted_at: string | null
           id: string
+          metadata: Json | null
           role: Database["public"]["Enums"]["admin_role"]
           updated_at: string | null
         }
@@ -65,6 +66,7 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           id: string
+          metadata?: Json | null
           role?: Database["public"]["Enums"]["admin_role"]
           updated_at?: string | null
         }
@@ -72,6 +74,7 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           id?: string
+          metadata?: Json | null
           role?: Database["public"]["Enums"]["admin_role"]
           updated_at?: string | null
         }
@@ -757,7 +760,15 @@ export type Database = {
           user_id?: string
           version?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "terms_agreements_user_id_fkey1"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

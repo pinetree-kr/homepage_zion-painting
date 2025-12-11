@@ -75,6 +75,7 @@ export async function verifyTokenHash(token_hash: string, type: string): Promise
   success: boolean, error?: string, data?: {
     user: {
       id: string;
+      email?: string;
     }
   }
 }> {
@@ -137,7 +138,100 @@ export async function verifyTokenHash(token_hash: string, type: string): Promise
     }
   }
 
-  return { success: true, data: { user: { id: data.user.id } } };
+  return {
+    success: true,
+    data: {
+      user: {
+        id: data.user.id,
+        email: data.user.email
+      }
+    }
+  };
+}
+
+/**
+ * 토큰을 사용하여 패스워드 설정/변경 (공통 함수)
+ * recovery와 invite 타입 모두 지원
+ * 토큰 검증과 패스워드 설정을 한 번에 처리
+ */
+export async function setPasswordWithToken(
+  token_hash: string,
+  type: 'recovery' | 'invite',
+  password: string
+): Promise<{ success: boolean; error?: string; userId?: string }> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const supabase = await createSecretClient(env.SUPABASE_SECRET_KEY);
+
+    // 1. 토큰 검증
+    const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: type as any,
+    });
+
+    if (verifyError || !verifyData?.user) {
+      return {
+        success: false,
+        error: '링크가 만료되었거나 유효하지 않습니다.'
+      };
+    }
+
+    const userId = verifyData.user.id;
+    const currentMetadata = (verifyData.user.user_metadata || {}) as Record<string, any>;
+
+    // 2. 패스워드 설정
+    // password_required 플래그 제거 및 패스워드 설정 완료 표시
+    const updatedMetadata: Record<string, any> = {
+      ...currentMetadata,
+      password_set: true,
+      password_set_at: new Date().toISOString(),
+    };
+
+    // password_required가 있으면 제거
+    if (updatedMetadata.password_required) {
+      delete updatedMetadata.password_required;
+    }
+
+    if (updatedMetadata.invite_pending) {
+      delete updatedMetadata.invite_pending;
+    }
+
+    if (updatedMetadata.role) {
+      delete updatedMetadata.role;
+    }
+
+    // 패스워드 설정 시 user_metadata에 email_verified: true를 설정하여 인증 완료 상태로 만듦
+    // 이렇게 하면 handle_verified_user 트리거가 자동으로 실행되어
+    // profiles.metadata.verified와 administrators.metadata.verified를 업데이트함
+    const { error: updateError } = await supabase.auth.admin.updateUserById(
+      userId,
+      {
+        password: password,
+        user_metadata: {
+          ...updatedMetadata,
+          email_verified: true, // 이메일 인증 완료로 표시 (트리거가 verified를 true로 업데이트)
+        },
+      }
+    );
+
+    if (updateError) {
+      return {
+        success: false,
+        error: '비밀번호 설정에 실패했습니다: ' + updateError.message
+      };
+    }
+
+    // administrators.metadata.verified는 handle_verified_user 트리거가 자동으로 업데이트함
+    // 패스워드 설정 시 email_confirm: true로 설정하면 트리거가 실행됨
+
+    return { success: true, userId };
+  } catch (error) {
+    console.error('패스워드 설정 중 오류 발생:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '비밀번호 설정 중 오류가 발생했습니다.'
+    };
+  }
 }
 
 /**
@@ -645,7 +739,7 @@ export async function linkGoogleIdentityToUser(
 
     // 구글 사용자의 identity 정보 가져오기
     const { data: googleAuthUser } = await supabase.auth.admin.getUserById(googleUserId);
-    
+
     if (!googleAuthUser?.user) {
       return { success: false, error: '구글 계정을 찾을 수 없습니다.' };
     }
@@ -663,11 +757,11 @@ export async function linkGoogleIdentityToUser(
     // Supabase Admin API를 사용하여 identity 연결
     // 주의: linkIdentity는 identity ID가 필요하지만, Supabase는 이를 직접 제공하지 않음
     // 대신, 구글 계정을 삭제하고 targetUserId에 새로 연결해야 할 수 있음
-    
+
     // 임시 해결책: 구글 계정의 identity 정보를 targetUserId에 복사
     // 실제로는 Supabase의 linkIdentity API를 사용해야 하지만,
     // 현재 구조에서는 복잡하므로 에러를 반환하고 사용자에게 안내
-    
+
     return {
       success: false,
       error: '계정 연동 기능은 준비 중입니다. 잠시 후 다시 시도해주세요.',
