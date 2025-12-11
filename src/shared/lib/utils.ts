@@ -338,7 +338,7 @@ export function formatPhoneOnInput(value: string, previousValue?: string): strin
 function hashString(str: string): number {
   // UUID의 경우 하이픈을 제거하여 더 나은 해시 분산
   const normalized = str.replace(/-/g, '');
-  
+
   let hash = 0;
   for (let i = 0; i < normalized.length; i++) {
     const char = normalized.charCodeAt(i);
@@ -363,28 +363,28 @@ export function generateUserColor(userId: string | null | undefined): { r: numbe
   }
 
   const hash = hashString(userId.trim().toLowerCase());
-  
+
   // 해시 값을 여러 방식으로 분산하여 색상 차이를 극대화
   // 비트 시프트와 모듈로 연산을 조합하여 hue, saturation, lightness를 독립적으로 계산
   const hash1 = hash;
   const hash2 = (hash << 13) ^ hash; // 비트 시프트로 다른 값 생성
   const hash3 = (hash >> 7) ^ hash;  // 다른 방향 시프트
-  
+
   // HSL 색상 공간을 사용하여 더 일관된 색상 생성
   // Hue: 0-350도 (10도 간격 스텝, 36단계)
   // Saturation: 45-95% (5% 간격 스텝: 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95)
   // Lightness: 30-70% (5% 간격 스텝: 30, 35, 40, 45, 50, 55, 60, 65, 70)
-  
+
   // Hue: 0-350도 범위를 10도 간격의 36단계로 구분
   const hueSteps = Array.from({ length: 72 }, (_, i) => i * 5); // [0, 5, 10, ..., 350]
   const hueIndex = Math.abs(hash1) % hueSteps.length;
   const hue = hueSteps[hueIndex];
-  
+
   // Saturation: 45-95% 범위를 5% 간격의 11단계로 구분
   const saturationSteps = [45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95];
   const saturationIndex = Math.abs(hash2) % saturationSteps.length;
   const saturation = saturationSteps[saturationIndex];
-  
+
   // Lightness: 30-70% 범위를 5% 간격의 9단계로 구분
   const lightnessSteps = [30, 35, 40, 45, 50, 55, 60, 65, 70];
   const lightnessIndex = Math.abs(hash3) % lightnessSteps.length;

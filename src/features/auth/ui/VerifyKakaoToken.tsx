@@ -21,8 +21,16 @@ function VerifyKakaoTokenContent({ accessToken, idToken }: VerifyKakaoTokenProps
         const supabase = createBrowserClient();
 
         try {
+            // 현재 세션 확인 (계정 연동 시 사용)
+            // const { data: { user } } = await supabase.auth.getUser();
+            // const currentUserId = user?.id;
+
+            // URL에서 link_user_id 파라미터 확인 (AccountLinkingForm에서 전달)
+            const urlParams = new URLSearchParams(window.location.search);
+            const { linkUserId } = JSON.parse(urlParams.get('state') || '{}');
+
             // 서버 액션으로 카카오 토큰 검증 및 사용자 생성/찾기
-            const result = await verifyKakaoTokenAndCreateSession(accessToken);
+            const result = await verifyKakaoTokenAndCreateSession(accessToken, linkUserId || undefined);
 
             if (!result.success || !result.userId) {
                 setStatus('error');
@@ -54,26 +62,19 @@ function VerifyKakaoTokenContent({ accessToken, idToken }: VerifyKakaoTokenProps
                     return;
                 }
 
-                // // 관리자 여부 확인
-                // const { data: adminData } = await supabase
-                //     .from('administrators')
-                //     .select('id')
-                //     .eq('id', verifyData.user.id)
-                //     .is('deleted_at', null)
-                //     .maybeSingle();
-
-                // const isAdmin = adminData !== null;
-
-                // // 관리자가 아니면 약관 동의 페이지로 리디렉션
-                // if (!isAdmin) {
-                //     router.push('/auth/terms-agreement');
-                //     router.refresh();
-                //     return;
-                // } else {
                 setStatus('success');
-                setMessage('잠시 후 메인 페이지로 이동합니다.');
+                let message = '';
+                let redirectPath = '';
+                if (linkUserId) {
+                    message = '잠시 후 프로필 페이지로 이동합니다.';
+                    redirectPath = '/mypage/profile';
+                } else {
+                    message = '잠시 후 메인 페이지로 이동합니다.';
+                    redirectPath = '/';
+                }
+                setMessage(message);
                 setTimeout(() => {
-                    router.push('/');
+                    router.push(redirectPath);
                     router.refresh();
                 }, 1000);
                 // }

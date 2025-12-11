@@ -21,8 +21,6 @@ export default function TermsAgreementPageClient({
 
     const [termsAgreed, setTermsAgreed] = useState(false);
     const [privacyAgreed, setPrivacyAgreed] = useState(false);
-    const [tempTermsAgreed, setTempTermsAgreed] = useState(false);
-    const [tempPrivacyAgreed, setTempPrivacyAgreed] = useState(false);
     const [termsLoading, setTermsLoading] = useState(true);
     const [savingTerms, setSavingTerms] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
@@ -39,8 +37,6 @@ export default function TermsAgreementPageClient({
                 );
                 setTermsAgreed(termsAgreed);
                 setPrivacyAgreed(privacyAgreed);
-                setTempTermsAgreed(termsAgreed);
-                setTempPrivacyAgreed(privacyAgreed);
                 setTermsLoading(false);
 
                 // 이미 약관 동의가 완료되어 있으면 메인으로 리디렉션
@@ -60,7 +56,7 @@ export default function TermsAgreementPageClient({
     // 약관 동의 저장
     const handleSave = async () => {
         // 체크된 약관이 없으면 에러
-        if (!tempTermsAgreed || !tempPrivacyAgreed) {
+        if (!termsAgreed || !privacyAgreed) {
             setErrorMessage('모든 약관에 동의해주세요.');
             return;
         }
@@ -70,7 +66,7 @@ export default function TermsAgreementPageClient({
             const userAgent = typeof window !== 'undefined' ? window.navigator.userAgent : null;
 
             // 이용약관 동의 저장
-            if (tempTermsAgreed && !termsAgreed) {
+            if (termsAgreed) {
                 const termsResult = await saveTermsAgreement(
                     userId,
                     'terms',
@@ -85,7 +81,7 @@ export default function TermsAgreementPageClient({
             }
 
             // 개인정보 수집 및 이용 동의 저장
-            if (tempPrivacyAgreed && !privacyAgreed) {
+            if (privacyAgreed) {
                 const privacyResult = await saveTermsAgreement(
                     userId,
                     'privacy',
@@ -98,11 +94,6 @@ export default function TermsAgreementPageClient({
                     return;
                 }
             }
-
-            // 저장 성공
-            setTermsAgreed(tempTermsAgreed);
-            setPrivacyAgreed(tempPrivacyAgreed);
-
 
             // 약관 동의는 terms_agreements 테이블에 저장되므로 별도 업데이트 불필요
             // if (tempTermsAgreed && tempPrivacyAgreed) {
@@ -161,9 +152,9 @@ export default function TermsAgreementPageClient({
                         <div className="flex items-start space-x-3">
                             <Checkbox
                                 id="terms-page"
-                                checked={tempTermsAgreed}
+                                checked={termsAgreed}
                                 onCheckedChange={(checked) => {
-                                    setTempTermsAgreed(!!checked);
+                                    setTermsAgreed(!!checked);
                                     setErrorMessage('');
                                 }}
                                 className="mt-1"
@@ -190,9 +181,9 @@ export default function TermsAgreementPageClient({
                         <div className="flex items-start space-x-3">
                             <Checkbox
                                 id="privacy-page"
-                                checked={tempPrivacyAgreed}
+                                checked={privacyAgreed}
                                 onCheckedChange={(checked) => {
-                                    setTempPrivacyAgreed(!!checked);
+                                    setPrivacyAgreed(!!checked);
                                     setErrorMessage('');
                                 }}
                                 className="mt-1"
@@ -220,7 +211,7 @@ export default function TermsAgreementPageClient({
                     <Button
                         type="button"
                         onClick={handleSave}
-                        disabled={savingTerms || (tempTermsAgreed === termsAgreed && tempPrivacyAgreed === privacyAgreed)}
+                        disabled={savingTerms || !(termsAgreed && privacyAgreed)}
                         className="w-full h-10"
                     >
                         {savingTerms ? '저장 중...' : '약관 동의 완료'}

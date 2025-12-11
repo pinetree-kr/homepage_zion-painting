@@ -9,10 +9,10 @@ import { Label } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
 import { Dialog, DialogContent } from '@/src/shared/ui';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
-import { checkEmailConfirmed } from '@/src/features/auth/api/auth-actions';
-import { saveTermsAgreement } from '@/src/features/auth/api/auth-client';
+import { checkEmailConfirmed, saveTermsAgreement } from '@/src/features/auth/api/auth-actions';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { CURRENT_TERMS_VERSION, CURRENT_TERMS_VERSION_DB } from '@/src/shared/lib/auth';
+import { getClientIp } from '@/src/shared/lib/client-ip';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -99,14 +99,15 @@ export default function SignUpPage() {
 
       // 약관 동의 저장
       const userAgent = typeof window !== 'undefined' ? window.navigator.userAgent : null;
-
+      const ipAddress = await getClientIp()
       // 이용약관 동의 저장
       if (agreedToTerms) {
         const termsResult = await saveTermsAgreement(
           authData.user.id,
           'terms',
           CURRENT_TERMS_VERSION_DB,
-          userAgent
+          userAgent,
+          ipAddress
         );
         if (!termsResult.success) {
           console.error('이용약관 동의 저장 실패:', termsResult.error);
@@ -119,7 +120,8 @@ export default function SignUpPage() {
           authData.user.id,
           'privacy',
           CURRENT_TERMS_VERSION_DB,
-          userAgent
+          userAgent,
+          ipAddress
         );
         if (!privacyResult.success) {
           console.error('개인정보 동의 저장 실패:', privacyResult.error);

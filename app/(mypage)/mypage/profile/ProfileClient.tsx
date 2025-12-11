@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Container, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/src/shared/ui';
 import ProfileForm from '@/src/features/mypage/profile/ui/ProfileForm';
 import PasswordForm from '@/src/features/mypage/profile/ui/PasswordForm';
 import TermsAgreementForm from '@/src/features/mypage/profile/ui/TermsAgreementForm';
-import AccountLinkingForm from '@/src/features/mypage/profile/ui/AccountLinkingForm';
 import type { Profile } from '@/src/entities/user';
 import { updateProfile } from '@/src/entities/user/model/updateProfile';
 import { updatePassword } from '@/src/entities/user/model/updatePassword';
 import { Save } from 'lucide-react';
 import { CURRENT_TERMS_VERSION_DB } from '@/src/shared/lib/auth';
+import { getLinkedAccounts } from '@/src/features/auth/api/auth-actions';
 
 interface ProfileClientProps {
   user: Profile;
@@ -30,6 +30,22 @@ export default function ProfileClient({ user, termsRequired }: ProfileClientProp
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
+
+  useEffect(() => {
+    loadLinkedAccounts();
+  }, [user.id]);
+
+  const loadLinkedAccounts = async () => {
+    try {
+      const result = await getLinkedAccounts(user.id);
+      if (result.success && result.providers) {
+        setLinkedProviders(result.providers);
+      }
+    } catch (error) {
+      console.error('연결된 계정 조회 실패:', error);
+    }
+  };
 
   const handleProfileUpdate = async (data: { name: string }) => {
     setProfileFormData(data);
@@ -65,6 +81,8 @@ export default function ProfileClient({ user, termsRequired }: ProfileClientProp
       router.refresh();
       setProfileFormData(null);
       setPasswordFormData(null);
+      // 연결된 계정 목록 새로고침
+      await loadLinkedAccounts();
     } catch (error) {
       console.error('저장 실패:', error);
       setErrorMessage(error instanceof Error ? error.message : '저장에 실패했습니다.');
@@ -104,9 +122,6 @@ export default function ProfileClient({ user, termsRequired }: ProfileClientProp
             />
           )}
 
-          {/* 계정 연동 섹션 */}
-          <AccountLinkingForm userId={user.id} currentEmail={user.email} />
-
           {/* 폼 섹션 */}
           <Card>
             <CardHeader>
@@ -114,8 +129,14 @@ export default function ProfileClient({ user, termsRequired }: ProfileClientProp
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <ProfileForm user={user} onUpdate={handleProfileUpdate} />
-                {isEmailProvider && <PasswordForm onUpdate={handlePasswordUpdate} />}
+                <ProfileForm user={user} onUpdate={handleProfileUpdate} linkedProviders={linkedProviders} />
+                {isEmailProvider &&
+                  <>
+                    {/* 수평선 */}
+                    <div className="my-8 h-[1px] bg-[#E2E8F0]" />
+                    <PasswordForm onUpdate={handlePasswordUpdate} />
+                  </>
+                }
               </div>
             </CardContent>
             <CardFooter className="justify-between">

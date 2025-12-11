@@ -10,7 +10,7 @@ export async function saveTermsAgreement(
   userId: string,
   agreementType: 'terms' | 'privacy',
   version: string,
-  userAgent?: string | null
+  userAgent?: string | null,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createBrowserClient();
@@ -82,7 +82,7 @@ export async function saveTermsAgreement(
 export async function saveAllTermsAgreements(
   userId: string,
   version: string,
-  userAgent?: string | null
+  userAgent?: string | null,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createBrowserClient();

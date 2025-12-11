@@ -117,43 +117,9 @@ export default async function GoogleCallbackPage({ searchParams }: GoogleCallbac
       redirectUri
     );
 
-    console.log('tokenData', { tokenData });
-
     accessToken = tokenData?.access_token || null;
     idToken = tokenData?.id_token || null;
 
-
-    // console.log('tokenData', tokenData);
-
-    // Access token으로 사용자 정보 가져오기
-    // const googleUser = await getUserInfo(tokenData.access_token);
-
-    // console.log('googleUser', googleUser);
-
-    // if (!googleUser.email || !googleUser.verified_email) {
-    //   redirect('/auth/sign-in?error=email_not_verified');
-    // }
-
-    // Supabase에서 사용자 찾기 또는 생성
-    // const userResult = await findOrCreateGoogleUser(googleUser);
-
-    // if (!userResult.success || !userResult.data?.user_id) {
-    //   console.error('사용자 찾기/생성 실패:', userResult.error);
-    //   redirect('/auth/sign-in?error=user_creation_failed');
-    // }
-
-    // const userId = userResult.data.user_id;
-
-    // // 프로필 업데이트
-    // const profileResult = await updateGoogleUserProfile(userId, googleUser);
-
-    // if (!profileResult.success) {
-    //   console.error('프로필 업데이트 실패:', profileResult.error);
-    //   // 프로필 업데이트 실패해도 로그인은 계속 진행
-    // }
-
-    // 로그인 성공 시 홈으로 리다이렉트
-    // redirect('/');
   } catch (err) {
     console.error('구글 콜백 처리 중 오류 발생:', err);
     redirect('/auth/sign-in?error=callback_error');

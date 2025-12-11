@@ -19,13 +19,18 @@ function VerifyEmailTokenContent({ accessToken, idToken }: VerifyEmailTokenProps
 
     const signInWithGoogle = useCallback(async (idToken: string) => {
         const supabase = createBrowserClient();
-        console.log('accessToken', idToken);
+
+        // URL에서 link_user_id 파라미터 확인 (AccountLinkingForm에서 전달)
+        const urlParams = new URLSearchParams(window.location.search);
+
+        const { linkUserId } = JSON.parse(urlParams.get('state') || '{}');
+        console.log({ linkUserId })
+
         const { data, error } = await supabase.auth.signInWithIdToken({
             provider: 'google',
             token: idToken,
         });
-        console.log('data', data);
-        console.log('error', error);
+
         if (error) {
             setStatus('error');
             setMessage(error.message || '토큰이 만료되었거나 유효하지 않습니다.');
@@ -33,32 +38,30 @@ function VerifyEmailTokenContent({ accessToken, idToken }: VerifyEmailTokenProps
         }
 
         if (data.user) {
+            // link_user_id가 있고 새로 생성된 사용자와 다르면 계정 연동 필요
+            // (Supabase가 자동으로 identity를 생성하므로, 여기서는 프로필 업데이트만 수행)
+            const targetUserId = (linkUserId && linkUserId !== data.user.id) ? linkUserId : data.user.id;
+            console.log({ targetUserId })
+
             // 구글 로그인 후 프로필 업데이트 (계정 연동 포함)
-            await updateGoogleUserProfileAfterLogin(data.user.id, data.user.email || '');
+            await updateGoogleUserProfileAfterLogin(targetUserId);
 
-            // 관리자 여부 확인
-            // const { data: adminData } = await supabase
-            //     .from('administrators')
-            //     .select('id')
-            //     .eq('id', data.user.id)
-            //     .is('deleted_at', null)
-            //     .maybeSingle();
+            let message = '';
+            let redirectPath = '';
+            if (linkUserId) {
+                message = '잠시 후 프로필 페이지로 이동합니다.';
+                redirectPath = '/mypage/profile';
+            } else {
+                message = '잠시 후 메인 페이지로 이동합니다.';
+                redirectPath = '/';
+            }
 
-            // const isAdmin = adminData !== null;
-
-            // 관리자가 아니면 약관 동의 페이지로 리디렉션
-            // if (!isAdmin) {
-            //     router.push('/auth/terms-agreement');
-            //     router.refresh();
-            //     return;
-            // } else {
             setStatus('success');
-            setMessage('잠시 후 메인 페이지로 이동합니다.');
+            setMessage(message);
             setTimeout(() => {
-                router.push('/');
+                router.push(redirectPath);
                 router.refresh();
             }, 1000);
-            // }
         }
     }, [router]);
 

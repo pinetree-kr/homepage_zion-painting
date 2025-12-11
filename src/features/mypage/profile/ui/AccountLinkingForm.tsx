@@ -8,9 +8,10 @@ import { Mail, Link2, Check } from 'lucide-react';
 interface AccountLinkingFormProps {
   userId: string;
   currentEmail: string | null;
+  onAccountLinked?: () => void;
 }
 
-export default function AccountLinkingForm({ userId, currentEmail }: AccountLinkingFormProps) {
+export default function AccountLinkingForm({ userId, currentEmail, onAccountLinked }: AccountLinkingFormProps) {
   const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [linking, setLinking] = useState<string | null>(null);
@@ -38,22 +39,25 @@ export default function AccountLinkingForm({ userId, currentEmail }: AccountLink
       setLinking(provider);
       const host = window.location.host;
       const protocol = window.location.protocol.replace(':', '');
+      // 현재 사용자 ID를 콜백 URL에 포함하여 계정 연동 시 사용
       const redirectUri = `${protocol}://${host}/auth/callback/${provider}`;
 
       if (provider === 'google') {
-        const { url } = await signInWithGoogle({ redirectUri });
+        const { url } = await signInWithGoogle({ redirectUri, linkUserId: userId });
         window.location.href = url;
       } else if (provider === 'kakao') {
-        const { url } = await signInWithKakao({ redirectUri });
+        const { url } = await signInWithKakao({ redirectUri, linkUserId: userId });
         window.location.href = url;
       } else if (provider === 'naver') {
         // 네이버는 아직 구현되지 않음
-        alert('네이버 연동은 준비 중입니다.');
+        // alert('네이버 연동은 준비 중입니다.');
+        console.log('네이버 연동은 준비 중입니다.');
         setLinking(null);
       }
     } catch (error) {
       console.error('계정 연동 실패:', error);
-      alert('계정 연동에 실패했습니다.');
+      // alert('계정 연동에 실패했습니다.');
+      console.log('계정 연동에 실패했습니다.');
       setLinking(null);
     }
   };

@@ -9,6 +9,7 @@ import { Checkbox } from '@/src/shared/ui';
 import { Badge } from '@/src/shared/ui';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import { recordAdminLogin, recordLoginFailed, signInWithGoogle, signInWithKakao } from '@/src/features/auth/api/auth-actions';
+import { getClientIp } from '@/src/shared/lib/client-ip';
 
 export default function SignInForm() {
   const router = useRouter();
@@ -43,8 +44,8 @@ export default function SignInForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
+      const ipAddress = await getClientIp();
       // Supabase 로그인
       const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
         email,
@@ -56,7 +57,8 @@ export default function SignInForm() {
           setError('이메일 또는 비밀번호가 올바르지 않습니다');
           // 로그인 실패 로그 기록
           try {
-            await recordLoginFailed(email);
+
+            await recordLoginFailed(email, ipAddress);
           } catch (logError) {
             console.error('로그인 실패 로그 기록 오류:', logError);
           }
@@ -114,7 +116,7 @@ export default function SignInForm() {
       // 관리자인 경우 관리자 로그인 로그 기록
       if (isAdmin) {
         try {
-          await recordAdminLogin();
+          await recordAdminLogin(ipAddress);
         } catch (logError) {
           console.error('관리자 로그인 로그 기록 오류:', logError);
           // 로그 기록 실패해도 로그인은 계속 진행
@@ -142,12 +144,12 @@ export default function SignInForm() {
     setGoogleLoading(true);
 
     try {
-      const { url, state } = await signInWithGoogle({
+      const { url, nonce } = await signInWithGoogle({
         redirectUri: `${window.location.origin}/auth/callback/google`
       });
 
       // state를 sessionStorage에 저장 (콜백에서 검증용)
-      sessionStorage.setItem('google_oauth_state', state);
+      sessionStorage.setItem('google_oauth_nonce', nonce);
 
       // 구글 인증 페이지로 리다이렉트
       window.location.href = url;
@@ -163,12 +165,12 @@ export default function SignInForm() {
     setKakaoLoading(true);
 
     try {
-      const { url, state } = await signInWithKakao({
+      const { url, nonce } = await signInWithKakao({
         redirectUri: `${window.location.origin}/auth/callback/kakao`
       });
 
       // state를 sessionStorage에 저장 (콜백에서 검증용)
-      sessionStorage.setItem('kakao_oauth_state', state);
+      sessionStorage.setItem('kakao_oauth_nonce', nonce);
 
       // 카카오 인증 페이지로 리다이렉트
       window.location.href = url;

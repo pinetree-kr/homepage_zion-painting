@@ -6,46 +6,18 @@ import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser'
 import { createSecretClient } from '@/src/shared/lib/supabase/service';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous';
-
-/**
- * 클라이언트 IP 주소 가져오기
- */
-async function getClientIp(): Promise<string | null> {
-  try {
-    const headersList = await headers();
-    const forwardedFor = headersList.get('x-forwarded-for');
-    const realIp = headersList.get('x-real-ip');
-    const cfConnectingIp = headersList.get('cf-connecting-ip'); // Cloudflare
-
-    if (forwardedFor) {
-      // x-forwarded-for는 여러 IP가 쉼표로 구분될 수 있음
-      return forwardedFor.split(',')[0].trim();
-    }
-    if (realIp) {
-      return realIp;
-    }
-    if (cfConnectingIp) {
-      return cfConnectingIp;
-    }
-
-    return null;
-  } catch (error) {
-    console.error('IP 주소 가져오기 실패:', error);
-    return null;
-  }
-}
+import { CURRENT_TERMS_VERSION_DB } from '@/src/shared/lib/auth';
 
 /**
  * 관리자 로그인 로그 기록
  */
-export async function recordAdminLogin(): Promise<{ success: boolean; error?: string }> {
+export async function recordAdminLogin(ipAddress?: string | null): Promise<{ success: boolean; error?: string }> {
   try {
     const user = await getCurrentUserProfile();
     if (!user) {
       return { success: false, error: '사용자 정보를 찾을 수 없습니다' };
     }
 
-    const ipAddress = await getClientIp();
     await logAdminLogin(user.id, user.name || '알 수 없음', ipAddress);
 
     return { success: true };
@@ -58,9 +30,8 @@ export async function recordAdminLogin(): Promise<{ success: boolean; error?: st
 /**
  * 로그인 실패 로그 기록
  */
-export async function recordLoginFailed(email: string): Promise<{ success: boolean; error?: string }> {
+export async function recordLoginFailed(email: string, ipAddress?: string | null): Promise<{ success: boolean; error?: string }> {
   try {
-    const ipAddress = await getClientIp();
     await logLoginFailed(email, ipAddress);
 
     return { success: true };
@@ -118,53 +89,100 @@ export async function verifyTokenHash(token_hash: string, type: string): Promise
   if (!data?.user?.id) {
     return { success: false, error: 'user not found' };
   }
+
+  // OTP 인증 성공 후 약관 동의 정보를 user_metadata에 업데이트
+  // 회원가입 시 약관 동의는 terms_agreements 테이블에 저장되지만,
+  // user_metadata에는 저장되지 않아서 middleware에서 체크할 수 없음
+  if (type === 'signup' || type === 'email') {
+    try {
+      const { env } = await getCloudflareContext({ async: true });
+      const secretClient = await createSecretClient(env.SUPABASE_SECRET_KEY);
+
+      // terms_agreements 테이블에서 약관 동의 정보 확인
+      const { data: termsData, error: termsError } = await secretClient
+        .from('terms_agreements')
+        .select('agreement_type, agreed')
+        .eq('user_id', data.user.id)
+        .eq('version', CURRENT_TERMS_VERSION_DB)
+        .eq('agreed', true);
+
+      if (!termsError && termsData && termsData.length > 0) {
+        const termsAgreed = termsData.some(item => item.agreement_type === 'terms');
+        const privacyAgreed = termsData.some(item => item.agreement_type === 'privacy');
+
+        // user_metadata 업데이트
+        const currentMetadata = data.user.user_metadata || {};
+        const updatedMetadata = {
+          ...currentMetadata,
+          terms_agreed_version: CURRENT_TERMS_VERSION_DB,
+          ...(termsAgreed && { terms_agreed: true }),
+          ...(privacyAgreed && { privacy_agreed: true }),
+        };
+
+        const { error: updateError } = await secretClient.auth.admin.updateUserById(
+          data.user.id,
+          {
+            user_metadata: updatedMetadata,
+          }
+        );
+
+        if (updateError) {
+          console.error('user_metadata 업데이트 오류:', updateError);
+          // metadata 업데이트 실패해도 인증은 성공으로 처리
+        }
+      }
+    } catch (metadataError) {
+      console.error('약관 동의 metadata 업데이트 중 오류 발생:', metadataError);
+      // metadata 업데이트 실패해도 인증은 성공으로 처리
+    }
+  }
+
   return { success: true, data: { user: { id: data.user.id } } };
 }
 
-// /**
-//  * 약관 동의 저장
-//  */
-// export async function saveTermsAgreement(
-//   userId: string,
-//   agreementType: 'terms' | 'privacy',
-//   version: string,
-//   userAgent?: string | null
-// ): Promise<{ success: boolean; error?: string }> {
-//   try {
-//     const { env } = await getCloudflareContext({ async: true });
-//     const supabase = await createSecretClient(env.SUPABASE_SECRET_KEY);
+/**
+ * 약관 동의 저장
+ */
+export async function saveTermsAgreement(
+  userId: string,
+  agreementType: 'terms' | 'privacy',
+  version: string,
+  userAgent?: string | null,
+  ipAddress?: string | null,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const supabase = await createSecretClient(env.SUPABASE_SECRET_KEY);
 
-//     // 서버에서 IP 주소 가져오기
-//     const ipAddress = await getClientIp();
 
-//     const { error } = await supabase
-//       .from('terms_agreements')
-//       .insert({
-//         user_id: userId,
-//         agreement_type: agreementType,
-//         version: version,
-//         agreed: true,
-//         ip_address: ipAddress || null,
-//         user_agent: userAgent || null,
-//       });
+    const { error } = await supabase
+      .from('terms_agreements')
+      .insert({
+        user_id: userId,
+        agreement_type: agreementType,
+        version: version,
+        agreed: true,
+        ip_address: ipAddress || null,
+        user_agent: userAgent || null,
+      });
 
-//     if (error) {
-//       console.error('약관 동의 저장 오류:', error);
-//       return {
-//         success: false,
-//         error: error.message,
-//       };
-//     }
+    if (error) {
+      console.error('약관 동의 저장 오류:', error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
 
-//     return { success: true };
-//   } catch (error) {
-//     console.error('약관 동의 저장 중 오류 발생:', error);
-//     return {
-//       success: false,
-//       error: error instanceof Error ? error.message : '알 수 없는 오류',
-//     };
-//   }
-// }
+    return { success: true };
+  } catch (error) {
+    console.error('약관 동의 저장 중 오류 발생:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '알 수 없는 오류',
+    };
+  }
+}
 
 /**
  * 사용자의 약관 동의 여부 확인
@@ -211,9 +229,11 @@ export async function checkTermsAgreement(
  */
 export async function signInWithGoogle({
   redirectUri,
+  linkUserId,
 }: {
   redirectUri: string;
-}): Promise<{ url: string; state: string }> {
+  linkUserId?: string;
+}): Promise<{ url: string; nonce: string }> {
   const { env } = await getCloudflareContext({ async: true });
   const clientId = env.GOOGLE_CLIENT_ID;
 
@@ -228,7 +248,12 @@ export async function signInWithGoogle({
   const scope = 'openid email profile';
   const responseType = 'code';
   // Cloudflare Workers는 crypto.randomUUID()를 지원합니다
-  const state = crypto.randomUUID(); // CSRF 방지를 위한 state
+  const nonce = crypto.randomUUID(); // CSRF 방지를 위한 nonce
+
+  const state = JSON.stringify({
+    nonce,
+    linkUserId,
+  });
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -245,7 +270,7 @@ export async function signInWithGoogle({
   // URL과 state를 반환 (클라이언트에서 리다이렉트 처리)
   return {
     url: googleAuthUrl,
-    state: state,
+    nonce,
   };
 }
 
@@ -255,9 +280,11 @@ export async function signInWithGoogle({
  */
 export async function signInWithKakao({
   redirectUri,
+  linkUserId,
 }: {
   redirectUri: string;
-}): Promise<{ url: string; state: string }> {
+  linkUserId?: string;
+}): Promise<{ url: string; nonce: string }> {
   const { env } = await getCloudflareContext({ async: true });
   const clientId = env.KAKAO_CLIENT_ID;
 
@@ -272,7 +299,12 @@ export async function signInWithKakao({
   const scope = 'profile_nickname profile_image account_email';
   const responseType = 'code';
   // Cloudflare Workers는 crypto.randomUUID()를 지원합니다
-  const state = crypto.randomUUID(); // CSRF 방지를 위한 state
+  const nonce = crypto.randomUUID(); // CSRF 방지를 위한 nonce
+
+  const state = JSON.stringify({
+    nonce,
+    linkUserId,
+  });
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -287,7 +319,7 @@ export async function signInWithKakao({
   // URL과 state를 반환 (클라이언트에서 리다이렉트 처리)
   return {
     url: kakaoAuthUrl,
-    state: state,
+    nonce,
   };
 }
 
@@ -295,7 +327,8 @@ export async function signInWithKakao({
  * 카카오 access token으로 사용자 정보 가져오기 및 Supabase 세션 생성
  */
 export async function verifyKakaoTokenAndCreateSession(
-  accessToken: string
+  accessToken: string,
+  currentUserId?: string
 ): Promise<{ success: boolean; error?: string; sessionToken?: string; userId?: string }> {
   try {
     const { env } = await getCloudflareContext({ async: true });
@@ -332,48 +365,131 @@ export async function verifyKakaoTokenAndCreateSession(
       return { success: false, error: '카카오 계정에 이메일 정보가 없습니다. 이메일 동의가 필요합니다.' };
     }
 
-    // Supabase에서 해당 이메일로 사용자 찾기
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id, metadata')
-      .eq('email', email)
-      .is('deleted_at', null)
-      .maybeSingle();
-
-    let userId: string;
+    let userId: string | undefined;
     let isLinking = false;
 
-    if (existingProfile) {
-      // 기존 사용자가 있는 경우 - 계정 연동
-      userId = existingProfile.id;
-      isLinking = true;
-
-      // metadata에 연결된 provider 정보 추가
-      const currentMetadata = (existingProfile.metadata as Record<string, any>) || {};
-      const linkedProviders = currentMetadata.linked_providers || [];
-
-      // 이미 연결된 provider가 아니면 추가
-      if (!linkedProviders.includes('kakao')) {
-        linkedProviders.push('kakao');
-      }
-
-      // metadata 업데이트
-      const updatedMetadata = {
-        ...currentMetadata,
-        linked_providers: linkedProviders,
-        kakao_id: String(kakaoUser.id),
-        last_login: new Date().toISOString(),
-      };
-
-      const { error: updateError } = await supabase
+    // 1. 현재 세션이 있으면 그 사용자로 연동 (명시적 계정 연동)
+    if (currentUserId) {
+      const { data: currentProfile } = await supabase
         .from('profiles')
-        .update({ metadata: updatedMetadata })
-        .eq('id', userId);
+        .select('id, metadata, email')
+        .eq('id', currentUserId)
+        .is('deleted_at', null)
+        .maybeSingle();
 
-      if (updateError) {
-        console.error('프로필 업데이트 오류:', updateError);
+      if (currentProfile) {
+        userId = currentProfile.id;
+        isLinking = true;
+
+        const currentMetadata = (currentProfile.metadata as Record<string, any>) || {};
+        const linkedProviders = currentMetadata.linked_providers || [];
+
+        // 이미 연결된 provider가 아니면 추가
+        if (!linkedProviders.includes('kakao')) {
+          linkedProviders.push('kakao');
+        }
+
+        // metadata 업데이트
+        const updatedMetadata = {
+          ...currentMetadata,
+          linked_providers: linkedProviders,
+          kakao_id: String(kakaoUser.id),
+          last_login: new Date().toISOString(),
+        };
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ metadata: updatedMetadata })
+          .eq('id', currentUserId);
+
+        if (updateError) {
+          console.error('프로필 업데이트 오류:', updateError);
+        }
       }
-    } else {
+    }
+
+    // 2. 이메일로 기존 사용자 찾기
+    if (!userId && email) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id, metadata')
+        .eq('email', email)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      if (existingProfile) {
+        userId = existingProfile.id;
+        isLinking = true;
+
+        // metadata에 연결된 provider 정보 추가
+        const currentMetadata = (existingProfile.metadata as Record<string, any>) || {};
+        const linkedProviders = currentMetadata.linked_providers || [];
+
+        // 이미 연결된 provider가 아니면 추가
+        if (!linkedProviders.includes('kakao')) {
+          linkedProviders.push('kakao');
+        }
+
+        // metadata 업데이트
+        const updatedMetadata = {
+          ...currentMetadata,
+          linked_providers: linkedProviders,
+          kakao_id: String(kakaoUser.id),
+          last_login: new Date().toISOString(),
+        };
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ metadata: updatedMetadata })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('프로필 업데이트 오류:', updateError);
+        }
+      }
+    }
+
+    // 3. 카카오 ID로 기존 사용자 찾기 (이메일이 다른 경우 대비)
+    if (!userId) {
+      const { data: existingByKakaoId } = await supabase
+        .from('profiles')
+        .select('id, metadata, email')
+        .eq('metadata->>kakao_id', String(kakaoUser.id))
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      if (existingByKakaoId) {
+        userId = existingByKakaoId.id;
+        isLinking = true;
+
+        const currentMetadata = (existingByKakaoId.metadata as Record<string, any>) || {};
+        const linkedProviders = currentMetadata.linked_providers || [];
+
+        if (!linkedProviders.includes('kakao')) {
+          linkedProviders.push('kakao');
+        }
+
+        // 이메일이 다를 수 있으므로 카카오 이메일도 업데이트 (선택적)
+        const updatedMetadata = {
+          ...currentMetadata,
+          linked_providers: linkedProviders,
+          kakao_id: String(kakaoUser.id),
+          last_login: new Date().toISOString(),
+        };
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ metadata: updatedMetadata })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('프로필 업데이트 오류:', updateError);
+        }
+      }
+    }
+
+    // 4. 새 사용자 생성
+    if (!userId) {
       // 새 사용자 생성
       // 카카오 사용자 ID를 기반으로 고유한 비밀번호 생성 (실제로는 사용하지 않음)
       const randomPassword = crypto.randomUUID() + crypto.randomUUID();
@@ -421,6 +537,19 @@ export async function verifyKakaoTokenAndCreateSession(
     }
 
     // 마법 링크를 생성하여 세션 토큰 생성
+    // userId가 있으면 해당 사용자의 이메일 사용 (계정 연동 시)
+    let emailForLink = email;
+    if (userId && isLinking) {
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', userId)
+        .maybeSingle();
+      if (userProfile?.email) {
+        emailForLink = userProfile.email;
+      }
+    }
+
     const headersList = await headers();
     const host = headersList.get('host') || 'localhost:8080';
     const protocol = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
@@ -428,7 +557,7 @@ export async function verifyKakaoTokenAndCreateSession(
 
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
-      email: email,
+      email: emailForLink,
       options: {
         redirectTo: `${siteUrl}/auth/callback/kakao?session=true`,
       },
@@ -457,7 +586,6 @@ export async function verifyKakaoTokenAndCreateSession(
  */
 export async function updateGoogleUserProfileAfterLogin(
   userId: string,
-  email: string
 ): Promise<{ success: boolean; error?: string; isLinking?: boolean }> {
   try {
     const { env } = await getCloudflareContext({ async: true });
@@ -492,6 +620,17 @@ export async function updateGoogleUserProfileAfterLogin(
       if (hasGoogleIdentity && !linkedProviders.includes('google')) {
         linkedProviders.push('google');
         isLinking = true;
+      }
+
+      // 구글이 이미 metadata에 있지만 identity에 없으면 추가 (동기화)
+      if (linkedProviders.includes('google') && !hasGoogleIdentity) {
+        // identity는 Supabase가 자동으로 관리하므로 여기서는 metadata만 업데이트
+        isLinking = true;
+      }
+    } else {
+      // auth user가 없으면 새로 생성된 사용자이므로 구글을 linked_providers에 추가
+      if (!linkedProviders.includes('google')) {
+        linkedProviders.push('google');
       }
     }
 
@@ -556,6 +695,7 @@ export async function getLinkedAccounts(
 
     const metadata = (profile.metadata as Record<string, any>) || {};
     const linkedProviders = metadata.linked_providers || [];
+    const signupProvider = metadata.signup_provider || 'email';
 
     // Supabase auth.identities에서도 확인
     const { data: authUser } = await supabase.auth.admin.getUserById(userId);
@@ -565,7 +705,16 @@ export async function getLinkedAccounts(
     const identityProviders = identities.map((identity: any) => identity.provider);
 
     // 두 목록을 합치고 중복 제거
-    const allProviders = Array.from(new Set([...linkedProviders, ...identityProviders]));
+    let allProviders = Array.from(new Set([...linkedProviders, ...identityProviders]));
+
+    // signup_provider는 제외 (처음 가입한 방법이므로 "연결된" 계정이 아님)
+    allProviders = allProviders.filter(provider => provider !== signupProvider);
+
+    // signup_provider가 'email'이 아닌 경우, 'email' provider도 제외
+    // (구글/카카오 등으로 가입한 경우 이메일 identity가 있어도 연동된 것이 아님)
+    if (signupProvider !== 'email') {
+      allProviders = allProviders.filter(provider => provider !== 'email');
+    }
 
     return {
       success: true,
