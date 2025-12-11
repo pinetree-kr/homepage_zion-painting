@@ -723,6 +723,42 @@ export type Database = {
         }
         Relationships: []
       }
+      terms_agreements: {
+        Row: {
+          agreed: boolean
+          agreed_at: string | null
+          agreement_type: string
+          created_at: string
+          id: string
+          ip_address: unknown
+          user_agent: string | null
+          user_id: string
+          version: string
+        }
+        Insert: {
+          agreed?: boolean
+          agreed_at?: string | null
+          agreement_type: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+          user_id: string
+          version: string
+        }
+        Update: {
+          agreed?: boolean
+          agreed_at?: string | null
+          agreement_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

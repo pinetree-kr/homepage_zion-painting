@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
+import { Badge } from '@/src/shared/ui';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
-import { recordAdminLogin, recordLoginFailed, signInWithGoogle } from '@/src/features/auth/api/auth-actions';
+import { recordAdminLogin, recordLoginFailed, signInWithGoogle, signInWithKakao } from '@/src/features/auth/api/auth-actions';
 
 export default function SignInForm() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function SignInForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [kakaoLoading, setKakaoLoading] = useState(false);
 
   // URL 쿼리 파라미터에서 에러 메시지 읽기
   useEffect(() => {
@@ -25,6 +27,7 @@ export default function SignInForm() {
     if (errorParam) {
       const errorMessages: Record<string, string> = {
         google_auth_failed: '구글 로그인에 실패했습니다.',
+        kakao_auth_failed: '카카오 로그인에 실패했습니다.',
         no_code: '인증 코드를 받지 못했습니다.',
         session_exchange_failed: '세션 생성에 실패했습니다.',
         no_user: '사용자 정보를 찾을 수 없습니다.',
@@ -60,7 +63,7 @@ export default function SignInForm() {
         }
         else if (authError.code === 'email_not_confirmed') {
           // setError('이메일이 인증되지 않았습니다. 이메일을 확인해주세요.');
-          router.push(`/auth/callback?email=${encodeURIComponent(email)}&verified=false`);
+          router.push(`/auth/callback?email=${encodeURIComponent(email)}&error=email_not_confirmed`);
         }
         else {
           setError(authError.message);
@@ -118,6 +121,7 @@ export default function SignInForm() {
         }
       }
 
+      // 약관 동의 확인은 미들웨어에서 처리됨
       // 관리자인 경우 관리자 페이지로, 아니면 홈으로
       if (isAdmin) {
         // router.push('/admin');
@@ -138,19 +142,40 @@ export default function SignInForm() {
     setGoogleLoading(true);
 
     try {
-      const { url, state } = await signInWithGoogle({ 
-        redirectUri: `${window.location.origin}/auth/callback/google` 
+      const { url, state } = await signInWithGoogle({
+        redirectUri: `${window.location.origin}/auth/callback/google`
       });
-      
+
       // state를 sessionStorage에 저장 (콜백에서 검증용)
       sessionStorage.setItem('google_oauth_state', state);
-      
+
       // 구글 인증 페이지로 리다이렉트
       window.location.href = url;
     } catch (err) {
       console.error('구글 로그인 중 오류 발생:', err);
       setError('구글 로그인 중 오류가 발생했습니다');
       setGoogleLoading(false);
+    }
+  };
+
+  const handleKakaoSignIn = async () => {
+    setError('');
+    setKakaoLoading(true);
+
+    try {
+      const { url, state } = await signInWithKakao({
+        redirectUri: `${window.location.origin}/auth/callback/kakao`
+      });
+
+      // state를 sessionStorage에 저장 (콜백에서 검증용)
+      sessionStorage.setItem('kakao_oauth_state', state);
+
+      // 카카오 인증 페이지로 리다이렉트
+      window.location.href = url;
+    } catch (err) {
+      console.error('카카오 로그인 중 오류 발생:', err);
+      setError('카카오 로그인 중 오류가 발생했습니다');
+      setKakaoLoading(false);
     }
   };
 
@@ -272,7 +297,7 @@ export default function SignInForm() {
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            disabled={googleLoading || loading}
+            disabled={googleLoading || loading || kakaoLoading}
             className="mt-6 w-full h-10 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 border border-gray-300 rounded-md px-4 py-2 flex items-center justify-center gap-3 transition-colors"
           >
             {googleLoading ? (
@@ -295,6 +320,28 @@ export default function SignInForm() {
               </>
             )}
           </button>
+
+          <div className="mt-3 relative">
+            <button
+              type="button"
+              onClick={handleKakaoSignIn}
+              disabled={true}
+              title="카카오 로그인은 준비 중입니다"
+              className="w-full h-10 bg-[#FEE500]/50 hover:bg-[#FEE500]/50 disabled:bg-[#FEE500]/50 disabled:cursor-not-allowed text-[#000000]/50 rounded-md px-4 py-2 flex items-center justify-center gap-3 transition-colors"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3z" />
+              </svg>
+              <span>카카오로 로그인</span>
+            </button>
+            <Badge
+              variant="secondary"
+              className="absolute -top-2 -right-2 text-xs px-2 py-0.5"
+              title="카카오 로그인은 준비 중입니다"
+            >
+              예정
+            </Badge>
+          </div>
         </div>
 
         <div className="mt-6 text-center">

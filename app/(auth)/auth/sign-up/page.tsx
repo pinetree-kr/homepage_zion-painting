@@ -7,8 +7,12 @@ import Link from 'next/link';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
+import { Dialog, DialogContent } from '@/src/shared/ui';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import { checkEmailConfirmed } from '@/src/features/auth/api/auth-actions';
+import { saveTermsAgreement } from '@/src/features/auth/api/auth-client';
+import { DialogTitle } from '@radix-ui/react-dialog';
+import { CURRENT_TERMS_VERSION, CURRENT_TERMS_VERSION_DB } from '@/src/shared/lib/auth';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -19,8 +23,11 @@ export default function SignUpPage() {
     confirmPassword: '',
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalUrl, setModalUrl] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +49,12 @@ export default function SignUpPage() {
     }
 
     if (!agreedToTerms) {
-      setError('약관에 동의해주세요');
+      setError('이용약관에 동의해주세요');
+      return;
+    }
+
+    if (!agreedToPrivacy) {
+      setError('개인정보 수집 및 이용에 동의해주세요');
       return;
     }
 
@@ -83,6 +95,35 @@ export default function SignUpPage() {
         setError('회원가입에 실패했습니다');
         setLoading(false);
         return;
+      }
+
+      // 약관 동의 저장
+      const userAgent = typeof window !== 'undefined' ? window.navigator.userAgent : null;
+
+      // 이용약관 동의 저장
+      if (agreedToTerms) {
+        const termsResult = await saveTermsAgreement(
+          authData.user.id,
+          'terms',
+          CURRENT_TERMS_VERSION_DB,
+          userAgent
+        );
+        if (!termsResult.success) {
+          console.error('이용약관 동의 저장 실패:', termsResult.error);
+        }
+      }
+
+      // 개인정보 수집 및 이용 동의 저장
+      if (agreedToPrivacy) {
+        const privacyResult = await saveTermsAgreement(
+          authData.user.id,
+          'privacy',
+          CURRENT_TERMS_VERSION_DB,
+          userAgent
+        );
+        if (!privacyResult.success) {
+          console.error('개인정보 동의 저장 실패:', privacyResult.error);
+        }
       }
 
       router.push(`/auth/callback?email=${encodeURIComponent(formData.email)}&requested=true`);
@@ -211,21 +252,58 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="terms"
-              checked={agreedToTerms}
-              onCheckedChange={setAgreedToTerms}
-            />
-            <label
-              htmlFor="terms"
-              className="text-sm text-gray-600 leading-none cursor-pointer"
-            >
-              이용약관에 동의합니다{' '}
-              <a href="#" className="text-teal-600 hover:text-teal-700">
-                이용약관
-              </a>
-            </label>
+          <div className="space-y-3">
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="terms"
+                checked={agreedToTerms}
+                onCheckedChange={setAgreedToTerms}
+                className="mt-0.5"
+              />
+              <label
+                htmlFor="terms"
+                className="text-sm text-gray-600 leading-relaxed cursor-pointer flex-1"
+              >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setModalUrl(`/terms/${CURRENT_TERMS_VERSION}`);
+                    setModalOpen(true);
+                  }}
+                  className="text-teal-600 hover:text-teal-700 underline"
+                >
+                  이용약관
+                </button>
+                에 동의합니다 (필수)
+              </label>
+            </div>
+
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="privacy"
+                checked={agreedToPrivacy}
+                onCheckedChange={setAgreedToPrivacy}
+                className="mt-0.5"
+              />
+              <label
+                htmlFor="privacy"
+                className="text-sm text-gray-600 leading-relaxed cursor-pointer flex-1"
+              >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setModalUrl(`/privacy/${CURRENT_TERMS_VERSION}`);
+                    setModalOpen(true);
+                  }}
+                  className="text-teal-600 hover:text-teal-700 underline"
+                >
+                  개인정보 수집 및 이용
+                </button>
+                에 동의합니다 (필수)
+              </label>
+            </div>
           </div>
 
           <button
@@ -251,6 +329,24 @@ export default function SignUpPage() {
           </p>
         </div>
       </div>
+
+      {/* 약관 모달 */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-[95vw] w-full h-[90vh] max-h-[90vh] p-0">
+          <div className="flex flex-col overflow-hidden">
+            <DialogTitle>
+            </DialogTitle>
+            {modalUrl && (
+              <iframe
+                src={modalUrl + '?wrapped=false'}
+                className="w-full h-full flex-1 border-0"
+                title="약관 내용"
+                style={{ minHeight: 0 }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

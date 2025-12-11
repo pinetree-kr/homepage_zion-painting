@@ -1,207 +1,54 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
+import { checkTermsAgreementServer } from '@/src/entities/user/model/checkTermsAgreement';
+import ProfileClient from './ProfileClient';
+import { CURRENT_TERMS_VERSION_DB } from '@/src/shared/lib/auth';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Container, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/src/shared/ui';
-import ProfileForm from '@/src/features/mypage/profile/ui/ProfileForm';
-import PasswordForm from '@/src/features/mypage/profile/ui/PasswordForm';
-import type { Profile } from '@/src/entities/user';
-import { updateProfile } from '@/src/entities/user/model/updateProfile';
-import { updatePassword } from '@/src/entities/user/model/updatePassword';
-import { Save } from 'lucide-react';
-import { getSupabaseUser, supabaseClient } from '@/src/shared/lib/supabase/client';
+interface ProfilePageProps {
+  searchParams: Promise<{
+    terms_required?: string;
+  }>;
+}
 
-export default function ProfilePage() {
-  const router = useRouter();
-  // const supabase = useSupabase();
-  const [user, setUser] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [profileFormData, setProfileFormData] = useState<{ name: string } | null>(null);
-  const [passwordFormData, setPasswordFormData] = useState<{
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-  } | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
+export default async function ProfilePage({ searchParams }: ProfilePageProps) {
+  const params = await searchParams;
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const user = await getSupabaseUser();
-        if (!user) {
-          router.push('/auth/sign-in');
-          return;
-        }
-        const { data: profileData } = await supabaseClient
-          .from('profiles')
-          .select('id, name, email, metadata, created_at, updated_at')
-          .eq('id', user?.id)
-          .single<Profile>();
-
-        if (!profileData) {
-          router.push('/auth/sign-in');
-          return;
-        }
-
-        setUser(profileData);
-        setLoading(false);
-      } catch (error) {
-        console.error('사용자 정보 로드 실패:', error);
-        router.push('/auth/sign-in');
-      }
-    };
-
-    loadUser();
-  }, [router]);
-
-  const handleProfileUpdate = async (data: { name: string }) => {
-    setProfileFormData(data);
-  };
-
-  const handlePasswordUpdate = async (data: {
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-  }) => {
-    setPasswordFormData(data);
-  };
-
-  const handleSave = async () => {
-    if (!user) return;
-
-    setIsSaving(true);
-    try {
-      // 프로필 정보 업데이트
-      if (profileFormData) {
-        await updateProfile(user.id, profileFormData);
-      }
-
-      // 비밀번호 변경
-      if (passwordFormData) {
-        await updatePassword(
-          user.email || '',
-          passwordFormData.currentPassword,
-          passwordFormData.newPassword
-        );
-      }
-
-      // 성공 메시지 및 페이지 새로고침
-      setShowSuccessModal(true);
-      router.refresh();
-      setProfileFormData(null);
-      setPasswordFormData(null);
-    } catch (error) {
-      console.error('저장 실패:', error);
-      setErrorMessage(error instanceof Error ? error.message : '저장에 실패했습니다.');
-      setShowErrorModal(true);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    router.back();
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F4F6F8]">
-        <div className="w-16 h-16 border-4 border-[#1A2C6D] border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  // 사용자 정보 가져오기
+  const user = await getCurrentUserProfile();
 
   if (!user) {
-    return null;
+    redirect('/auth/sign-in');
   }
 
-  // provider 확인 (이메일 가입자인지 확인)
-  const provider = user.metadata?.signup_provider || 'email';
-  const isEmailProvider = provider === 'email';
+  // 관리자 여부 확인
+  const { createServerClient } = await import('@/src/shared/lib/supabase/server');
+  const supabase = await createServerClient();
+  const { data: adminData } = await supabase
+    .from('administrators')
+    .select('id')
+    .eq('id', user.id)
+    .is('deleted_at', null)
+    .maybeSingle();
 
-  return (
-    <>
-      <Container className="lg:max-w-6xl mx-auto">
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-normal text-[#101828]">프로필</h1>
-            <p className="text-base text-[#4D4D4D] mt-2">
-              회원님의 정보를 수정할 수 있습니다
-            </p>
-          </div>
-          {/* 폼 섹션 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-normal text-[#101828]">기본 정보</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <ProfileForm user={user} onUpdate={handleProfileUpdate} />
-                {isEmailProvider && <PasswordForm onUpdate={handlePasswordUpdate} />}
-              </div>
-            </CardContent>
-            <CardFooter className="justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                size="lg"
-                className="h-[42px] gap-2"
-              >
-                취소
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving}
-                size="lg"
-                className="h-[42px] gap-2"
-              >
-                <Save className="h-4 w-4" />
-                {isSaving ? '저장 중...' : '저장'}
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </Container>
+  const isAdmin = adminData !== null;
 
-      {/* 성공 모달 */}
-      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>저장 완료</DialogTitle>
-            <DialogDescription>
-              저장되었습니다.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setShowSuccessModal(false)}>
-              확인
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+  // 약관 동의 여부 확인 (관리자는 제외)
+  let termsRequired = false;
+  if (!isAdmin) {
+    const { termsAgreed, privacyAgreed } = await checkTermsAgreementServer(
+      user.id,
+      CURRENT_TERMS_VERSION_DB
+    );
 
-      {/* 에러 모달 */}
-      <Dialog open={showErrorModal} onOpenChange={setShowErrorModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>저장 실패</DialogTitle>
-            <DialogDescription>
-              {errorMessage}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setShowErrorModal(false)}>
-              확인
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+    // 약관 동의가 안 되어 있으면 termsRequired를 true로 설정
+    termsRequired = !termsAgreed || !privacyAgreed;
+
+    // 쿼리 파라미터가 'true'이거나 약관 동의가 필요한 경우 termsRequired를 true로 설정
+    if (params.terms_required === 'true' || termsRequired) {
+      termsRequired = true;
+    }
+  }
+
+  return <ProfileClient user={user} termsRequired={termsRequired} />;
 }
 

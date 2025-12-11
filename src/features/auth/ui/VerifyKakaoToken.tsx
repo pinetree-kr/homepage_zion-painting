@@ -5,69 +5,95 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
-import { updateGoogleUserProfileAfterLogin } from '@/src/features/auth/api/auth-actions';
+import { verifyKakaoTokenAndCreateSession } from '@/src/features/auth/api/auth-actions';
 
-interface VerifyEmailTokenProps {
+interface VerifyKakaoTokenProps {
     accessToken: string;
     idToken: string;
 }
 
-function VerifyEmailTokenContent({ accessToken, idToken }: VerifyEmailTokenProps) {
+function VerifyKakaoTokenContent({ accessToken, idToken }: VerifyKakaoTokenProps) {
     const router = useRouter();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('');
 
-    const signInWithGoogle = useCallback(async (idToken: string) => {
+    const signInWithKakao = useCallback(async (accessToken: string) => {
         const supabase = createBrowserClient();
-        console.log('accessToken', idToken);
-        const { data, error } = await supabase.auth.signInWithIdToken({
-            provider: 'google',
-            token: idToken,
-        });
-        console.log('data', data);
-        console.log('error', error);
-        if (error) {
+
+        try {
+            // 서버 액션으로 카카오 토큰 검증 및 사용자 생성/찾기
+            const result = await verifyKakaoTokenAndCreateSession(accessToken);
+
+            if (!result.success || !result.userId) {
+                setStatus('error');
+                setMessage(result.error || '카카오 로그인에 실패했습니다.');
+                return;
+            }
+
+            const userId = result.userId;
+            const sessionToken = result.sessionToken;
+
+            // 세션 토큰이 있으면 마법 링크를 사용하여 세션 생성
+            if (sessionToken) {
+                // 마법 링크에서 토큰 해시 추출
+                let tokenHash = sessionToken;
+                if (sessionToken.includes('token_hash=')) {
+                    const url = new URL(sessionToken);
+                    tokenHash = url.searchParams.get('token_hash') || url.hash.split('token_hash=')[1]?.split('&')[0] || sessionToken;
+                }
+
+                // 마법 링크 토큰으로 세션 생성
+                const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+                    token_hash: tokenHash,
+                    type: 'magiclink',
+                });
+
+                if (verifyError || !verifyData.user) {
+                    setStatus('error');
+                    setMessage(verifyError?.message || '세션 생성에 실패했습니다.');
+                    return;
+                }
+
+                // // 관리자 여부 확인
+                // const { data: adminData } = await supabase
+                //     .from('administrators')
+                //     .select('id')
+                //     .eq('id', verifyData.user.id)
+                //     .is('deleted_at', null)
+                //     .maybeSingle();
+
+                // const isAdmin = adminData !== null;
+
+                // // 관리자가 아니면 약관 동의 페이지로 리디렉션
+                // if (!isAdmin) {
+                //     router.push('/auth/terms-agreement');
+                //     router.refresh();
+                //     return;
+                // } else {
+                setStatus('success');
+                setMessage('잠시 후 메인 페이지로 이동합니다.');
+                setTimeout(() => {
+                    router.push('/');
+                    router.refresh();
+                }, 1000);
+                // }
+            } else {
+                setStatus('error');
+                setMessage('세션 토큰을 받지 못했습니다.');
+            }
+
+        } catch (error) {
+            console.error('카카오 로그인 오류:', error);
             setStatus('error');
-            setMessage(error.message || '토큰이 만료되었거나 유효하지 않습니다.');
-            return;
-        }
-
-        if (data.user) {
-            // 구글 로그인 후 프로필 업데이트 (계정 연동 포함)
-            await updateGoogleUserProfileAfterLogin(data.user.id, data.user.email || '');
-
-            // 관리자 여부 확인
-            // const { data: adminData } = await supabase
-            //     .from('administrators')
-            //     .select('id')
-            //     .eq('id', data.user.id)
-            //     .is('deleted_at', null)
-            //     .maybeSingle();
-
-            // const isAdmin = adminData !== null;
-
-            // 관리자가 아니면 약관 동의 페이지로 리디렉션
-            // if (!isAdmin) {
-            //     router.push('/auth/terms-agreement');
-            //     router.refresh();
-            //     return;
-            // } else {
-            setStatus('success');
-            setMessage('잠시 후 메인 페이지로 이동합니다.');
-            setTimeout(() => {
-                router.push('/');
-                router.refresh();
-            }, 1000);
-            // }
+            setMessage(error instanceof Error ? error.message : '카카오 로그인 중 오류가 발생했습니다.');
         }
     }, [router]);
 
-
     useEffect(() => {
         if (idToken) {
-            signInWithGoogle(idToken);
+            signInWithKakao(idToken);
         }
-    }, [idToken, signInWithGoogle]);
+    }, [idToken, signInWithKakao]);
 
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
@@ -148,7 +174,7 @@ function VerifyEmailTokenContent({ accessToken, idToken }: VerifyEmailTokenProps
     );
 }
 
-export default function VerifyEmailToken({ accessToken, idToken }: VerifyEmailTokenProps) {
+export default function VerifyKakaoToken({ accessToken, idToken }: VerifyKakaoTokenProps) {
     return (
         <Suspense
             fallback={
@@ -167,7 +193,7 @@ export default function VerifyEmailToken({ accessToken, idToken }: VerifyEmailTo
                 </div>
             }
         >
-            <VerifyEmailTokenContent accessToken={accessToken} idToken={idToken} />
+            <VerifyKakaoTokenContent accessToken={accessToken} idToken={idToken} />
         </Suspense>
     );
 }

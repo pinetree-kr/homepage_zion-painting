@@ -1,49 +1,22 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useState } from 'react';
 import Link from 'next/link';
 
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button } from '@/src/shared/ui';
-import { checkEmailConfirmed } from '../api/auth-actions';
-import { useRouter } from 'next/navigation';
 
-function WelcomeContent({ email, requested }: { email: string, requested: boolean }) {
-  const router = useRouter();
+function WelcomeContent({ email, error }: { email: string, error?: string }) {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalTitle, setModalTitle] = useState('');
   const [isResending, setIsResending] = useState(false);
-
-
-  useEffect(() => {
-    checkEmailConfirmed(email).then(({ success, error }) => {
-      if (!success) {
-        if (requested) {
-          setModalTitle('가입 요청 완료');
-          setModalMessage('가입하신 이메일로 인증 메일을 발송했습니다. 이메일을 확인해주세요.');
-          setShowModal(true);
-        } else {
-          setModalMessage('아직 이메일 인증이 완료되지 않았습니다. 이메일을 확인해주세요.');
-          setShowModal(true);
-        }
-      } else {
-        setModalTitle('이메일 인증 완료');
-        setModalMessage('이메일 인증이 완료되었습니다. 로그인 페이지로 이동합니다.');
-        setShowModal(true);
-        setTimeout(() => {
-          router.push('/');
-        }, 3000);
-      }
-    });
-  }, [requested, email, router]);
 
   const resendEmail = useCallback(async () => {
     setIsResending(true);
     try {
       const supabase = createBrowserClient();
 
-      // 이메일 주소 가져오기: searchParams에서 먼저 시도, 없으면 현재 세션에서 가져오기
       let emailToResend = email;
       if (!emailToResend) {
         const { data: { user } } = await supabase.auth.getUser();
@@ -67,8 +40,6 @@ function WelcomeContent({ email, requested }: { email: string, requested: boolea
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-
-      console.log({ emailRedirectTo: `${window.location.origin}/auth/callback`, })
 
       if (error) {
         setModalTitle('재발송 실패');
@@ -101,16 +72,28 @@ function WelcomeContent({ email, requested }: { email: string, requested: boolea
                 </svg>
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">환영합니다!</h2>
-            <p className="text-sm text-gray-500 mb-6">
-              회원가입 요청이 완료되었습니다. 이메일을 확인하고 인증 링크를 클릭해주세요.
-            </p>
+            {error === 'email_not_confirmed' ? (
+              <>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">이메일 인증 필요</h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  이메일이 인증되지 않았습니다. 이메일을 확인하고 인증 링크를 클릭해주세요.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">환영합니다!</h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  회원가입 요청이 완료되었습니다. 이메일을 확인하고 인증 링크를 클릭해주세요.
+                </p>
+              </>
+            )}
+
             <div className="flex gap-4 justify-center">
               <Link
                 href="/auth/sign-in"
                 className="inline-block px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-md transition-colors"
               >
-                로그인
+                로그인 페이지로 돌아가기
               </Link>
               <button
                 onClick={resendEmail}
@@ -156,7 +139,7 @@ function WelcomeContent({ email, requested }: { email: string, requested: boolea
   );
 }
 
-export default function Welcome({ email, requested }: { email: string, requested: boolean }) {
+export default function Welcome({ email, error }: { email: string, error?: string }) {
   return (
     <Suspense
       fallback={
@@ -175,7 +158,7 @@ export default function Welcome({ email, requested }: { email: string, requested
         </div>
       }
     >
-      <WelcomeContent email={email} requested={requested} />
+      <WelcomeContent email={email} error={error} />
     </Suspense>
   );
 }

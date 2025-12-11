@@ -1,11 +1,11 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button } from '@/src/shared/ui';
+import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import { verifyTokenHash } from '../api/auth-actions';
 
 interface VerifyEmailTokenProps {
@@ -75,7 +75,7 @@ function VerifyEmailTokenContent({ email, token_hash }: VerifyEmailTokenProps) {
 
     useEffect(() => {
         if (token_hash) {
-            verifyTokenHash(token_hash, 'signup').then(({ success, error }) => {
+            verifyTokenHash(token_hash, 'signup').then(async ({ success, error, data }) => {
                 // 회원가입 후 이메일 인증 대기 상태
                 if (!success || error) {
                     setStatus('pending');
@@ -83,19 +83,25 @@ function VerifyEmailTokenContent({ email, token_hash }: VerifyEmailTokenProps) {
                     return;
                 }
 
-                // 이메일 인증 콜백 처리
+                // 이메일 인증 완료
+                if (!data?.user?.id) {
+                    setStatus('error');
+                    setMessage('사용자 정보를 가져올 수 없습니다.');
+                    return;
+                }
+
                 setStatus('success');
-                setMessage('인증이 완료되었습니다. 잠시 후 메인 페이지로 이동합니다.');
+                setMessage('인증이 완료되었습니다. 잠시 후 로그인 페이지로 이동합니다.');
                 setTimeout(() => {
-                    router.push('/');
-                    router.refresh();
-                }, 3000);
+                    router.push('/auth/sign-in');
+                }, 2000);
             }).catch((error) => {
                 setStatus('error');
                 setMessage('인증에 실패했습니다. 링크가 만료되었거나 유효하지 않습니다.');
             });
         }
-    }, [token_hash, router]);
+    }, [token_hash]);
+
 
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
@@ -123,10 +129,10 @@ function VerifyEmailTokenContent({ email, token_hash }: VerifyEmailTokenProps) {
                             <h2 className="text-2xl font-bold text-gray-900 mb-2">인증 완료!</h2>
                             <p className="text-gray-600 mb-6">{message}</p>
                             <Link
-                                href="/"
+                                href="/auth/sign-in"
                                 className="inline-block px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-md transition-colors"
                             >
-                                메인으로 이동
+                                로그인 페이지로 이동
                             </Link>
                         </div>
                     )}
@@ -200,7 +206,7 @@ function VerifyEmailTokenContent({ email, token_hash }: VerifyEmailTokenProps) {
                         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        메인으로 돌아가기
+                        로그인 페이지로 돌아가기
                     </Link>
                 </div>
             </div>
