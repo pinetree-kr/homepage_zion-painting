@@ -247,16 +247,6 @@ export default function ProfileForm({ user, onUpdate, linkedProviders = [], onAc
             연결된 계정
           </label>
           <div className="flex flex-wrap gap-2 my-3">
-            {/* 이메일은 베이스 프로바이더가 아닐 때만 표시 */}
-            {/* {user.email && baseProvider !== 'email' && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-[#E2E8F0] rounded-[10px] bg-white">
-                <div className="text-gray-600">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <span className="text-sm text-[#4D4D4D]">이메일</span>
-                <Check className="w-3.5 h-3.5 text-green-600" />
-              </div>
-            )} */}
             {/* 다른 provider들 표시 (베이스 프로바이더 제외) */}
             {allProviders.map((provider) => {
               const isLinked = linkedProviders.includes(provider);
@@ -277,6 +267,7 @@ export default function ProfileForm({ user, onUpdate, linkedProviders = [], onAc
                 );
               } else {
                 // 연결되지 않은 경우: 연결하기 버튼
+                const isComingSoon = provider === 'kakao' || provider === 'naver';
                 return (
                   <Button
                     key={provider}
@@ -284,12 +275,16 @@ export default function ProfileForm({ user, onUpdate, linkedProviders = [], onAc
                     variant="outline"
                     size="sm"
                     onClick={() => handleLinkAccount(provider as 'google' | 'kakao' | 'naver')}
-                    disabled={isLinkingThis || linking !== null}
+                    disabled={isComingSoon || isLinkingThis || linking !== null}
                     className="h-auto px-3 py-1.5 gap-2 border border-[#E2E8F0] rounded-[10px]"
                   >
                     <div className={providerInfo.color}>{providerInfo.icon}</div>
                     <span className="text-sm text-[#4D4D4D]">
-                      {isLinkingThis ? '연결 중...' : `${providerInfo.name} 연결하기`}
+                      {isComingSoon 
+                        ? '예정' 
+                        : isLinkingThis 
+                        ? '연결 중...' 
+                        : `${providerInfo.name} 연결하기`}
                     </span>
                   </Button>
                 );
