@@ -582,14 +582,126 @@ export async function verifyKakaoTokenAndCreateSession(
 }
 
 /**
+ * 구글 계정이 이미 다른 계정에 연결되어 있는지 확인
+ */
+export async function checkGoogleAccountConflict(
+  googleEmail: string,
+  currentUserId: string
+): Promise<{ hasConflict: boolean; existingUserId?: string; error?: string }> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const supabase = await createSecretClient(env.SUPABASE_SECRET_KEY);
+
+    // 1. 구글 이메일로 이미 존재하는 프로필 확인
+    const { data: existingProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', googleEmail)
+      .neq('id', currentUserId) // 현재 사용자 제외
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('프로필 조회 오류:', profileError);
+      return { hasConflict: false };
+    }
+
+    if (existingProfile) {
+      // 2. 해당 프로필의 auth.identities에서 구글 identity 확인
+      const { data: authUser } = await supabase.auth.admin.getUserById(existingProfile.id);
+      const hasGoogleIdentity = authUser?.user?.identities?.some(
+        (identity: any) => identity.provider === 'google'
+      ) || false;
+
+      if (hasGoogleIdentity) {
+        return {
+          hasConflict: true,
+          existingUserId: existingProfile.id,
+        };
+      }
+    }
+
+    return { hasConflict: false };
+  } catch (error) {
+    console.error('구글 계정 충돌 확인 중 오류 발생:', error);
+    return {
+      hasConflict: false,
+      error: error instanceof Error ? error.message : '알 수 없는 오류',
+    };
+  }
+}
+
+/**
+ * 구글 identity를 특정 사용자 계정에 연결
+ */
+export async function linkGoogleIdentityToUser(
+  targetUserId: string,
+  googleUserId: string,
+  idToken: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const supabase = await createSecretClient(env.SUPABASE_SECRET_KEY);
+
+    // 구글 사용자의 identity 정보 가져오기
+    const { data: googleAuthUser } = await supabase.auth.admin.getUserById(googleUserId);
+    
+    if (!googleAuthUser?.user) {
+      return { success: false, error: '구글 계정을 찾을 수 없습니다.' };
+    }
+
+    // 구글 identity 찾기
+    const googleIdentity = googleAuthUser.user.identities?.find(
+      (identity: any) => identity.provider === 'google'
+    );
+
+    if (!googleIdentity) {
+      return { success: false, error: '구글 identity를 찾을 수 없습니다.' };
+    }
+
+    // targetUserId에 구글 identity 연결
+    // Supabase Admin API를 사용하여 identity 연결
+    // 주의: linkIdentity는 identity ID가 필요하지만, Supabase는 이를 직접 제공하지 않음
+    // 대신, 구글 계정을 삭제하고 targetUserId에 새로 연결해야 할 수 있음
+    
+    // 임시 해결책: 구글 계정의 identity 정보를 targetUserId에 복사
+    // 실제로는 Supabase의 linkIdentity API를 사용해야 하지만,
+    // 현재 구조에서는 복잡하므로 에러를 반환하고 사용자에게 안내
+    
+    return {
+      success: false,
+      error: '계정 연동 기능은 준비 중입니다. 잠시 후 다시 시도해주세요.',
+    };
+  } catch (error) {
+    console.error('구글 identity 연결 중 오류 발생:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '알 수 없는 오류',
+    };
+  }
+}
+
+/**
  * 구글 로그인 후 프로필 업데이트 (계정 연동 포함)
  */
 export async function updateGoogleUserProfileAfterLogin(
   userId: string,
+  googleEmail?: string,
 ): Promise<{ success: boolean; error?: string; isLinking?: boolean }> {
   try {
     const { env } = await getCloudflareContext({ async: true });
     const supabase = await createSecretClient(env.SUPABASE_SECRET_KEY);
+
+    // 구글 이메일이 제공된 경우, 계정 충돌 확인
+    if (googleEmail) {
+      const conflictCheck = await checkGoogleAccountConflict(googleEmail, userId);
+      if (conflictCheck.hasConflict) {
+        return {
+          success: false,
+          error: '이 구글 계정은 이미 다른 계정에 연결되어 있습니다. 기존 계정으로 로그인해주세요.',
+        };
+      }
+    }
 
     // profiles 테이블에서 현재 사용자 정보 가져오기
     const { data: currentProfile } = await supabase
