@@ -162,27 +162,29 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 h-full">
           <nav className="flex items-center justify-between h-full">
             {/* 모바일: 햄버거 버튼 (좌측) */}
-            <button
-              className="md:hidden p-2 -ml-2 transition-colors duration-300 text-[#101828] hover:bg-gray-100 rounded-lg"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="메뉴 열기"
-            >
-              {isMenuOpen ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M2.5 5H17.5M2.5 10H17.5M2.5 15H17.5"
-                    stroke="currentColor"
-                    strokeWidth="1.67"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-            </button>
+            <div className="md:hidden w-14 flex items-center justify-center">
+              <button
+                className="p-2 transition-colors duration-300 text-[#101828] hover:bg-gray-100 rounded-lg"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label="메뉴 열기"
+              >
+                {isMenuOpen ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M2.5 5H17.5M2.5 10H17.5M2.5 15H17.5"
+                      stroke="currentColor"
+                      strokeWidth="1.67"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
 
             {/* 로고 - 모바일에서는 중앙, 데스크톱에서는 좌측 */}
             <Link href="/" className={`flex-1 flex justify-center md:flex-none md:justify-start ${isMenuOpen ? 'md:flex-1 md:justify-center' : ''
@@ -268,7 +270,7 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
             </div>
 
             {/* 모바일: 프로필 메뉴 (우측) */}
-            <div className="md:hidden flex items-center justify-center">
+            <div className="md:hidden w-14 flex items-center justify-center">
               <UserMenu isScrolled={!enableScrollAnimation || isScrolled} />
             </div>
           </nav>

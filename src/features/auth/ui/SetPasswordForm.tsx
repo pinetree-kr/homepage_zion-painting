@@ -150,7 +150,7 @@ export default function SetPasswordForm({
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
         <div className="w-full">
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
             <div className="text-center">
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
@@ -197,7 +197,7 @@ export default function SetPasswordForm({
                     disabled={isResending}
                     className="bg-teal-500 hover:bg-teal-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
-                    {isResending ? '재발송 중...' : '이메일 재발송'}
+                    {isResending ? '재발송 중...' : '재발송'}
                   </Button>
 
                   {!verifiedEmail && !showEmailInput && (
@@ -231,7 +231,7 @@ export default function SetPasswordForm({
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
         <div className="w-full">
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
             <div className="text-center">
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
@@ -256,7 +256,7 @@ export default function SetPasswordForm({
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
       <div className="w-full">
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+        <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
           <div className="text-center mb-6">
             <div className="mb-4 flex justify-center">
               <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
@@ -289,7 +289,7 @@ export default function SetPasswordForm({
               variant="outline"
               className="text-sm"
             >
-              {isResending ? '재발송 중...' : '이메일 재발송'}
+              {isResending ? '재발송 중...' : '재발송'}
             </Button>
           </div> */}
 
@@ -352,7 +352,7 @@ export default function SetPasswordForm({
                   disabled={isResending}
                   className="w-full bg-teal-500 hover:bg-teal-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  {isResending ? '재발송 중...' : '이메일 재발송'}
+                  {isResending ? '재발송 중...' : '재발송'}
                 </Button>
               </>
             )}
@@ -380,7 +380,7 @@ export default function SetPasswordForm({
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            로그인 페이지로 돌아가기
+            로그인
           </Link>
         </div>
       </div>

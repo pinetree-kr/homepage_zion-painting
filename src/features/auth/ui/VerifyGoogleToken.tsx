@@ -139,7 +139,7 @@ function VerifyEmailTokenContent({ accessToken, idToken }: VerifyEmailTokenProps
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
             <div className="w-full">
-                <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+                <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
                     {status === 'loading' && (
                         <div className="text-center">
                             <div className="mb-4 flex justify-center">
@@ -221,7 +221,7 @@ export default function VerifyEmailToken({ accessToken, idToken }: VerifyEmailTo
             fallback={
                 <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
                     <div className="w-full max-w-md">
-                        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+                        <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
                             <div className="text-center">
                                 <div className="mb-4 flex justify-center">
                                     <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
