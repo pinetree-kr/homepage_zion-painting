@@ -138,7 +138,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-8 relative">
+    <>
       <div className="w-full max-w-md">
         <div className="mb-8">
           <h2 className="text-gray-900 text-2xl font-bold mb-2">회원가입</h2>
@@ -339,7 +339,7 @@ export default function SignUpPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 

@@ -62,13 +62,13 @@ function WelcomeContent({ email, error }: { email: string, error?: string }) {
   }, [email]);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
+    <>
       <div className="w-full">
-        <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
+        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
           <div className="text-center">
             <div className="mb-4 flex justify-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                <MailIcon className='w-10 h-10 text-[#3b82f6]'/>
+                <MailIcon className='w-10 h-10 text-[#3b82f6]' />
               </div>
             </div>
             {error === 'email_not_confirmed' ? (
@@ -94,13 +94,18 @@ function WelcomeContent({ email, error }: { email: string, error?: string }) {
               >
                 로그인
               </Link>
-              <button
-                onClick={resendEmail}
-                disabled={isResending}
-                className="inline-block px-6 py-2 bg-teal-500 hover:bg-teal-600 disabled:bg-teal-300 disabled:cursor-not-allowed text-white rounded-md transition-colors"
-              >
-                {isResending ? '재발송 중...' : '재발송'}
-              </button>
+              {
+                error && (
+                  <button
+                    onClick={resendEmail}
+                    disabled={isResending}
+                    className="inline-block px-6 py-2 bg-teal-500 hover:bg-teal-600 disabled:bg-teal-300 disabled:cursor-not-allowed text-white rounded-md transition-colors"
+                  >
+                    {isResending ? '재발송 중...' : '재발송'}
+                  </button>
+                )
+              }
+
             </div>
           </div>
         </div>
@@ -134,7 +139,7 @@ function WelcomeContent({ email, error }: { email: string, error?: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 
@@ -142,16 +147,14 @@ export default function Welcome({ email, error }: { email: string, error?: strin
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
-          <div className="w-full max-w-md">
-            <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
-              <div className="text-center">
-                <div className="mb-4 flex justify-center">
-                  <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">로딩 중...</h2>
-                <p className="text-gray-600">페이지를 불러오는 중입니다.</p>
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
+            <div className="text-center">
+              <div className="mb-4 flex justify-center">
+                <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">로딩 중...</h2>
+              <p className="text-gray-600">페이지를 불러오는 중입니다.</p>
             </div>
           </div>
         </div>

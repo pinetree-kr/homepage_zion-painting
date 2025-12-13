@@ -148,9 +148,9 @@ export default function SetPasswordForm({
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
+      <>
         <div className="w-full">
-          <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
             <div className="text-center">
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
@@ -223,7 +223,7 @@ export default function SetPasswordForm({
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -231,7 +231,7 @@ export default function SetPasswordForm({
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
         <div className="w-full">
-          <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
             <div className="text-center">
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
@@ -256,7 +256,7 @@ export default function SetPasswordForm({
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
       <div className="w-full">
-        <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
+        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
           <div className="text-center mb-6">
             <div className="mb-4 flex justify-center">
               <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">

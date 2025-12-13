@@ -10,6 +10,7 @@ import { Badge } from '@/src/shared/ui';
 import { supabaseClient } from '@/src/shared/lib/supabase/client';
 import { recordAdminLogin, recordLoginFailed, signInWithGoogle, signInWithKakao } from '@/src/features/auth/api/auth-actions';
 import { getClientIp } from '@/src/shared/lib/client-ip';
+import Header from './Header';
 
 export default function SignInForm() {
   const router = useRouter();
@@ -182,7 +183,8 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-8 relative">
+    <>
+
       {/* <Link
         href="/"
         className="absolute top-8 left-8 flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
@@ -355,6 +357,7 @@ export default function SignInForm() {
           </p>
         </div>
       </div>
-    </div>
+
+    </>
   );
 }

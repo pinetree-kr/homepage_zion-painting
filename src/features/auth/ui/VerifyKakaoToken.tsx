@@ -97,9 +97,9 @@ function VerifyKakaoTokenContent({ accessToken, idToken }: VerifyKakaoTokenProps
     }, [idToken, signInWithKakao]);
 
     return (
-        <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
+        <>
             <div className="w-full">
-                <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
+                <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
                     {status === 'loading' && (
                         <div className="text-center">
                             <div className="mb-4 flex justify-center">
@@ -171,7 +171,7 @@ function VerifyKakaoTokenContent({ accessToken, idToken }: VerifyKakaoTokenProps
                     </Link>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
 
@@ -179,16 +179,14 @@ export default function VerifyKakaoToken({ accessToken, idToken }: VerifyKakaoTo
     return (
         <Suspense
             fallback={
-                <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
-                    <div className="w-full max-w-md">
-                        <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-200">
-                            <div className="text-center">
-                                <div className="mb-4 flex justify-center">
-                                    <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">로딩 중...</h2>
-                                <p className="text-gray-600">페이지를 불러오는 중입니다.</p>
+                <div className="w-full max-w-md">
+                    <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
+                        <div className="text-center">
+                            <div className="mb-4 flex justify-center">
+                                <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
                             </div>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">로딩 중...</h2>
+                            <p className="text-gray-600">페이지를 불러오는 중입니다.</p>
                         </div>
                     </div>
                 </div>

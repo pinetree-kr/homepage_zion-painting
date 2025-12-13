@@ -1,4 +1,5 @@
 // import { getCurrentUserProfile } from '@/src/entities/user/model/getCurrentUser';
+import Header from '@/src/features/auth/ui/Header';
 import Image from 'next/image';
 // import { redirect } from 'next/navigation';
 
@@ -61,9 +62,12 @@ export default async function AuthLayout({
                     </div>
                 </div>
             </div>
-
-            {/* Right Side - Form */}
-            {children}
+            <Header />
+            {/* <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2"></div> */}
+            <div className="min-h-screen bg-white flex md:items-center justify-center pt-24 md:pt-8 p-6 md:p-8 w-full relative">
+                {/* Right Side - Form */}
+                {children}
+            </div>
         </div>
     );
 }
