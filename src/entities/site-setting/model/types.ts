@@ -1,3 +1,11 @@
+export interface MapConfig {
+    provider: 'kakao' | 'naver';
+    enabled: boolean; // 지도 활성화 여부
+    coords: [number, number] | null; // [latitude, longitude]
+    client_id: string | null; // 암호화된 client_id (카카오맵: REST API 키, 네이버맵: NCP Client ID)
+    client_secret: string | null; // 암호화된 client_secret (네이버맵만 사용)
+}
+
 export interface SiteSetting {
     id: string;
     contact: {
@@ -7,7 +15,8 @@ export interface SiteSetting {
         phone_primary: string | null;
         phone_secondary: string | null;
         fax: string | null;
-        map_url: string | null;
+        // map_url: string | null; // deprecated: 하위 호환성을 위해 유지
+        maps: MapConfig[] | null; // 새로운 지도 설정 배열
         extra_json: any | null;
     };
     default_boards: {

@@ -6,14 +6,16 @@ import {
     getCompanyHistories,
     getCompanyOrganizationMembers,
     getContactInfo,
+    getMapApiKeys,
 } from '@/src/features/management-company/api/company-actions';
 
 export default async function AboutPage() {
-    const [aboutInfo, histories, organizationMembers, contactInfo] = await Promise.all([
+    const [aboutInfo, histories, organizationMembers, contactInfo, mapApiKeys] = await Promise.all([
         getCompanyAboutInfo(),
         getCompanyHistories(),
         getCompanyOrganizationMembers(),
         getContactInfo(),
+        getMapApiKeys(),
     ]);
 
     return (
@@ -31,6 +33,7 @@ export default async function AboutPage() {
                 histories={histories}
                 organizationMembers={organizationMembers}
                 contactInfo={contactInfo}
+                mapApiKeys={mapApiKeys}
             />
         </div>
     );

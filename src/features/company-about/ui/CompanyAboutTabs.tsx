@@ -16,6 +16,10 @@ interface CompanyAboutTabsProps {
   histories: CompanyHistory[];
   organizationMembers: OrganizationMember[];
   contactInfo: ContactInfo | null;
+  mapApiKeys: {
+    kakao: string | null;
+    naver: { clientId: string | null; clientSecret: string | null };
+  };
 }
 
 type TabType = 'overview' | 'history' | 'organization' | 'location';
@@ -32,6 +36,7 @@ export default function CompanyAboutTabs({
   histories,
   organizationMembers,
   contactInfo,
+  mapApiKeys,
 }: CompanyAboutTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
@@ -86,7 +91,7 @@ export default function CompanyAboutTabs({
             <CompanyOrganizationTab members={organizationMembers} />
           )}
           {activeTab === 'location' && (
-            <CompanyLocationTab contactInfo={contactInfo} />
+            <CompanyLocationTab contactInfo={contactInfo} mapApiKeys={mapApiKeys} />
           )}
         </div>
       </Container>

@@ -871,7 +871,7 @@ export async function getSiteSettings(): Promise<SiteSetting | null> {
         phone_primary: contact.phone_primary || null,
         phone_secondary: contact.phone_secondary || null,
         fax: contact.fax || null,
-        map_url: contact.map_url || null,
+        maps: contact.maps || null, // 새로운 maps 배열
         extra_json: contact.extra_json || null,
       },
       default_boards: defaultBoards,
@@ -889,22 +889,7 @@ export async function getSiteSettings(): Promise<SiteSetting | null> {
  * 사이트 설정 저장/업데이트 (관리자용)
  */
 export async function saveSiteSettings(
-  settings: Partial<Omit<SiteSetting, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>> & {
-    // 하위 호환성을 위한 레거시 필드들 (deprecated)
-    prologue_default_title?: string | null;
-    prologue_default_description?: string | null;
-    contact_email?: string | null;
-    contact_address?: string | null;
-    contact_business_hours?: string | null;
-    contact_phone_primary?: string | null;
-    contact_phone_secondary?: string | null;
-    contact_fax?: string | null;
-    contact_map_url?: string | null;
-    contact_extra_json?: string | null;
-    notice_board_id?: string | null;
-    inquire_board_id?: string | null;
-    pds_board_id?: string | null;
-  }
+  settings: Partial<Omit<SiteSetting, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>>
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createServerClient();
@@ -949,39 +934,39 @@ export async function saveSiteSettings(
       };
       hasContactUpdates = true;
     } else {
-      // 레거시 필드 지원 (하위 호환성)
-      if (settings.contact_email !== undefined) {
-        contactUpdates.email = settings.contact_email || null;
-        hasContactUpdates = true;
-      }
-      if (settings.contact_address !== undefined) {
-        contactUpdates.address = settings.contact_address || null;
-        hasContactUpdates = true;
-      }
-      if (settings.contact_business_hours !== undefined) {
-        contactUpdates.business_hours = settings.contact_business_hours || null;
-        hasContactUpdates = true;
-      }
-      if (settings.contact_phone_primary !== undefined) {
-        contactUpdates.phone_primary = settings.contact_phone_primary || null;
-        hasContactUpdates = true;
-      }
-      if (settings.contact_phone_secondary !== undefined) {
-        contactUpdates.phone_secondary = settings.contact_phone_secondary || null;
-        hasContactUpdates = true;
-      }
-      if (settings.contact_fax !== undefined) {
-        contactUpdates.fax = settings.contact_fax || null;
-        hasContactUpdates = true;
-      }
-      if (settings.contact_map_url !== undefined) {
-        contactUpdates.map_url = settings.contact_map_url || null;
-        hasContactUpdates = true;
-      }
-      if (settings.contact_extra_json !== undefined) {
-        contactUpdates.extra_json = settings.contact_extra_json || null;
-        hasContactUpdates = true;
-      }
+      // // 레거시 필드 지원 (하위 호환성)
+      // if (settings.contact_email !== undefined) {
+      //   contactUpdates.email = settings.contact_email || null;
+      //   hasContactUpdates = true;
+      // }
+      // if (settings.contact_address !== undefined) {
+      //   contactUpdates.address = settings.contact_address || null;
+      //   hasContactUpdates = true;
+      // }
+      // if (settings.contact_business_hours !== undefined) {
+      //   contactUpdates.business_hours = settings.contact_business_hours || null;
+      //   hasContactUpdates = true;
+      // }
+      // if (settings.contact_phone_primary !== undefined) {
+      //   contactUpdates.phone_primary = settings.contact_phone_primary || null;
+      //   hasContactUpdates = true;
+      // }
+      // if (settings.contact_phone_secondary !== undefined) {
+      //   contactUpdates.phone_secondary = settings.contact_phone_secondary || null;
+      //   hasContactUpdates = true;
+      // }
+      // if (settings.contact_fax !== undefined) {
+      //   contactUpdates.fax = settings.contact_fax || null;
+      //   hasContactUpdates = true;
+      // }
+      // // if (settings.contact_map_url !== undefined) {
+      // //   contactUpdates.map_url = settings.contact_map_url || null;
+      // //   hasContactUpdates = true;
+      // // }
+      // if (settings.contact_extra_json !== undefined) {
+      //   contactUpdates.extra_json = settings.contact_extra_json || null;
+      //   hasContactUpdates = true;
+      // }
 
       if (hasContactUpdates) {
         settingsData.contact = { ...existingContact, ...contactUpdates };
@@ -1002,15 +987,15 @@ export async function saveSiteSettings(
 
       // boards 테이블에서 name 조회
       const boardIdsToFetch: string[] = [];
-      if (settings.notice_board_id !== undefined && settings.notice_board_id) {
-        boardIdsToFetch.push(settings.notice_board_id);
-      }
-      if (settings.inquire_board_id !== undefined && settings.inquire_board_id) {
-        boardIdsToFetch.push(settings.inquire_board_id);
-      }
-      if (settings.pds_board_id !== undefined && settings.pds_board_id) {
-        boardIdsToFetch.push(settings.pds_board_id);
-      }
+      // if (settings.notice_board_id !== undefined && settings.notice_board_id) {
+      //   boardIdsToFetch.push(settings.notice_board_id);
+      // }
+      // if (settings.inquire_board_id !== undefined && settings.inquire_board_id) {
+      //   boardIdsToFetch.push(settings.inquire_board_id);
+      // }
+      // if (settings.pds_board_id !== undefined && settings.pds_board_id) {
+      //   boardIdsToFetch.push(settings.pds_board_id);
+      // }
 
       const boardsMap: Map<string, { id: string; name: string }> = new Map();
       if (boardIdsToFetch.length > 0) {
@@ -1027,39 +1012,39 @@ export async function saveSiteSettings(
         }
       }
 
-      if (settings.notice_board_id !== undefined) {
-        if (settings.notice_board_id) {
-          const board = boardsMap.get(settings.notice_board_id);
-          defaultBoardsUpdates.notice = board
-            ? { id: board.id, name: board.name }
-            : { id: settings.notice_board_id, name: '공지사항' };
-        } else {
-          defaultBoardsUpdates.notice = null;
-        }
-        hasDefaultBoardsUpdates = true;
-      }
-      if (settings.inquire_board_id !== undefined) {
-        if (settings.inquire_board_id) {
-          const board = boardsMap.get(settings.inquire_board_id);
-          defaultBoardsUpdates.inquiry = board
-            ? { id: board.id, name: board.name }
-            : { id: settings.inquire_board_id, name: 'Q&A' };
-        } else {
-          defaultBoardsUpdates.inquiry = null;
-        }
-        hasDefaultBoardsUpdates = true;
-      }
-      if (settings.pds_board_id !== undefined) {
-        if (settings.pds_board_id) {
-          const board = boardsMap.get(settings.pds_board_id);
-          defaultBoardsUpdates.pds = board
-            ? { id: board.id, name: board.name }
-            : { id: settings.pds_board_id, name: '자료실' };
-        } else {
-          defaultBoardsUpdates.pds = null;
-        }
-        hasDefaultBoardsUpdates = true;
-      }
+      // if (settings.notice_board_id !== undefined) {
+      //   if (settings.notice_board_id) {
+      //     const board = boardsMap.get(settings.notice_board_id);
+      //     defaultBoardsUpdates.notice = board
+      //       ? { id: board.id, name: board.name }
+      //       : { id: settings.notice_board_id, name: '공지사항' };
+      //   } else {
+      //     defaultBoardsUpdates.notice = null;
+      //   }
+      //   hasDefaultBoardsUpdates = true;
+      // }
+      // if (settings.inquire_board_id !== undefined) {
+      //   if (settings.inquire_board_id) {
+      //     const board = boardsMap.get(settings.inquire_board_id);
+      //     defaultBoardsUpdates.inquiry = board
+      //       ? { id: board.id, name: board.name }
+      //       : { id: settings.inquire_board_id, name: 'Q&A' };
+      //   } else {
+      //     defaultBoardsUpdates.inquiry = null;
+      //   }
+      //   hasDefaultBoardsUpdates = true;
+      // }
+      // if (settings.pds_board_id !== undefined) {
+      //   if (settings.pds_board_id) {
+      //     const board = boardsMap.get(settings.pds_board_id);
+      //     defaultBoardsUpdates.pds = board
+      //       ? { id: board.id, name: board.name }
+      //       : { id: settings.pds_board_id, name: '자료실' };
+      //   } else {
+      //     defaultBoardsUpdates.pds = null;
+      //   }
+      //   hasDefaultBoardsUpdates = true;
+      // }
 
       if (hasDefaultBoardsUpdates) {
         settingsData.default_boards = defaultBoardsUpdates;
