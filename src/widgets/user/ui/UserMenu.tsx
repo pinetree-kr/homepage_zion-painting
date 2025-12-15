@@ -7,8 +7,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { LogOut, Settings, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { supabaseClient } from "@/src/shared/lib/supabase/client";
+import { generateUserColor, rgbToCss } from "@/src/shared/lib/utils";
+import { cn } from "@/app/components";
 
 {/* 사용자 드롭다운 메뉴 */ }
 export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
@@ -63,6 +65,14 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
     const router = useRouter();
     const pathname = usePathname();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+
+    // 사용자 ID를 기준으로 색상 생성
+    const backgroundColor = useMemo(() => {
+        const userId = user?.id;
+        const userColor = generateUserColor(userId);
+        return rgbToCss(userColor);
+    }, [user?.id]);
 
 
     // DropdownMenu 열림/닫힘 상태에 따른 스크롤바 쉬프팅 방지
@@ -138,8 +148,8 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
     }, [router])
 
     if (loading) return (
-        <div className="flex items-center justify-center w-10 h-10">
-            <svg className="animate-spin text-white" width="24" height="24" viewBox="0 0 24 24">
+        <div className="flex items-center justify-center w-10 h-10 md:w-auto md:h-auto">
+            <svg className={`animate-spin ${isScrolled ? 'text-gray-700' : 'text-gray-700 md:text-white'}`} width="24" height="24" viewBox="0 0 24 24">
                 <circle
                     className="opacity-40"
                     cx="12"
@@ -161,20 +171,21 @@ export default function UserMenu({ isScrolled }: { isScrolled: boolean }) {
     if (!user) return (
         <Link
             href="/auth/sign-in"
-            className={`px-4 py-2 rounded-lg text-base font-normal transition-colors ${isScrolled
-                ? 'text-gray-700 hover:bg-gray-100'
-                : 'text-white hover:bg-white/10'
-                }`}
+            className={cn("w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 rounded-lg text-base font-normal transition-colors flex items-center justify-center", isScrolled ? "text-gray-700 hover:bg-gray-100" : "text-gray-700 md:text-white hover:bg-gray-100 md:hover:bg-white/10")}
         >
-            로그인
+            <span className="md:inline hidden">로그인</span>
+            <span className="md:hidden text-xs">로그인</span>
         </Link>
     )
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                <button className="relative h-10 w-10 rounded-full bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] text-white flex items-center justify-center hover:opacity-80 transition-opacity outline-none">
-                    <span className="text-sm font-medium">{user.name?.charAt(0)}</span>
+                <button
+                    className="relative h-10 w-10 rounded-full text-white flex items-center border border-gray-50/80 justify-center hover:opacity-80 transition-opacity outline-none flex-shrink-0"
+                    style={{ backgroundColor }}
+                >
+                    <span className="text-sm font-medium">{user.name?.charAt(0)?.toUpperCase()}</span>
                 </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

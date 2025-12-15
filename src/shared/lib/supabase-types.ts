@@ -7,38 +7,58 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: string | null
+          id: string
+          ip_address: unknown
+          log_type: Database["public"]["Enums"]["log_type"]
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          ip_address?: unknown
+          log_type: Database["public"]["Enums"]["log_type"]
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          ip_address?: unknown
+          log_type?: Database["public"]["Enums"]["log_type"]
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: []
+      }
       administrators: {
         Row: {
           created_at: string | null
           deleted_at: string | null
           id: string
+          metadata: Json | null
           role: Database["public"]["Enums"]["admin_role"]
           updated_at: string | null
         }
@@ -46,6 +66,7 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           id: string
+          metadata?: Json | null
           role?: Database["public"]["Enums"]["admin_role"]
           updated_at?: string | null
         }
@@ -53,6 +74,7 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           id?: string
+          metadata?: Json | null
           role?: Database["public"]["Enums"]["admin_role"]
           updated_at?: string | null
         }
@@ -93,54 +115,101 @@ export type Database = {
           },
         ]
       }
+      board_policies: {
+        Row: {
+          board_id: string
+          cmt_create: boolean
+          cmt_delete: boolean
+          cmt_edit: boolean
+          cmt_read: boolean
+          created_at: string | null
+          file_download: boolean
+          file_upload: boolean
+          post_create: boolean
+          post_delete: boolean
+          post_edit: boolean
+          post_list: boolean
+          post_read: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          board_id: string
+          cmt_create?: boolean
+          cmt_delete?: boolean
+          cmt_edit?: boolean
+          cmt_read?: boolean
+          created_at?: string | null
+          file_download?: boolean
+          file_upload?: boolean
+          post_create?: boolean
+          post_delete?: boolean
+          post_edit?: boolean
+          post_list?: boolean
+          post_read?: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          board_id?: string
+          cmt_create?: boolean
+          cmt_delete?: boolean
+          cmt_edit?: boolean
+          cmt_read?: boolean
+          created_at?: string | null
+          file_download?: boolean
+          file_upload?: boolean
+          post_create?: boolean
+          post_delete?: boolean
+          post_edit?: boolean
+          post_list?: boolean
+          post_read?: boolean
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_policies_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boards: {
         Row: {
-          allow_anonymous: boolean
-          allow_comment: boolean
-          allow_file: boolean
-          allow_guest: boolean
-          allow_secret: boolean | null
           code: string
           created_at: string | null
           deleted_at: string | null
           description: string | null
           display_order: number
           id: string
-          is_public: boolean
           name: string
           updated_at: string | null
+          visibility: Database["public"]["Enums"]["visible_type"]
         }
         Insert: {
-          allow_anonymous?: boolean
-          allow_comment?: boolean
-          allow_file?: boolean
-          allow_guest?: boolean
-          allow_secret?: boolean | null
           code: string
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
           display_order?: number
           id?: string
-          is_public?: boolean
           name: string
           updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["visible_type"]
         }
         Update: {
-          allow_anonymous?: boolean
-          allow_comment?: boolean
-          allow_file?: boolean
-          allow_guest?: boolean
-          allow_secret?: boolean | null
           code?: string
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
           display_order?: number
           id?: string
-          is_public?: boolean
           name?: string
           updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["visible_type"]
         }
         Relationships: []
       }
@@ -218,35 +287,10 @@ export type Database = {
         }
         Relationships: []
       }
-      business_info: {
-        Row: {
-          areas: Json | null
-          created_at: string | null
-          id: string
-          introduction: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          areas?: Json | null
-          created_at?: string | null
-          id?: string
-          introduction?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          areas?: Json | null
-          created_at?: string | null
-          id?: string
-          introduction?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       comments: {
         Row: {
           author_id: string | null
-          author_ip: string | null
-          author_name: string | null
+          author_metadata: Json | null
           context: string
           created_at: string | null
           deleted_at: string | null
@@ -258,8 +302,7 @@ export type Database = {
         }
         Insert: {
           author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
+          author_metadata?: Json | null
           context?: string
           created_at?: string | null
           deleted_at?: string | null
@@ -271,8 +314,7 @@ export type Database = {
         }
         Update: {
           author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
+          author_metadata?: Json | null
           context?: string
           created_at?: string | null
           deleted_at?: string | null
@@ -306,348 +348,99 @@ export type Database = {
           },
         ]
       }
-      company_info: {
+      pages: {
         Row: {
+          code: string
           created_at: string | null
-          greetings: string | null
-          histories: Json | null
+          display_order: number
           id: string
-          introduction: string | null
-          mission: string | null
-          organization_members: Json | null
-          strengths: Json | null
-          updated_at: string | null
-          values: Json | null
-          vision: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          greetings?: string | null
-          histories?: Json | null
-          id?: string
-          introduction?: string | null
-          mission?: string | null
-          organization_members?: Json | null
-          strengths?: Json | null
-          updated_at?: string | null
-          values?: Json | null
-          vision?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          greetings?: string | null
-          histories?: Json | null
-          id?: string
-          introduction?: string | null
-          mission?: string | null
-          organization_members?: Json | null
-          strengths?: Json | null
-          updated_at?: string | null
-          values?: Json | null
-          vision?: string | null
-        }
-        Relationships: []
-      }
-      contact_info: {
-        Row: {
-          address: string
-          business_hours: string | null
-          created_at: string | null
-          email: string
-          extra_json: string | null
-          fax: string | null
-          id: string
-          map_url: string | null
-          phone_primary: string | null
-          phone_secondary: string | null
+          metadata: Json
+          page: string
+          section_type: string
+          status: Database["public"]["Enums"]["document_status"]
           updated_at: string | null
         }
         Insert: {
-          address: string
-          business_hours?: string | null
+          code: string
           created_at?: string | null
-          email: string
-          extra_json?: string | null
-          fax?: string | null
+          display_order?: number
           id?: string
-          map_url?: string | null
-          phone_primary?: string | null
-          phone_secondary?: string | null
+          metadata?: Json
+          page: string
+          section_type: string
+          status?: Database["public"]["Enums"]["document_status"]
           updated_at?: string | null
         }
         Update: {
-          address?: string
-          business_hours?: string | null
+          code?: string
           created_at?: string | null
-          email?: string
-          extra_json?: string | null
-          fax?: string | null
+          display_order?: number
           id?: string
-          map_url?: string | null
-          phone_primary?: string | null
-          phone_secondary?: string | null
+          metadata?: Json
+          page?: string
+          section_type?: string
+          status?: Database["public"]["Enums"]["document_status"]
           updated_at?: string | null
         }
         Relationships: []
-      }
-      post_files: {
-        Row: {
-          created_at: string | null
-          file_name: string
-          file_size: number
-          file_url: string
-          id: string
-          mime_type: string
-          post_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          file_name: string
-          file_size: number
-          file_url: string
-          id?: string
-          mime_type: string
-          post_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          file_name?: string
-          file_size?: number
-          file_url?: string
-          id?: string
-          mime_type?: string
-          post_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "post_files_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      post_inquiries: {
-        Row: {
-          author_email: string | null
-          author_id: string | null
-          author_ip: string | null
-          author_name: string | null
-          author_phone: string | null
-          budget_max: number
-          budget_min: number
-          company_name: string | null
-          created_at: string | null
-          deleted_at: string | null
-          expected_end_at: string | null
-          expected_start_at: string | null
-          inquiry_status: Database["public"]["Enums"]["inquiry_status"]
-          internal_notes: string | null
-          post_id: string
-          priority: Database["public"]["Enums"]["inquiry_priority"]
-          product_id: string | null
-          product_name: string | null
-          subject: string | null
-          type: Database["public"]["Enums"]["inquiry_type"]
-          updated_at: string | null
-        }
-        Insert: {
-          author_email?: string | null
-          author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
-          author_phone?: string | null
-          budget_max?: number
-          budget_min?: number
-          company_name?: string | null
-          created_at?: string | null
-          deleted_at?: string | null
-          expected_end_at?: string | null
-          expected_start_at?: string | null
-          inquiry_status?: Database["public"]["Enums"]["inquiry_status"]
-          internal_notes?: string | null
-          post_id: string
-          priority?: Database["public"]["Enums"]["inquiry_priority"]
-          product_id?: string | null
-          product_name?: string | null
-          subject?: string | null
-          type?: Database["public"]["Enums"]["inquiry_type"]
-          updated_at?: string | null
-        }
-        Update: {
-          author_email?: string | null
-          author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
-          author_phone?: string | null
-          budget_max?: number
-          budget_min?: number
-          company_name?: string | null
-          created_at?: string | null
-          deleted_at?: string | null
-          expected_end_at?: string | null
-          expected_start_at?: string | null
-          inquiry_status?: Database["public"]["Enums"]["inquiry_status"]
-          internal_notes?: string | null
-          post_id?: string
-          priority?: Database["public"]["Enums"]["inquiry_priority"]
-          product_id?: string | null
-          product_name?: string | null
-          subject?: string | null
-          type?: Database["public"]["Enums"]["inquiry_type"]
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "post_inquiries_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_inquiries_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_inquiries_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      post_reviews: {
-        Row: {
-          cons: string
-          created_at: string | null
-          deleted_at: string | null
-          post_id: string
-          product_id: string | null
-          product_name: string | null
-          pros: string
-          purchase_date: string
-          rating: number
-          updated_at: string | null
-        }
-        Insert: {
-          cons?: string
-          created_at?: string | null
-          deleted_at?: string | null
-          post_id: string
-          product_id?: string | null
-          product_name?: string | null
-          pros?: string
-          purchase_date: string
-          rating?: number
-          updated_at?: string | null
-        }
-        Update: {
-          cons?: string
-          created_at?: string | null
-          deleted_at?: string | null
-          post_id?: string
-          product_id?: string | null
-          product_name?: string | null
-          pros?: string
-          purchase_date?: string
-          rating?: number
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "post_reviews_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_reviews_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       posts: {
         Row: {
-          author_email: string | null
           author_id: string | null
-          author_ip: string | null
-          author_name: string | null
-          author_phone: string | null
+          author_metadata: Json | null
           board_id: string | null
           category_id: string | null
           comment_count: number
           content: string
-          content_summary: string
+          content_metadata: Json | null
           created_at: string | null
           deleted_at: string | null
           extra_json: string | null
+          files: Json | null
           id: string
           is_pinned: boolean
-          is_secret: boolean
           like_count: number
           status: Database["public"]["Enums"]["document_status"]
-          thumbnail_url: string | null
           title: string
           updated_at: string | null
           view_count: number
         }
         Insert: {
-          author_email?: string | null
           author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
-          author_phone?: string | null
+          author_metadata?: Json | null
           board_id?: string | null
           category_id?: string | null
           comment_count?: number
           content: string
-          content_summary?: string
+          content_metadata?: Json | null
           created_at?: string | null
           deleted_at?: string | null
           extra_json?: string | null
+          files?: Json | null
           id?: string
           is_pinned?: boolean
-          is_secret?: boolean
           like_count?: number
           status?: Database["public"]["Enums"]["document_status"]
-          thumbnail_url?: string | null
           title: string
           updated_at?: string | null
           view_count?: number
         }
         Update: {
-          author_email?: string | null
           author_id?: string | null
-          author_ip?: string | null
-          author_name?: string | null
-          author_phone?: string | null
+          author_metadata?: Json | null
           board_id?: string | null
           category_id?: string | null
           comment_count?: number
           content?: string
-          content_summary?: string
+          content_metadata?: Json | null
           created_at?: string | null
           deleted_at?: string | null
           extra_json?: string | null
+          files?: Json | null
           id?: string
           is_pinned?: boolean
-          is_secret?: boolean
           like_count?: number
           status?: Database["public"]["Enums"]["document_status"]
-          thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
           view_count?: number
@@ -699,6 +492,129 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      product_inquiries: {
+        Row: {
+          budget_max: number
+          budget_min: number
+          company_name: string | null
+          created_at: string | null
+          deleted_at: string | null
+          expected_end_at: string | null
+          expected_start_at: string | null
+          id: string
+          inquiry_status: Database["public"]["Enums"]["inquiry_status"]
+          internal_notes: string | null
+          post_id: string
+          priority: Database["public"]["Enums"]["inquiry_priority"]
+          product_id: string
+          type: Database["public"]["Enums"]["inquiry_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          budget_max?: number
+          budget_min?: number
+          company_name?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          expected_end_at?: string | null
+          expected_start_at?: string | null
+          id?: string
+          inquiry_status?: Database["public"]["Enums"]["inquiry_status"]
+          internal_notes?: string | null
+          post_id: string
+          priority?: Database["public"]["Enums"]["inquiry_priority"]
+          product_id: string
+          type?: Database["public"]["Enums"]["inquiry_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          budget_max?: number
+          budget_min?: number
+          company_name?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          expected_end_at?: string | null
+          expected_start_at?: string | null
+          id?: string
+          inquiry_status?: Database["public"]["Enums"]["inquiry_status"]
+          internal_notes?: string | null
+          post_id?: string
+          priority?: Database["public"]["Enums"]["inquiry_priority"]
+          product_id?: string
+          type?: Database["public"]["Enums"]["inquiry_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_inquiries_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_inquiries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_reviews: {
+        Row: {
+          cons: string
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          post_id: string
+          product_id: string
+          pros: string
+          purchase_date: string
+          rating: number
+          updated_at: string | null
+        }
+        Insert: {
+          cons?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          post_id: string
+          product_id: string
+          pros?: string
+          purchase_date: string
+          rating?: number
+          updated_at?: string | null
+        }
+        Update: {
+          cons?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          post_id?: string
+          product_id?: string
+          pros?: string
+          purchase_date?: string
+          rating?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -759,9 +675,8 @@ export type Database = {
           deleted_at: string | null
           email: string | null
           id: string
-          last_login: string | null
+          metadata: Json | null
           name: string | null
-          phone: string | null
           updated_at: string | null
         }
         Insert: {
@@ -769,9 +684,8 @@ export type Database = {
           deleted_at?: string | null
           email?: string | null
           id: string
-          last_login?: string | null
+          metadata?: Json | null
           name?: string | null
-          phone?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -779,80 +693,120 @@ export type Database = {
           deleted_at?: string | null
           email?: string | null
           id?: string
-          last_login?: string | null
+          metadata?: Json | null
           name?: string | null
-          phone?: string | null
           updated_at?: string | null
         }
         Relationships: []
       }
-      prologue_carousel_items: {
+      site_settings: {
         Row: {
+          contact: Json | null
           created_at: string | null
-          description: string | null
-          display_order: number
+          default_boards: Json | null
+          deleted_at: string | null
           id: string
-          image_url: string
-          title: string | null
           updated_at: string | null
         }
         Insert: {
+          contact?: Json | null
           created_at?: string | null
-          description?: string | null
-          display_order?: number
+          default_boards?: Json | null
+          deleted_at?: string | null
           id?: string
-          image_url: string
-          title?: string | null
           updated_at?: string | null
         }
         Update: {
+          contact?: Json | null
           created_at?: string | null
-          description?: string | null
-          display_order?: number
+          default_boards?: Json | null
+          deleted_at?: string | null
           id?: string
-          image_url?: string
-          title?: string | null
           updated_at?: string | null
         }
         Relationships: []
       }
-      prologue_settings: {
+      terms_agreements: {
         Row: {
-          created_at: string | null
-          default_description: string | null
-          default_title: string | null
+          agreed: boolean
+          agreed_at: string | null
+          agreement_type: string
+          created_at: string
           id: string
-          updated_at: string | null
+          ip_address: unknown
+          user_agent: string | null
+          user_id: string
+          version: string
         }
         Insert: {
-          created_at?: string | null
-          default_description?: string | null
-          default_title?: string | null
+          agreed?: boolean
+          agreed_at?: string | null
+          agreement_type: string
+          created_at?: string
           id?: string
-          updated_at?: string | null
+          ip_address?: unknown
+          user_agent?: string | null
+          user_id: string
+          version: string
         }
         Update: {
-          created_at?: string | null
-          default_description?: string | null
-          default_title?: string | null
+          agreed?: boolean
+          agreed_at?: string | null
+          agreement_type?: string
+          created_at?: string
           id?: string
-          updated_at?: string | null
+          ip_address?: unknown
+          user_agent?: string | null
+          user_id?: string
+          version?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "terms_agreements_user_id_fkey1"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_board_permission: {
+        Args: { p_board_id: string; p_permission: string; p_user_id: string }
+        Returns: boolean
+      }
+      cleanup_old_activity_logs: { Args: never; Returns: number }
       is_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
       admin_role: "system" | "contents"
+      app_role: "member" | "admin"
       document_status: "draft" | "published"
       inquiry_priority: "low" | "medium" | "high"
       inquiry_status: "pending" | "approved" | "answered" | "rejected"
       inquiry_type: "general" | "quote"
+      log_type:
+        | "USER_SIGNUP"
+        | "ADMIN_SIGNUP"
+        | "LOGIN_FAILED"
+        | "ADMIN_LOGIN"
+        | "SECTION_SETTING_CHANGE"
+        | "BOARD_CREATE"
+        | "BOARD_UPDATE"
+        | "BOARD_DELETE"
+        | "POST_CREATE"
+        | "POST_UPDATE"
+        | "POST_DELETE"
+        | "POST_ANSWER"
+        | "COMMENT_CREATE"
+        | "COMMENT_UPDATE"
+        | "COMMENT_DELETE"
+        | "ERROR"
+      visible_type: "public" | "member" | "owner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -978,17 +932,33 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       admin_role: ["system", "contents"],
+      app_role: ["member", "admin"],
       document_status: ["draft", "published"],
       inquiry_priority: ["low", "medium", "high"],
       inquiry_status: ["pending", "approved", "answered", "rejected"],
       inquiry_type: ["general", "quote"],
+      log_type: [
+        "USER_SIGNUP",
+        "ADMIN_SIGNUP",
+        "LOGIN_FAILED",
+        "ADMIN_LOGIN",
+        "SECTION_SETTING_CHANGE",
+        "BOARD_CREATE",
+        "BOARD_UPDATE",
+        "BOARD_DELETE",
+        "POST_CREATE",
+        "POST_UPDATE",
+        "POST_DELETE",
+        "POST_ANSWER",
+        "COMMENT_CREATE",
+        "COMMENT_UPDATE",
+        "COMMENT_DELETE",
+        "ERROR",
+      ],
+      visible_type: ["public", "member", "owner"],
     },
   },
 } as const
-

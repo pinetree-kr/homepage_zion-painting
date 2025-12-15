@@ -21,6 +21,22 @@ import { supabaseUrl } from './config';
  * const { data, error } = await supabase.from('profiles').select('*');
  * ```
  */
+export async function createSecretClient(secretKey: string): Promise<SupabaseClient<Database>> {
+    if (!secretKey) {
+        throw new Error(
+            'Secret Key가 설정되지 않았습니다. ' +
+            'SUPABASE_SECRET_KEY 또는 SUPABASE_SERVICE_ROLE_KEY 환경 변수를 확인하세요.'
+        );
+    }
+
+    return createClient<Database>(supabaseUrl, secretKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+        },
+    });
+}
+
 export async function createServiceRoleClient(secretKey: string): Promise<SupabaseClient<Database>> {
     if (!secretKey) {
         throw new Error(

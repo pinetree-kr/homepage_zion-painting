@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Save, Plus, Trash2, GripVertical, Upload, User, X } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
-import { Card } from '@/src/shared/ui';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { saveCompanyOrganizationMembers } from '../api/company-actions';
@@ -333,10 +333,13 @@ export default function CompanyOrganization({ items }: CompanyOrganizationProps)
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="mb-6">
-          <h3 className="text-gray-900 text-lg font-semibold">조직도</h3>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="text-gray-900 text-lg font-semibold">조직도</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
 
         <DndContext
           sensors={sensors}
@@ -370,14 +373,14 @@ export default function CompanyOrganization({ items }: CompanyOrganizationProps)
             </div>
           </SortableContext>
         </DndContext>
+        </CardContent>
+        <CardFooter className="justify-end">
+          <Button onClick={handleSave} className="h-[42px] gap-2" disabled={saving} size="lg">
+            <Save className="h-4 w-4" />
+            {saving ? '저장 중...' : '저장'}
+          </Button>
+        </CardFooter>
       </Card>
-
-      <div className="flex justify-end">
-        <Button onClick={handleSave} className="gap-2" disabled={saving} size="lg">
-          <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
-      </div>
     </div>
   );
 }

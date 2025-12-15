@@ -6,7 +6,7 @@ import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
-import { Card } from '@/src/shared/ui';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/shared/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { DynamicCustomEditor } from '@/src/features/editor';
@@ -18,6 +18,7 @@ import {
   saveBusinessAchievement,
   deleteBusinessAchievement,
 } from '../api/business-actions';
+import { getCurrentDateString } from '@/src/shared/lib/utils';
 
 interface BusinessAchievementFormProps {
   achievementId?: string;
@@ -73,10 +74,10 @@ async function createAndUploadThumbnail(imageUrl: string): Promise<string | null
     try {
       const url = new URL(imageUrl);
       const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-      const isExternalImage = url.origin !== currentOrigin && 
-                              !url.hostname.includes('supabase.co') &&
-                              !url.hostname.includes('localhost') &&
-                              !url.hostname.includes('127.0.0.1');
+      const isExternalImage = url.origin !== currentOrigin &&
+        !url.hostname.includes('supabase.co') &&
+        !url.hostname.includes('localhost') &&
+        !url.hostname.includes('127.0.0.1');
 
       if (isExternalImage) {
         // 외부 이미지는 API 라우트를 통해 프록시하여 가져오기 (CORS 문제 해결)
@@ -163,7 +164,7 @@ export default function BusinessAchievementForm({
     return {
       title: '',
       content: '',
-      achievement_date: new Date().toISOString().split('T')[0],
+      achievement_date: getCurrentDateString(),
       category_id: null,
       status: 'draft',
     };
@@ -226,7 +227,7 @@ export default function BusinessAchievementForm({
         if (achievement.id || achievementId) {
           router.refresh();
         } else {
-          router.push('/admin/info/business/achievements');
+          router.push('/admin/site-settings/business/achievements');
         }
       } else {
         toast.error(`저장 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
@@ -250,7 +251,7 @@ export default function BusinessAchievementForm({
       const result = await deleteBusinessAchievement(achievementId);
       if (result.success) {
         toast.success('사업실적이 삭제되었습니다.');
-        router.push('/admin/info/business/achievements');
+        router.push('/admin/site-settings/business/achievements');
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
       }
@@ -269,7 +270,7 @@ export default function BusinessAchievementForm({
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => router.push('/admin/info/business/achievements')}
+            onClick={() => router.push('/admin/site-settings/business/achievements')}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -281,8 +282,13 @@ export default function BusinessAchievementForm({
         </div>
       </div>
 
-      <Card className="p-6">
-        <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="text-gray-900 text-lg font-semibold">사업실적 {achievementId ? '수정' : '추가'}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>제목</Label>
@@ -347,27 +353,26 @@ export default function BusinessAchievementForm({
               onChange={(content) => setAchievement({ ...achievement, content })}
             />
           </div>
-        </div>
-      </Card>
+        </CardContent>
 
-      <div className="flex justify-end gap-2">
-        {achievementId && (
-          <Button
-            variant="destructive"
-            onClick={() => setShowDeleteDialog(true)}
-            className="gap-2"
-            disabled={deleting}
-            size="lg"
-          >
-            <Trash2 className="h-4 w-4" />
-            {deleting ? '삭제 중...' : '삭제'}
+        <CardFooter className="justify-end">
+          {achievementId && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              className="h-[42px] gap-2"
+              disabled={deleting}
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleting ? '삭제 중...' : '삭제'}
+            </Button>
+          )}
+          <Button onClick={handleSave} className="h-[42px] gap-2" disabled={saving} size="lg">
+            <Save className="h-4 w-4" />
+            {saving ? '저장 중...' : '저장'}
           </Button>
-        )}
-        <Button onClick={handleSave} className="gap-2" disabled={saving} size="lg">
-          <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
-      </div>
+        </CardFooter>
+      </Card>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>

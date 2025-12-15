@@ -232,7 +232,7 @@ pages/
 import ManangementAboutCompanyPage from '@/src/pages/management-about-company';
 export default ManangementAboutCompanyPage;
 
-// app/(admin)/admin/customer/members/page.tsx
+// app/(admin)/admin/services/members/page.tsx
 import ManagementCustomerMembersPage from '@/src/pages/management-customer-members';
 export default ManagementCustomerMembersPage;
 

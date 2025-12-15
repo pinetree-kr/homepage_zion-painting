@@ -2,69 +2,47 @@
 
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import type { CompanyAbout, CompanyStrength, CompanyValue } from '@/src/entities/company/model/types';
+import type { Page } from '@/src/shared/lib/model';
 
 /**
  * 클라이언트 사이드에서 회사소개 정보 로드
  */
-export async function fetchCompanyAboutInfo(): Promise<CompanyAbout> {
+export async function fetchCompanyAboutInfo(): Promise<Partial<Page<CompanyAbout>>> {
   try {
     const supabase = createBrowserClient();
     const { data, error } = await supabase
-      .from('company_info')
-      .select('introduction, vision, greetings, mission, strengths, values')
-      .limit(1)
-      .maybeSingle() as {
-        data: {
-          introduction: string | null;
-          vision: string | null;
-          greetings: string | null;
-          mission: string | null;
-          strengths: CompanyStrength[] | null;
-          values: CompanyValue[] | null;
-        } | null;
-        error: any;
-      };
+      .from('pages')
+      .select('id, metadata->>introduction, metadata->>strengths, metadata->>vision, metadata->>values, metadata->>greetings, metadata->>mission')
+      .eq('code', 'company_intro')
+      .eq('status', 'published')
+      .maybeSingle();
 
     if (error) {
       console.error('회사소개 정보 로드 오류:', error);
       return {
-        introduction: '',
-        strengths: [],
-        vision: '',
-        values: [],
-        greetings: '',
-        mission: '',
       };
     }
 
     if (!data) {
       return {
-        introduction: '',
-        strengths: [],
-        vision: '',
-        values: [],
-        greetings: '',
-        mission: '',
       };
     }
 
     return {
-      introduction: data.introduction || '',
-      strengths: Array.isArray(data.strengths) ? data.strengths : [],
-      vision: data.vision || '',
-      values: Array.isArray(data.values) ? data.values : [],
-      greetings: data.greetings || '',
-      mission: data.mission || '',
+      id: data.id,
+      metadata: {
+        introduction: data.introduction || '',
+        strengths: Array.isArray(data.strengths) ? data.strengths : [],
+        vision: data.vision as string || '',
+        values: Array.isArray(data.values) ? data.values : [],
+        greetings: data.greetings || '',
+        mission: data.mission || '',
+      },
     };
+
   } catch (error) {
     console.error('회사소개 정보 로드 중 예외 발생:', error);
     return {
-      introduction: '',
-      strengths: [],
-      vision: '',
-      values: [],
-      greetings: '',
-      mission: '',
     };
   }
 }
@@ -83,9 +61,14 @@ export async function fetchCompanyAboutField(
 ): Promise<string | CompanyStrength[] | CompanyValue[]> {
   try {
     const supabase = createBrowserClient();
+
+    const selectClause = `${field}:metadata->>${field}`;
+
     const { data, error } = await supabase
-      .from('company_info')
-      .select(field)
+      .from('pages')
+      .select(selectClause)
+      .eq('code', 'company_intro')
+      .eq('status', 'published')
       .limit(1)
       .maybeSingle();
 
@@ -106,7 +89,7 @@ export async function fetchCompanyAboutField(
 
     const value = (data as any)[field];
     if (field === 'strengths' || field === 'values') {
-      return Array.isArray(value) ? value : [];
+      return value.startsWith('[') ? JSON.parse(value) : [];
     }
     return value || '';
   } catch (error) {

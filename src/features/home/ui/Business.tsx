@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Container } from '@/src/shared/ui';
 import type { BusinessInfo, BusinessArea, BusinessCategory, Achievement } from '@/src/entities/business/model/types';
+import { formatDate } from '@/src/shared/lib/utils';
 
 // Icon Components (lucide-react 기반)
 const LayersIcon = ({ className }: { className?: string }) => (
@@ -203,11 +204,7 @@ export default function Business({ businessInfo, categories, achievements }: Bus
 
                     {/* 날짜 */}
                     <div className="text-sm text-gray-500 mb-3">
-                      {new Date(achievement.achievement_date).toLocaleDateString('ko-KR', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                      {formatDate(achievement.achievement_date, 'YYYY년 M월 D일')}
                     </div>
 
                     {/* 제목 */}

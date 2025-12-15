@@ -1,4 +1,4 @@
-export type { DashboardStats, RecentPost, EmptyInfo } from './model/types';
+export type { DashboardStats, EmptyInfo, RecentPosts } from './model/types';
 export {
   getDashboardStats,
   getRecentQnA,

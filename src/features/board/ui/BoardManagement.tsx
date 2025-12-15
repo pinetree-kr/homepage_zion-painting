@@ -4,16 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Board } from '@/src/entities/board/model/types';
 import {
-  FileText,
   Plus,
-  Trash2,
-  Edit,
   Calendar,
+  ExternalLink,
 } from 'lucide-react';
 import { Card } from '@/src/shared/ui';
 import { Button } from '@/src/shared/ui';
-import { Input } from '@/src/shared/ui';
-import { Label } from '@/src/shared/ui';
 import { Badge } from '@/src/shared/ui';
 import {
   Dialog,
@@ -24,10 +20,9 @@ import {
   DialogTitle,
 } from '@/src/shared/ui';
 import { toast } from 'sonner';
-import { DataTable, DataTableColumn, DataTableAction, DataTablePagination, DataTableSearchBar } from '@/src/shared/ui';
-import { Checkbox } from '@/src/shared/ui';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/shared/ui';
-import { createBoard, updateBoard, deleteBoard } from '../api/board-actions';
+import { DataTable, DataTableColumn, DataTablePagination, DataTableSearchBar } from '@/src/shared/ui';
+import { deleteBoard } from '../api/board-actions';
+import { formatDateSimple } from '@/src/shared/lib/utils';
 
 interface BoardManagementProps {
   items: Board[];
@@ -47,98 +42,10 @@ export default function BoardManagement({
   searchTerm,
 }: BoardManagementProps) {
   const router = useRouter();
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [boardToDelete, setBoardToDelete] = useState<Board | null>(null);
-  const [editingBoard, setEditingBoard] = useState<Board | null>(null);
-  const [createForm, setCreateForm] = useState({
-    code: '',
-    name: '',
-    description: '',
-    is_public: false,
-    allow_anonymous: false,
-    allow_comment: false,
-    allow_file: false,
-    allow_guest: false,
-    allow_secret: false,
-    display_order: 0,
-    linked_table_name: null as string | null,
-  });
 
   const refreshPage = () => {
     router.refresh();
-  };
-
-  const handleCreate = async () => {
-    if (!createForm.code || !createForm.name) {
-      toast.error('게시판 코드와 이름을 입력해주세요.');
-      return;
-    }
-
-    // 게시판 코드는 영문, 숫자, 언더스코어만 허용
-    if (!/^[a-z0-9_]+$/.test(createForm.code)) {
-      toast.error('게시판 코드는 영문 소문자, 숫자, 언더스코어만 사용할 수 있습니다.');
-      return;
-    }
-
-    const result = await createBoard(createForm);
-    if (result.success) {
-      toast.success('게시판이 생성되었습니다.');
-      setCreateForm({
-        code: '',
-        name: '',
-        description: '',
-        is_public: false,
-        allow_anonymous: false,
-        allow_comment: false,
-        allow_file: false,
-        allow_guest: false,
-        allow_secret: false,
-        display_order: 0,
-        linked_table_name: null,
-      });
-      setShowCreateDialog(false);
-      refreshPage();
-    } else {
-      toast.error(result.error || '게시판 생성에 실패했습니다.');
-    }
-  };
-
-  const handleEdit = async () => {
-    if (!editingBoard) return;
-    if (!editingBoard.code || !editingBoard.name) {
-      toast.error('게시판 코드와 이름을 입력해주세요.');
-      return;
-    }
-
-    // 게시판 코드는 영문, 숫자, 언더스코어만 허용
-    if (!/^[a-z0-9_]+$/.test(editingBoard.code)) {
-      toast.error('게시판 코드는 영문 소문자, 숫자, 언더스코어만 사용할 수 있습니다.');
-      return;
-    }
-
-    const result = await updateBoard(editingBoard.id, {
-      code: editingBoard.code,
-      name: editingBoard.name,
-      description: editingBoard.description,
-      is_public: editingBoard.is_public,
-      allow_anonymous: editingBoard.allow_anonymous,
-      allow_comment: editingBoard.allow_comment,
-      allow_file: editingBoard.allow_file,
-      allow_guest: editingBoard.allow_guest,
-      allow_secret: editingBoard.allow_secret,
-      display_order: editingBoard.display_order,
-      linked_table_name: editingBoard.linked_table_name,
-    });
-
-    if (result.success) {
-      toast.success('게시판이 수정되었습니다.');
-      setEditingBoard(null);
-      setShowEditDialog(false);
-      refreshPage();
-    } else {
-      toast.error(result.error || '게시판 수정에 실패했습니다.');
-    }
   };
 
   const handleDelete = async () => {
@@ -155,15 +62,7 @@ export default function BoardManagement({
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateSimple(dateString || undefined);
   };
 
   const boardColumns: DataTableColumn<Board>[] = [
@@ -172,10 +71,15 @@ export default function BoardManagement({
       header: '게시판 코드',
       accessor: (row) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] flex items-center justify-center text-white text-xs font-mono flex-shrink-0">
+          {/* <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] flex items-center justify-center text-white text-xs font-mono flex-shrink-0">
             {row.code.charAt(0).toUpperCase()}
-          </div>
-          <span className="font-mono text-sm">{row.code}</span>
+          </div> */}
+          <button
+            onClick={() => router.push(`/admin/system/boards/${row.id}/edit`)}
+            className="font-medium hover:text-[#1A2C6D] hover:underline text-left"
+          >
+            <span className="font-mono text-sm">{row.code}</span>
+          </button>
         </div>
       ),
       sortable: true,
@@ -186,7 +90,12 @@ export default function BoardManagement({
       header: '게시판 이름',
       accessor: (row) => (
         <div>
-          <div className="font-medium">{row.name}</div>
+          <button
+            onClick={() => router.push(`/admin/system/boards/${row.id}/edit`)}
+            className="font-medium hover:text-[#1A2C6D] hover:underline text-left"
+          >
+            {row.name}
+          </button>
           {row.description && (
             <div className="text-xs text-gray-500 mt-1">{row.description}</div>
           )}
@@ -200,54 +109,19 @@ export default function BoardManagement({
       header: '설정',
       accessor: (row) => (
         <div className="flex flex-wrap gap-1">
-          {row.is_public && (
+          {row.visibility === 'public' && (
             <Badge variant="outline" className="text-xs">공개</Badge>
           )}
-          {row.allow_anonymous && (
-            <Badge variant="outline" className="text-xs">익명</Badge>
+          {row.visibility === 'member' && (
+            <Badge variant="outline" className="text-xs">회원용</Badge>
           )}
-          {row.allow_comment && (
-            <Badge variant="outline" className="text-xs">댓글</Badge>
-          )}
-          {row.allow_file && (
-            <Badge variant="outline" className="text-xs">파일</Badge>
-          )}
-          {row.allow_guest && (
-            <Badge variant="outline" className="text-xs">비회원</Badge>
-          )}
-          {row.allow_secret && (
-            <Badge variant="outline" className="text-xs">비밀글</Badge>
+          {row.visibility === 'owner' && (
+            <Badge variant="outline" className="text-xs">1:1</Badge>
           )}
         </div>
       ),
       sortable: false,
       width: '20%'
-    },
-    {
-      id: 'linked_table',
-      header: '연결 테이블',
-      accessor: (row) => (
-        <div>
-          {row.linked_table_name ? (
-            <Badge variant="default" className="text-xs">
-              {row.linked_table_name}
-            </Badge>
-          ) : (
-            <span className="text-xs text-gray-400">없음</span>
-          )}
-        </div>
-      ),
-      sortable: false,
-      width: '15%'
-    },
-    {
-      id: 'display_order',
-      header: '순서',
-      accessor: (row) => (
-        <span className="text-sm text-gray-600">{row.display_order}</span>
-      ),
-      sortable: true,
-      width: '10%'
     },
     {
       id: 'created_at',
@@ -260,23 +134,25 @@ export default function BoardManagement({
       ),
       sortable: true,
       width: '15%'
-    }
-  ];
-
-  const boardActions: DataTableAction<Board>[] = [
-    {
-      label: '수정',
-      icon: <Edit className="h-4 w-4" />,
-      onClick: (row) => {
-        setEditingBoard({ ...row });
-        setShowEditDialog(true);
-      }
     },
     {
-      label: '삭제',
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: setBoardToDelete,
-      variant: 'destructive'
+      id: 'actions',
+      header: '',
+      accessor: (row) => (
+        <div className="flex items-center justify-end">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => window.open(`/boards/${row.id}`, '_blank')}
+            className="h-8 w-8"
+            title="외부 링크"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+      sortable: false,
+      width: '5%'
     }
   ];
 
@@ -285,7 +161,7 @@ export default function BoardManagement({
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-gray-900 text-lg font-semibold">게시판 목록</h3>
-          <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+          <Button onClick={() => router.push('/admin/system/boards/new')} className="gap-2">
             <Plus className="h-4 w-4" />
             게시판 생성
           </Button>
@@ -301,7 +177,6 @@ export default function BoardManagement({
         <DataTable
           data={items}
           columns={boardColumns}
-          actions={boardActions}
           getRowId={(row) => row.id}
           emptyMessage="등록된 게시판이 없습니다"
           useUrlSort={true}
@@ -316,286 +191,6 @@ export default function BoardManagement({
           />
         )}
       </Card>
-
-      {/* 생성 다이얼로그 */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>게시판 생성</DialogTitle>
-            <DialogDescription>
-              새로운 게시판을 생성합니다.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="create-code">게시판 코드 *</Label>
-              <Input
-                id="create-code"
-                value={createForm.code}
-                onChange={(e) => setCreateForm({ ...createForm, code: e.target.value.toLowerCase() })}
-                placeholder="예: notices, qna, reviews"
-              />
-              <p className="text-xs text-gray-500">영문 소문자, 숫자, 언더스코어만 사용 가능합니다.</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-name">게시판 이름 *</Label>
-              <Input
-                id="create-name"
-                value={createForm.name}
-                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                placeholder="예: 공지사항, Q&A, 고객후기"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-description">게시판 설명</Label>
-              <Input
-                id="create-description"
-                value={createForm.description}
-                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                placeholder="게시판에 대한 설명을 입력하세요"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-display-order">표시 순서</Label>
-              <Input
-                id="create-display-order"
-                type="number"
-                value={createForm.display_order}
-                onChange={(e) => setCreateForm({ ...createForm, display_order: parseInt(e.target.value) || 0 })}
-                placeholder="0"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-linked-table">연결 테이블</Label>
-              <Select
-                value={createForm.linked_table_name || ''}
-                onValueChange={(value) => setCreateForm({ ...createForm, linked_table_name: value || null })}
-              >
-                <SelectTrigger id="create-linked-table">
-                  <SelectValue placeholder="연결할 테이블 선택 (선택사항)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">없음</SelectItem>
-                  <SelectItem value="products">products (제품)</SelectItem>
-                  <SelectItem value="business_achievements">business_achievements (사업 실적)</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">게시판에서 연결할 테이블을 선택합니다. (예: 리뷰 게시판 → products)</p>
-            </div>
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="create-is-public"
-                  checked={createForm.is_public}
-                  onCheckedChange={(checked) => setCreateForm({ ...createForm, is_public: checked === true })}
-                />
-                <Label htmlFor="create-is-public" className="cursor-pointer">
-                  공개 게시판
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="create-allow-anonymous"
-                  checked={createForm.allow_anonymous}
-                  onCheckedChange={(checked) => setCreateForm({ ...createForm, allow_anonymous: checked === true })}
-                />
-                <Label htmlFor="create-allow-anonymous" className="cursor-pointer">
-                  익명 게시 허용
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="create-allow-comment"
-                  checked={createForm.allow_comment}
-                  onCheckedChange={(checked) => setCreateForm({ ...createForm, allow_comment: checked === true })}
-                />
-                <Label htmlFor="create-allow-comment" className="cursor-pointer">
-                  댓글 허용
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="create-allow-file"
-                  checked={createForm.allow_file}
-                  onCheckedChange={(checked) => setCreateForm({ ...createForm, allow_file: checked === true })}
-                />
-                <Label htmlFor="create-allow-file" className="cursor-pointer">
-                  파일 첨부 허용
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="create-allow-guest"
-                  checked={createForm.allow_guest}
-                  onCheckedChange={(checked) => setCreateForm({ ...createForm, allow_guest: checked === true })}
-                />
-                <Label htmlFor="create-allow-guest" className="cursor-pointer">
-                  비회원 게시 허용
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="create-allow-secret"
-                  checked={createForm.allow_secret}
-                  onCheckedChange={(checked) => setCreateForm({ ...createForm, allow_secret: checked === true })}
-                />
-                <Label htmlFor="create-allow-secret" className="cursor-pointer">
-                  비밀글 허용
-                </Label>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-              취소
-            </Button>
-            <Button onClick={handleCreate} className="bg-gradient-to-r from-[#1A2C6D] to-[#2CA7DB]">
-              생성
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 수정 다이얼로그 */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>게시판 수정</DialogTitle>
-            <DialogDescription>
-              게시판 정보를 수정합니다.
-            </DialogDescription>
-          </DialogHeader>
-          {editingBoard && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-code">게시판 코드 *</Label>
-                <Input
-                  id="edit-code"
-                  value={editingBoard.code}
-                  onChange={(e) => setEditingBoard({ ...editingBoard, code: e.target.value.toLowerCase() })}
-                  placeholder="예: notices, qna, reviews"
-                />
-                <p className="text-xs text-gray-500">영문 소문자, 숫자, 언더스코어만 사용 가능합니다.</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">게시판 이름 *</Label>
-                <Input
-                  id="edit-name"
-                  value={editingBoard.name}
-                  onChange={(e) => setEditingBoard({ ...editingBoard, name: e.target.value })}
-                  placeholder="예: 공지사항, Q&A, 고객후기"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">게시판 설명</Label>
-                <Input
-                  id="edit-description"
-                  value={editingBoard.description || ''}
-                  onChange={(e) => setEditingBoard({ ...editingBoard, description: e.target.value })}
-                  placeholder="게시판에 대한 설명을 입력하세요"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-display-order">표시 순서</Label>
-                <Input
-                  id="edit-display-order"
-                  type="number"
-                  value={editingBoard.display_order}
-                  onChange={(e) => setEditingBoard({ ...editingBoard, display_order: parseInt(e.target.value) || 0 })}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-linked-table">연결 테이블</Label>
-                <Select
-                  value={editingBoard.linked_table_name || ''}
-                  onValueChange={(value) => setEditingBoard({ ...editingBoard, linked_table_name: value || null })}
-                >
-                  <SelectTrigger id="edit-linked-table">
-                    <SelectValue placeholder="연결할 테이블 선택 (선택사항)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">없음</SelectItem>
-                    <SelectItem value="products">products (제품)</SelectItem>
-                    <SelectItem value="business_achievements">business_achievements (사업 실적)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500">게시판에서 연결할 테이블을 선택합니다. (예: 리뷰 게시판 → products)</p>
-              </div>
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="edit-is-public"
-                    checked={editingBoard.is_public}
-                    onCheckedChange={(checked) => setEditingBoard({ ...editingBoard, is_public: checked === true })}
-                  />
-                  <Label htmlFor="edit-is-public" className="cursor-pointer">
-                    공개 게시판
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="edit-allow-anonymous"
-                    checked={editingBoard.allow_anonymous}
-                    onCheckedChange={(checked) => setEditingBoard({ ...editingBoard, allow_anonymous: checked === true })}
-                  />
-                  <Label htmlFor="edit-allow-anonymous" className="cursor-pointer">
-                    익명 게시 허용
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="edit-allow-comment"
-                    checked={editingBoard.allow_comment}
-                    onCheckedChange={(checked) => setEditingBoard({ ...editingBoard, allow_comment: checked === true })}
-                  />
-                  <Label htmlFor="edit-allow-comment" className="cursor-pointer">
-                    댓글 허용
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="edit-allow-file"
-                    checked={editingBoard.allow_file}
-                    onCheckedChange={(checked) => setEditingBoard({ ...editingBoard, allow_file: checked === true })}
-                  />
-                  <Label htmlFor="edit-allow-file" className="cursor-pointer">
-                    파일 첨부 허용
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="edit-allow-guest"
-                    checked={editingBoard.allow_guest}
-                    onCheckedChange={(checked) => setEditingBoard({ ...editingBoard, allow_guest: checked === true })}
-                  />
-                  <Label htmlFor="edit-allow-guest" className="cursor-pointer">
-                    비회원 게시 허용
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="edit-allow-secret"
-                    checked={editingBoard.allow_secret}
-                    onCheckedChange={(checked) => setEditingBoard({ ...editingBoard, allow_secret: checked === true })}
-                  />
-                  <Label htmlFor="edit-allow-secret" className="cursor-pointer">
-                    비밀글 허용
-                  </Label>
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              취소
-            </Button>
-            <Button onClick={handleEdit} className="bg-gradient-to-r from-[#1A2C6D] to-[#2CA7DB]">
-              저장
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* 삭제 다이얼로그 */}
       {boardToDelete && (

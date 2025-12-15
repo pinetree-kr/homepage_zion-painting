@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Mail, Phone, Calendar, User as UserIcon, Trash2 } from 'lucide-react';
-import { Button } from '@/src/shared/ui';
+import { Button, CardFooter } from '@/src/shared/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { toast } from 'sonner';
 import { Profile } from '@/src/entities';
+import { formatDateKorean } from '@/src/shared/lib/utils';
 import {
   deleteUser,
 } from '../api/user-actions';
@@ -27,7 +28,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
       const result = await deleteUser(member.id);
       if (result.success) {
         toast.success('회원이 삭제되었습니다.');
-        router.push('/admin/customer/members');
+        router.push('/admin/services/members');
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
         setDeleting(false);
@@ -42,22 +43,14 @@ export default function MemberDetail({ member }: MemberDetailProps) {
   };
 
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateKorean(dateString, true);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center">
         <Button
-          variant="ghost"
+          variant="outline"
           onClick={() => router.back()}
           className="gap-2"
         >
@@ -73,7 +66,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
             회원 정보
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pb-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-500">이름</label>
@@ -95,7 +88,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
               <label className="text-sm font-medium text-gray-500">전화번호</label>
               <div className="flex items-center gap-2 text-base">
                 <Phone className="h-4 w-4 text-gray-400" />
-                <span>{member.phone || '-'}</span>
+                <span>{(member.metadata as { phone?: string } | null)?.phone || '-'}</span>
               </div>
             </div>
 
@@ -118,7 +111,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
               <label className="text-sm font-medium text-gray-500">최근 로그인</label>
               <div className="flex items-center gap-2 text-base">
                 <Calendar className="h-4 w-4 text-gray-400" />
-                <span>{formatDate(member.last_login)}</span>
+                <span>{formatDate((member.metadata as { last_login?: string } | null)?.last_login || '')}</span>
               </div>
             </div>
 
@@ -133,18 +126,17 @@ export default function MemberDetail({ member }: MemberDetailProps) {
             )}
           </div>
         </CardContent>
+        <CardFooter className="justify-end">
+          <Button
+            variant="destructive"
+            onClick={() => setShowDeleteDialog(true)}
+            className="h-[42px] gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            삭제
+          </Button>
+        </CardFooter>
       </Card>
-
-      <div>
-        <Button
-          variant="destructive"
-          onClick={() => setShowDeleteDialog(true)}
-          className="gap-2"
-        >
-          <Trash2 className="h-4 w-4" />
-          삭제
-        </Button>
-      </div>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>

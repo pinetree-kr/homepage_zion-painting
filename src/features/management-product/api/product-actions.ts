@@ -2,10 +2,11 @@
 
 import { createServerClient } from '@/src/shared/lib/supabase/server';
 import { createAnonymousServerClient } from '@/src/shared/lib/supabase/anonymous';
-import type { Product, ProductCategory } from '@/src/entities/product/model/types';
+import type { Product, ProductCategory, ProductInfo } from '@/src/entities/product/model/types';
 import { revalidatePath } from 'next/cache';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/src/shared/lib/supabase-types';
+import { getCurrentISOString } from '@/src/shared/lib/utils';
 
 /**
  * 제품 카테고리 목록 로드
@@ -59,7 +60,7 @@ export async function saveProductCategory(category: Partial<ProductCategory>): P
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/info/products/categories');
+      revalidatePath('/admin/site-settings/product/categories');
 
       return { success: true, id: data.id };
     } else {
@@ -89,7 +90,7 @@ export async function saveProductCategory(category: Partial<ProductCategory>): P
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/info/products/categories');
+      revalidatePath('/admin/site-settings/product/categories');
 
       return { success: true, id: data.id };
     }
@@ -122,7 +123,7 @@ export async function updateProductCategoriesOrder(categories: { id: string; dis
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/info/products/categories');
+    revalidatePath('/admin/site-settings/product/categories');
 
     return { success: true };
   } catch (error: any) {
@@ -147,7 +148,7 @@ export async function deleteProductCategory(id: string): Promise<{ success: bool
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/info/products/categories');
+    revalidatePath('/admin/site-settings/product/categories');
 
     return { success: true };
   } catch (error: any) {
@@ -367,8 +368,6 @@ export async function saveProduct(product: Omit<Product, 'id'> & { id?: string |
       .is('deleted_at', null)
       .maybeSingle();
 
-    console.log({ adminData })
-
     if (adminError || !adminData) {
       return { success: false, error: '관리자 권한이 필요합니다.' };
     }
@@ -384,8 +383,6 @@ export async function saveProduct(product: Omit<Product, 'id'> & { id?: string |
       extra_json: product.extra_json || null,
     };
 
-    // console.log({ productData })
-
     if (product.id) {
       // 업데이트
       const { error, data } = await supabase
@@ -400,8 +397,8 @@ export async function saveProduct(product: Omit<Product, 'id'> & { id?: string |
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/info/products');
-      revalidatePath(`/admin/info/products/${product.id}`);
+      revalidatePath('/admin/site-settings/product');
+      revalidatePath(`/admin/site-settings/product/${product.id}`);
 
       return { success: true, id: data.id };
     } else {
@@ -418,7 +415,7 @@ export async function saveProduct(product: Omit<Product, 'id'> & { id?: string |
       }
 
       // 화면 업데이트를 위한 캐시 무효화
-      revalidatePath('/admin/info/products');
+      revalidatePath('/admin/site-settings/product');
 
       return { success: true, id: data.id };
     }
@@ -437,7 +434,7 @@ export async function deleteProduct(id: string): Promise<{ success: boolean; err
 
     const { error } = await supabase
       .from('products')
-      .update({ deleted_at: new Date().toISOString() } as any)
+      .update({ deleted_at: getCurrentISOString() })
       .eq('id', id);
 
     if (error) {
@@ -445,7 +442,131 @@ export async function deleteProduct(id: string): Promise<{ success: boolean; err
     }
 
     // 화면 업데이트를 위한 캐시 무효화
-    revalidatePath('/admin/info/products');
+    revalidatePath('/admin/site-settings/product');
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || '알 수 없는 오류' };
+  }
+}
+
+/**
+ * 제품소개 정보 로드
+ * 공개 데이터이므로 익명 클라이언트 사용
+ */
+export async function getProductInfo(): Promise<ProductInfo | null> {
+  try {
+    const supabase = createAnonymousServerClient();
+    const { data, error } = await supabase
+      .from('pages')
+      .select('id, metadata, created_at, updated_at')
+      .eq('code', 'product_intro')
+      .eq('status', 'published')
+      .maybeSingle() as {
+        data: {
+          id: string;
+          metadata: {
+            introduction?: string | null;
+            review_board_id?: string | null;
+            quote_board_id?: string | null;
+          };
+          created_at: string | null;
+          updated_at: string | null;
+        } | null;
+        error: any;
+      };
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('제품소개 정보 로드 오류:', error);
+      return {
+        id: '',
+        introduction: '',
+        review_board_id: null,
+        quote_board_id: null,
+      };
+    }
+
+    const metadata = data?.metadata || {};
+    return {
+      id: data?.id || '',
+      introduction: metadata.introduction || '',
+      review_board_id: metadata.review_board_id || null,
+      quote_board_id: metadata.quote_board_id || null,
+      created_at: data?.created_at || null,
+      updated_at: data?.updated_at || null,
+    };
+  } catch (error) {
+    console.error('제품소개 정보 로드 중 예외 발생:', error);
+    return {
+      id: '',
+      introduction: '',
+      review_board_id: null,
+      quote_board_id: null,
+    };
+  }
+}
+
+/**
+ * 제품소개 정보 저장
+ */
+export async function saveProductInfo(productInfo: Partial<ProductInfo>): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createServerClient();
+
+    // 기존 페이지 확인
+    const { data: existingPage } = await supabase
+      .from('pages')
+      .select('id, metadata')
+      .eq('code', 'product_intro')
+      .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
+
+    const newMetadata = {
+      ...(existingPage?.metadata || {}),
+    };
+
+    if (productInfo.introduction !== undefined) {
+      newMetadata.introduction = productInfo.introduction || '';
+    }
+
+    if (productInfo.review_board_id !== undefined) {
+      newMetadata.review_board_id = productInfo.review_board_id || null;
+    }
+
+    if (productInfo.quote_board_id !== undefined) {
+      newMetadata.quote_board_id = productInfo.quote_board_id || null;
+    }
+
+    if (existingPage?.id) {
+      // 업데이트
+      const { error } = await supabase
+        .from('pages')
+        .update({ metadata: newMetadata })
+        .eq('id', existingPage.id);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } else {
+      // 새로 생성
+      const { error } = await supabase
+        .from('pages')
+        .insert({
+          code: 'product_intro',
+          page: 'products',
+          section_type: 'rich_text',
+          display_order: 0,
+          status: 'published',
+          metadata: newMetadata,
+        });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    }
+
+    // 화면 업데이트를 위한 캐시 무효화
+    revalidatePath('/admin/site-settings/product');
+    revalidatePath('/admin/site-settings/product/board-settings');
 
     return { success: true };
   } catch (error: any) {

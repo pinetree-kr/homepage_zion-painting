@@ -7,8 +7,8 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    // 대시보드에서 기본적으로 회사정보 페이지로 리다이렉트
-    router.replace('/admin/info/prologue');
+    // 대시보드로 리다이렉트
+    router.replace('/admin/dashboard');
   }, [router]);
 
   return (

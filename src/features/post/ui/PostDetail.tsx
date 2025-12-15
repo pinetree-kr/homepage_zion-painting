@@ -1,94 +1,85 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, Calendar, CircleUser, Eye, Mail, Trash2, Pin, Edit, UserCircle, Search, Download, File, Image as ImageIcon, FileText } from 'lucide-react';
-import { Button } from '@/src/shared/ui';
+import { Button, CardFooter } from '@/src/shared/ui';
 import { Card, CardContent } from '@/src/shared/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/src/shared/ui';
 import { Badge } from '@/src/shared/ui';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/src/shared/ui';
 import { toast } from 'sonner';
-import { Post } from '@/src/entities/post/model/types';
+import { Post, PostFile } from '@/src/entities/post/model/types';
 import { deletePost } from '../api/post-actions';
-import Comments from '@/src/features/comment/ui/Comments';
-import { supabaseClient } from '@/src/shared/lib/supabase/client';
-import type { Profile } from '@/src/entities/user/model/types';
-import { type PostFile } from '../api/post-file-actions';
+import Comments, { type CommentWithProfile } from '@/src/features/comment/ui/Comments';
+import { BoardPolicy } from '@/src/entities/board/model/types';
+import { generateUserColor, rgbToCss, formatDateKorean } from '@/src/shared/lib/utils';
 
 interface PostDetailProps {
   post: Post;
-  boardCode: 'notices' | 'qna' | 'quotes' | 'reviews';
+  boardId: string;
+  boardCode: string;
   boardName: string;
-  allowComment: boolean;
   attachedFiles?: PostFile[];
+  isPublic?: boolean; // 일반 사용자용인지 여부
+  isAdmin?: boolean; // 관리자 여부
+  isAuthor?: boolean; // 작성자 여부
+  permissions?: Omit<BoardPolicy, 'board_id' | 'role' | 'post_list' | 'post_create' | 'file_upload' | 'created_at' | 'updated_at'>; // 권한 정보
+  comments?: CommentWithProfile[]; // 서버에서 가져온 초기 댓글 데이터
 }
 
-export default function PostDetail({ post, boardCode, boardName, allowComment, attachedFiles: initialAttachedFiles = [] }: PostDetailProps) {
+export default function PostDetail({
+  post,
+  boardId,
+  boardName,
+  attachedFiles = [],
+  isPublic = false,
+  isAdmin = false,
+  isAuthor = false,
+  permissions = {
+    post_read: false,
+    post_edit: false,
+    post_delete: false,
+    cmt_create: false,
+    cmt_read: false,
+    cmt_edit: false,
+    cmt_delete: false,
+    file_download: false,
+  },
+  comments = []
+}: PostDetailProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [currentUser, setCurrentUser] = useState<Profile | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [attachedFiles, setAttachedFiles] = useState<PostFile[]>(initialAttachedFiles);
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        
-        if (!user) {
-          setCurrentUser(null);
-          setIsAdmin(false);
-          setLoading(false);
-          return;
-        }
+  // board_policies에서 댓글 권한 확인 (어떤 역할이든 하나라도 cmt_create 또는 cmt_read 권한이 있으면 허용)
+  // permissions가 있으면 그것을 우선 사용
+  const allowComment = useMemo(() => {
+    return permissions?.cmt_create || permissions?.cmt_read;
+  }, [permissions?.cmt_create, permissions?.cmt_read]);
 
-        // 프로필 정보 가져오기
-        const { data: profileData } = await supabaseClient
-          .from('profiles')
-          .select('id, name, email')
-          .eq('id', user.id)
-          .single<Profile>();
+  const canEdit = useMemo(() => {
+    return permissions?.post_edit && (isAuthor || isAdmin);
+  }, [permissions?.post_edit, isAuthor, isAdmin]);
 
-        if (profileData) {
-          setCurrentUser(profileData);
-        }
+  const canDelete = useMemo(() => {
+    return permissions?.post_delete && (isAuthor || isAdmin);
+  }, [permissions?.post_delete, isAuthor, isAdmin]);
 
-        // 관리자 여부 확인
-        const { data: adminData } = await supabaseClient
-          .from('administrators')
-          .select('id')
-          .eq('id', user.id)
-          .is('deleted_at', null)
-          .maybeSingle();
+  const canDownloadFile = useMemo(() => {
+    return permissions?.file_download;
+  }, [permissions?.file_download]);
 
-        setIsAdmin(adminData !== null);
-      } catch (error) {
-        console.error('사용자 정보 로드 오류:', error);
-        setCurrentUser(null);
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUser();
-  }, []);
-
-  // 작성자 또는 관리자인지 확인
-  const canEdit = currentUser && (currentUser.id === post.author_id || isAdmin);
-
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     setDeleting(true);
     try {
-      const result = await deletePost(post.id, boardCode);
+      console.log('handleDelete', post.id, boardId);
+      const result = await deletePost(post.id, boardId);
       if (result.success) {
         toast.success('게시글이 삭제되었습니다.');
-        // quote는 estimates 경로로 리다이렉트
-        const redirectPath = `/admin/boards/${boardCode}`;
+        // 일반 사용자용인지 확인하여 리다이렉트 경로 결정
+        const redirectPath = isPublic ? `/boards/${boardId}` : `/admin/boards/${boardId}`;
         router.push(redirectPath);
       } else {
         toast.error(`삭제 중 오류가 발생했습니다: ${result.error || '알 수 없는 오류'}`);
@@ -101,35 +92,27 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
       setDeleting(false);
       setShowDeleteDialog(false);
     }
-  };
+  }, [post.id, boardId, isPublic, router]);
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const formatDate = useCallback((dateString: string | null | undefined) => {
+    return formatDateKorean(dateString, true);
+  }, []);
 
   /**
    * 파일 크기를 읽기 쉬운 형식으로 변환
    */
-  const formatFileSize = (bytes: number): string => {
+  const formatFileSize = useCallback((bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
+  }, []);
 
   /**
    * 파일 타입에 따른 아이콘 반환
    */
-  const getFileIcon = (mimeType: string) => {
+  const getFileIcon = useCallback((mimeType: string) => {
     if (mimeType.startsWith('image/')) {
       return ImageIcon;
     }
@@ -137,31 +120,31 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
       return FileText;
     }
     return File;
-  };
+  }, []);
 
   /**
    * 파일 다운로드 핸들러
    */
-  const handleDownload = async (file: PostFile) => {
+  const handleDownload = useCallback(async (file: PostFile) => {
     try {
       // 파일을 fetch로 가져와서 Blob으로 변환
       const response = await fetch(file.file_url);
       if (!response.ok) {
         throw new Error('파일 다운로드에 실패했습니다.');
       }
-      
+
       const blob = await response.blob();
-      
+
       // Blob URL 생성
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       // 다운로드 링크 생성
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = file.file_name; // 원본 파일명으로 다운로드
       document.body.appendChild(link);
       link.click();
-      
+
       // 정리
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
@@ -169,23 +152,12 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
       console.error('파일 다운로드 오류:', error);
       toast.error('파일 다운로드에 실패했습니다.');
     }
-  };
+  }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          목록으로
-        </Button>
-      </div>
-
-      <Card className="shadow-md">
-        <CardContent className="rounded-xl overflow-hidden" style={{ padding: '0px' }}>
+    <>
+      <Card>
+        <CardContent style={{ padding: '0px' }}>
           {/* 제목 */}
           <div className="flex items-center justify-between p-2 md:p-4 px-4 md:px-8 bg-slate-200/60 border-b border-gray-200">
             <h1 className="text-2xl font-semibold flex items-center gap-2">
@@ -205,30 +177,38 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 hover:text-gray-900 transition-colors cursor-pointer">
-                      <div className="relative h-6 w-6 rounded-full overflow-hidden bg-gradient-to-br from-[#1A2C6D] to-[#2CA7DB] text-white flex items-center justify-center hover:opacity-80 transition-opacity outline-none">
-                        {(() => {
-                          // extra_json에서 author_image 확인 (나중에 author_image 필드가 추가될 수 있음)
-                          const authorImage = post.extra_json?.author_image || null;
-                          
-                          if (authorImage) {
-                            return (
+                      {(() => {
+                        // extra_json에서 author_image 확인 (나중에 author_image 필드가 추가될 수 있음)
+                        const authorImage = post.extra_json?.author_image || null;
+                        const authorName = post.author_metadata?.name || '익명';
+                        // 사용자 ID를 기준으로 색상 생성
+                        const userColor = generateUserColor(post.author_id);
+                        const backgroundColor = rgbToCss(userColor);
+
+                        return (
+                          <div
+                            className="relative h-6 w-6 rounded-full overflow-hidden text-white flex items-center border border-gray-50/80 justify-center hover:opacity-80 transition-opacity outline-none"
+                            style={{ backgroundColor }}
+                          >
+                            {authorImage ? (
                               <Image
                                 src={authorImage}
-                                alt={post.author_name || '사용자'}
+                                alt={authorName}
                                 fill
                                 className="object-cover"
                               />
-                            );
-                          } else if (post.author_name) {
-                            return (
-                              <span className="text-[10px] font-medium">{post.author_name.charAt(0)}</span>
-                            );
-                          } else {
-                            return <CircleUser className="h-3 w-3" />;
-                          }
-                        })()}
-                      </div>
-                      <span className="font-medium">{post.author_name || '-'}</span>
+                            ) : authorName ? (
+                              <span className="text-[10px] font-medium">{authorName.charAt(0).toUpperCase()}</span>
+                            ) : (
+                              <CircleUser className="h-3 w-3" />
+                            )}
+                          </div>
+                        );
+                      })()}
+                      <span className="font-medium">
+                        {post.author_metadata?.name || '-'}
+                        {!post.author_id && post.author_metadata?.name && <span className="text-gray-500/50 ml-1">(탈퇴한 회원)</span>}
+                      </span>
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-48">
@@ -239,9 +219,9 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
                       <UserCircle className="h-4 w-4 mr-2" />
                       프로필
                     </DropdownMenuItem>
-                    {post.author_email && (
+                    {post.author_metadata?.email && (
                       <DropdownMenuItem
-                        onClick={() => window.location.href = `mailto:${post.author_email}`}
+                        onClick={() => window.location.href = `mailto:${post.author_metadata?.email}`}
                         className="cursor-pointer"
                       >
                         <Mail className="h-4 w-4 mr-2" />
@@ -251,12 +231,15 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => {
-                        if (post.author_name) {
-                          router.push(`/admin/boards/${boardCode}?search=${encodeURIComponent(post.author_name)}`);
+                        if (post.author_metadata?.name) {
+                          const searchPath = isPublic
+                            ? `/boards/${boardId}&search=${encodeURIComponent(post.author_metadata?.name)}`
+                            : `/admin/boards/${boardId}?search=${encodeURIComponent(post.author_metadata?.name)}`;
+                          router.push(searchPath);
                         }
                       }}
                       className="cursor-pointer"
-                      disabled={!post.author_name}
+                      disabled={!post.author_metadata?.name}
                     >
                       <Search className="h-4 w-4 mr-2" />
                       작성글검색
@@ -296,15 +279,16 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
 
                     return (
                       <div
-                        key={file.id}
+                        key={file.file_url}
                         className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         {/* 이미지 미리보기 또는 아이콘 */}
                         {isImage ? (
                           <div className="flex-shrink-0 w-12 h-12 rounded overflow-hidden bg-gray-100">
-                            <img
+                            <Image
                               src={file.file_url}
                               alt={file.file_name}
+                              fill
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -325,16 +309,18 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
                         </div>
 
                         {/* 다운로드 버튼 */}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(file)}
-                          className="flex-shrink-0 gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          다운로드
-                        </Button>
+                        {canDownloadFile && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(file)}
+                            className="flex-shrink-0 gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            다운로드
+                          </Button>
+                        )}
                       </div>
                     );
                   })}
@@ -343,31 +329,56 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
             )}
           </div>
         </CardContent>
+        {(canEdit || canDelete) && (
+          <CardFooter className="justify-end">
+            <div className="flex items-center justify-end gap-3">
+              {
+                canDelete && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    삭제
+                  </Button>
+                )
+              }
+              {canEdit && (
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    const editPath = isPublic
+                      ? `/boards/${boardId}/${post.id}/edit`
+                      : `/admin/boards/${boardId}/${post.id}/edit`;
+                    router.push(editPath);
+                  }}
+                  className="gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  수정
+                </Button>
+              )}
+            </div>
+          </CardFooter>
+        )}
+
       </Card>
 
-      {canEdit && (
-        <div className="flex items-center justify-end gap-3">
-          <Button
-            variant="destructive"
-            onClick={() => setShowDeleteDialog(true)}
-            className="gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            삭제
-          </Button>
-          <Button
-            variant="default"
-            onClick={() => router.push(`/admin/boards/${boardCode}/${post.id}/edit`)}
-            className="gap-2"
-          >
-            <Edit className="h-4 w-4" />
-            수정
-          </Button>
-        </div>
-      )}
+
 
       {/* 댓글 섹션 */}
-      {allowComment && <Comments postId={post.id} />}
+      {allowComment && <Comments
+        postId={post.id}
+        permissions={{
+          cmt_create: permissions?.cmt_create,
+          cmt_read: permissions?.cmt_read,
+          cmt_edit: permissions?.cmt_edit,
+          cmt_delete: permissions?.cmt_delete,
+        }}
+        isAdmin={isAdmin}
+        comments={comments}
+      />}
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
@@ -395,7 +406,7 @@ export default function PostDetail({ post, boardCode, boardName, allowComment, a
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 

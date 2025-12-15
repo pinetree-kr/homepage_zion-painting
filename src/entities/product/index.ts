@@ -1,2 +1,2 @@
-export type { Product, ProductCategory } from './model/types';
+export type { Product, ProductCategory, ProductInfo } from './model/types';
 

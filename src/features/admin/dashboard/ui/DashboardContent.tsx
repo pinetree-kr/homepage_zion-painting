@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardStats, RecentPost, EmptyInfo } from '@/src/entities/dashboard';
+import type { DashboardStats, EmptyInfo, RecentPosts } from '@/src/entities/dashboard';
 import StatsCard from './StatsCard';
 import RecentPostsList from './RecentPostsList';
 import EmptyInfoAlert from './EmptyInfoAlert';
@@ -8,8 +8,8 @@ import { Users, UserPlus } from 'lucide-react';
 
 interface DashboardContentProps {
   stats: DashboardStats;
-  recentQnA: RecentPost[];
-  recentQuotes: RecentPost[];
+  recentQnA: RecentPosts;
+  recentQuotes: RecentPosts;
   emptyInfo: EmptyInfo[];
 }
 
@@ -46,14 +46,14 @@ export default function DashboardContent({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RecentPostsList
           title="최근 문의글"
-          posts={recentQnA}
-          viewAllLink="/admin/customer/qna"
+          posts={recentQnA.items}
+          viewAllLink={recentQnA.board_id ? `/admin/customer/${recentQnA.board_id}` : null}
           emptyMessage="최근 문의글이 없습니다."
         />
         <RecentPostsList
           title="최근 견적문의"
-          posts={recentQuotes}
-          viewAllLink="/admin/customer/estimates"
+          posts={recentQuotes.items}
+          viewAllLink={recentQuotes.board_id ? `/admin/customer/${recentQuotes.board_id}` : null}
           emptyMessage="최근 견적문의가 없습니다."
         />
       </div>

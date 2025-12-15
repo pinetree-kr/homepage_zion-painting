@@ -7,7 +7,12 @@ import Link from 'next/link';
 import { Input } from '@/src/shared/ui';
 import { Label } from '@/src/shared/ui';
 import { Checkbox } from '@/src/shared/ui';
+import { Dialog, DialogContent } from '@/src/shared/ui';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
+import { checkEmailConfirmed, saveTermsAgreement } from '@/src/features/auth/api/auth-actions';
+import { DialogTitle } from '@radix-ui/react-dialog';
+import { CURRENT_TERMS_VERSION, CURRENT_TERMS_VERSION_DB } from '@/src/shared/lib/auth';
+import { getClientIp } from '@/src/shared/lib/client-ip';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -18,8 +23,11 @@ export default function SignUpPage() {
     confirmPassword: '',
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalUrl, setModalUrl] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +49,12 @@ export default function SignUpPage() {
     }
 
     if (!agreedToTerms) {
-      setError('약관에 동의해주세요');
+      setError('이용약관에 동의해주세요');
+      return;
+    }
+
+    if (!agreedToPrivacy) {
+      setError('개인정보 수집 및 이용에 동의해주세요');
       return;
     }
 
@@ -50,6 +63,17 @@ export default function SignUpPage() {
     try {
       // Supabase 회원가입
       const supabase = createBrowserClient();
+
+      const { success, error } = await checkEmailConfirmed(formData.email);
+
+      // 이미 인증완료된 계정시
+      if (success) {
+        setError('이메일이 이미 사용중입니다.');
+        setLoading(false);
+        return;
+      }
+
+      // 인증완료되지 않은 계정시
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -57,6 +81,7 @@ export default function SignUpPage() {
           data: {
             name: formData.name,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback/email`,
         },
       });
 
@@ -72,11 +97,39 @@ export default function SignUpPage() {
         return;
       }
 
-      // profiles 테이블은 트리거(handle_new_user)에 의해 자동 생성됨
-      // 트리거가 auth.users에 새 사용자가 생성될 때 자동으로 profiles 레코드를 생성합니다
+      // 약관 동의 저장
+      const userAgent = typeof window !== 'undefined' ? window.navigator.userAgent : null;
+      const ipAddress = await getClientIp()
+      // 이용약관 동의 저장
+      if (agreedToTerms) {
+        const termsResult = await saveTermsAgreement(
+          authData.user.id,
+          'terms',
+          CURRENT_TERMS_VERSION_DB,
+          userAgent,
+          ipAddress
+        );
+        if (!termsResult.success) {
+          console.error('이용약관 동의 저장 실패:', termsResult.error);
+        }
+      }
 
-      // 회원가입 성공 시 이메일 인증 안내 페이지로 이동
-      router.push(`/auth/callback?email=${encodeURIComponent(formData.email)}&verified=false`);
+      // 개인정보 수집 및 이용 동의 저장
+      if (agreedToPrivacy) {
+        const privacyResult = await saveTermsAgreement(
+          authData.user.id,
+          'privacy',
+          CURRENT_TERMS_VERSION_DB,
+          userAgent,
+          ipAddress
+        );
+        if (!privacyResult.success) {
+          console.error('개인정보 동의 저장 실패:', privacyResult.error);
+        }
+      }
+
+      router.push(`/auth/callback?email=${encodeURIComponent(formData.email)}&requested=true`);
+
     } catch (err) {
       console.error('회원가입 중 오류 발생:', err);
       setError('회원가입 중 오류가 발생했습니다');
@@ -85,17 +138,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-8 relative">
-      <Link
-        href="/"
-        className="absolute top-8 left-8 flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span>돌아가기</span>
-      </Link>
-
+    <>
       <div className="w-full max-w-md">
         <div className="mb-8">
           <h2 className="text-gray-900 text-2xl font-bold mb-2">회원가입</h2>
@@ -201,27 +244,64 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="terms"
-              checked={agreedToTerms}
-              onCheckedChange={setAgreedToTerms}
-            />
-            <label
-              htmlFor="terms"
-              className="text-sm text-gray-600 leading-none cursor-pointer"
-            >
-              이용약관에 동의합니다{' '}
-              <a href="#" className="text-teal-600 hover:text-teal-700">
-                이용약관
-              </a>
-            </label>
+          <div className="space-y-3">
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="terms"
+                checked={agreedToTerms}
+                onCheckedChange={setAgreedToTerms}
+                className="mt-0.5"
+              />
+              <label
+                htmlFor="terms"
+                className="text-sm text-gray-600 leading-relaxed cursor-pointer flex-1"
+              >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setModalUrl(`/terms/${CURRENT_TERMS_VERSION}`);
+                    setModalOpen(true);
+                  }}
+                  className="text-teal-600 hover:text-teal-700 underline"
+                >
+                  이용약관
+                </button>
+                에 동의합니다 (필수)
+              </label>
+            </div>
+
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="privacy"
+                checked={agreedToPrivacy}
+                onCheckedChange={setAgreedToPrivacy}
+                className="mt-0.5"
+              />
+              <label
+                htmlFor="privacy"
+                className="text-sm text-gray-600 leading-relaxed cursor-pointer flex-1"
+              >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setModalUrl(`/privacy/${CURRENT_TERMS_VERSION}`);
+                    setModalOpen(true);
+                  }}
+                  className="text-teal-600 hover:text-teal-700 underline"
+                >
+                  개인정보 수집 및 이용
+                </button>
+                에 동의합니다 (필수)
+              </label>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-10 bg-teal-500 hover:bg-teal-600 disabled:bg-teal-300 disabled:cursor-not-allowed text-white rounded-md px-4 py-2 flex items-center justify-center gap-2 transition-colors"
+            className="w-full h-10 bg-teal-500 hover:bg-gray-800 disabled:bg-teal-300 disabled:cursor-not-allowed text-white rounded-md px-4 py-2 flex items-center justify-center gap-2 transition-colors mt-8"
           >
             {loading ? '회원가입 중...' : '회원가입'}
             {!loading && (
@@ -241,7 +321,25 @@ export default function SignUpPage() {
           </p>
         </div>
       </div>
-    </div>
+
+      {/* 약관 모달 */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-[95vw] w-full h-[90vh] max-h-[90vh] p-0">
+          <div className="flex flex-col overflow-hidden">
+            <DialogTitle>
+            </DialogTitle>
+            {modalUrl && (
+              <iframe
+                src={modalUrl + '?wrapped=false'}
+                className="w-full h-full flex-1 border-0"
+                title="약관 내용"
+                style={{ minHeight: 0 }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

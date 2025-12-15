@@ -17,6 +17,8 @@ const getInfoTypeLabel = (type: EmptyInfo['type']) => {
       return '사업 정보';
     case 'contact':
       return '연락처 정보';
+    case 'settings':
+      return '게시판 연결 설정';
     default:
       return '정보';
   }
@@ -25,18 +27,20 @@ const getInfoTypeLabel = (type: EmptyInfo['type']) => {
 const getInfoTypeLink = (type: EmptyInfo['type'], field: string) => {
   if (type === 'company') {
     if (field === 'introduction' || field === 'vision' || field === 'greetings' || field === 'mission' || field === 'strengths' || field === 'values') {
-      return '/admin/info/company';
+      return '/admin/site-settings/company';
     } else if (field === 'histories') {
-      return '/admin/info/company/history';
+      return '/admin/site-settings/company/histories';
     } else if (field === 'organization_members') {
-      return '/admin/info/company/organization';
+      return '/admin/site-settings/company/organizations';
     } else {
-      return '/admin/info/company';
+      return '/admin/site-settings/company';
     }
   } else if (type === 'business') {
-    return '/admin/info/business';
+    return '/admin/site-settings/business';
   } else if (type === 'contact') {
-    return '/admin/info/contacts';
+    return '/admin/site-settings/default/contact';
+  } else if (type === 'settings') {
+    return '/admin/system/board-connections';
   }
   return '/admin';
 };

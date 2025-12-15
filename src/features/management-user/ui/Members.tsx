@@ -11,6 +11,7 @@ import {
   deleteUser,
 } from '../api/user-actions';
 import Link from 'next/link';
+import { formatDateSimple } from '@/src/shared/lib/utils';
 
 interface MembersProps {
   items: Profile[];
@@ -57,7 +58,7 @@ export default function Members({
       header: '이름',
       accessor: (row) => {
         return (
-          <Link href={`/admin/customer/members/${row.id}`} className="text-blue-500 hover:text-blue-700 font-medium">
+          <Link href={`/admin/services/members/${row.id}`} className="text-blue-500 hover:text-blue-700 font-medium">
             {row.name || '-'}
           </Link>
         );
@@ -80,24 +81,30 @@ export default function Members({
     {
       id: 'phone',
       header: '전화번호',
-      accessor: (row) => (
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Phone className="h-3.5 w-3.5 text-gray-400" />
-          {row.phone || '-'}
-        </div>
-      ),
-      width: '20%'
+      accessor: (row) => {
+        const metadata = row.metadata as { phone?: string } | null;
+        const phone = metadata?.phone;
+        return (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Phone className="h-3.5 w-3.5 text-gray-400" />
+            {phone || '-'}
+          </div>
+        );
+      },
+      width: '20%',
+      sortable: true
     },
     {
       id: 'last_login',
       header: '최근 로그인',
       accessor: (row) => {
-        if (!row.last_login) return '-';
-        const date = new Date(row.last_login);
+        const metadata = row.metadata as { last_login?: string } | null;
+        const lastLogin = metadata?.last_login;
+        if (!lastLogin) return '-';
         return (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Calendar className="h-3.5 w-3.5 text-gray-400" />
-            {date.toLocaleDateString('ko-KR')}
+            {formatDateSimple(lastLogin)}
           </div>
         );
       },
@@ -109,10 +116,9 @@ export default function Members({
       header: '가입일',
       accessor: (row) => {
         if (!row.created_at) return '-';
-        const date = new Date(row.created_at);
         return (
           <div className="text-sm text-gray-600">
-            {date.toLocaleDateString('ko-KR')}
+            {formatDateSimple(row.created_at)}
           </div>
         );
       },

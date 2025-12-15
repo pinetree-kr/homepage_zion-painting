@@ -5,6 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import UserMenu from '@/src/widgets/user/ui/UserMenu';
+import { FileIcon } from 'lucide-react';
+import { SiteSetting } from '@/src/entities/site-setting/model/types';
 
 // Icon Components
 const Building2Icon = ({ className }: { className?: string }) => (
@@ -164,6 +166,13 @@ const UserCogIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const SettingsIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
 const ImageIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
     <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
@@ -172,66 +181,104 @@ const ImageIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+// interface BoardConnections {
+//   noticeBoardCode: string | null;
+//   inquireBoardCode: string | null;
+//   pdsBoardCode: string | null;
+//   quoteBoardCode: string | null;
+//   reviewBoardCode: string | null;
+// }
+
+interface AdminLayoutProps {
+  children: React.ReactNode;
+  // boardConnections?: BoardConnections;
+  defaultBoards: SiteSetting['default_boards'];
+}
+
+export default function AdminLayout({ children, defaultBoards }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [openMenus, setOpenMenus] = useState<string[]>(['basic-info', 'customer-management', 'system-management']);
+  const [openMenus, setOpenMenus] = useState<string[]>(['site-settings', 'customer-management', 'main-boards', 'system-management']);
   const pathname = usePathname();
   const router = useRouter();
 
   // 현재 경로에 따라 activeTab 결정
   const getActiveTab = useCallback(() => {
     if (pathname === '/admin/dashboard') return 'dashboard';
-    if (pathname?.startsWith('/admin/info')) {
-      if (pathname === '/admin/info/prologue') return 'prologue';
-      if (pathname.startsWith('/admin/info/company')) return 'company-info';
-      if (pathname.startsWith('/admin/info/business')) return 'business-info';
-      if (pathname.startsWith('/admin/info/products')) return 'products-admin';
-      return 'prologue';
+    if (pathname?.startsWith('/admin/site-settings')) {
+      if (pathname.startsWith('/admin/site-settings/default')) return 'default-info';
+      if (pathname.startsWith('/admin/site-settings/company')) return 'company-info';
+      if (pathname.startsWith('/admin/site-settings/business')) return 'business-info';
+      if (pathname.startsWith('/admin/site-settings/product')) return 'product-info';
+      return 'default-info';
     }
-    if (pathname?.startsWith('/admin/customer')) {
-      if (pathname === '/admin/customer/members') return 'members';
+    if (pathname?.startsWith('/admin/services')) {
+      if (pathname === '/admin/services/members') return 'members';
       return 'members';
     }
     if (pathname?.startsWith('/admin/boards')) {
-      if (pathname.startsWith('/admin/boards/notices')) return 'notices';
-      if (pathname.startsWith('/admin/boards/qna')) return 'qna';
-      if (pathname.startsWith('/admin/boards/quotes')) return 'quotes';
-      if (pathname.startsWith('/admin/boards/reviews')) return 'reviews';
-      return 'notices';
+      // 게시판 연결 정보에 따라 활성 탭 결정
+      const boardId = pathname.split('/admin/boards/')[1]?.split('/')[0];
+
+      // if (boardCode === boardConnections?.noticeBoardCode) return 'notices';
+      // if (boardCode === boardConnections?.inquireBoardCode) return 'qna';
+      // if (boardCode === boardConnections?.quoteBoardCode) return 'quotes';
+      // if (boardCode === boardConnections?.reviewBoardCode) return 'reviews';
+      // if (boardCode === boardConnections?.pdsBoardCode) return 'pds';
+      // TODO
+
+
+      const defaultBoardKey = Object.entries(defaultBoards || {}).find(([key, board]: [string, { id: string | null; name: string | null; display_order: number | null } | null]) => {
+        return board?.id === boardId && board?.name !== null;
+      })?.[0] ?? null;
+
+      if (defaultBoardKey) {
+        return `main-board-${defaultBoardKey}`;
+      }
+
+      return `board-${boardId}`;
     }
     if (pathname?.startsWith('/admin/system')) {
       if (pathname === '/admin/system/administrators') return 'admin-management';
-      if (pathname === '/admin/system/boards') return 'boards-management';
-      if (pathname === '/admin/system/logs') return 'logs';
-      if (pathname === '/admin/system/resources') return 'resources';
+      if (pathname.startsWith('/admin/system/logs')) return 'logs';
+      if (pathname.startsWith('/admin/system/boards')) return 'board-management';
+      if (pathname === '/admin/system/board-connections') return 'board-management';
       return 'admin-management';
     }
-    return 'dashboard';
+    return null;
   }, [pathname]);
 
   const handleTabChange = useCallback((tab: string) => {
+    const getBoardRoute = (boardCode: string | null, defaultRoute: string) => {
+      if (boardCode) {
+        return `/admin/boards/${boardCode}`;
+      }
+      return defaultRoute;
+    };
+
     const routeMap: Record<string, string> = {
       'dashboard': '/admin/dashboard',
-      'prologue': '/admin/info/prologue',
-      'company-info': '/admin/info/company/about',
-      'business-info': '/admin/info/business/introduction',
-      'products-admin': '/admin/info/products',
-      'members': '/admin/customer/members',
-      'notices': '/admin/boards/notices',
-      'qna': '/admin/boards/qna',
-      'quotes': '/admin/boards/quotes',
-      'reviews': '/admin/boards/reviews',
+      'default-info': '/admin/site-settings/default/prologue',
+      'company-info': '/admin/site-settings/company/introduction',
+      'business-info': '/admin/site-settings/business/introduction',
+      'product-info': '/admin/site-settings/product/introduction',
+      'members': '/admin/services/members',
+      'board-management': '/admin/system/boards/list',
       'admin-management': '/admin/system/administrators',
-      'boards-management': '/admin/system/boards',
       'logs': '/admin/system/logs',
-      'resources': '/admin/system/resources',
+      // ...(defaultBoards ? Object.entries(defaultBoards).reduce((acc, [key, board]) => {
+      //   if (board?.id) {
+      //     acc[`main-board-${board.id}`] = `/admin/boards/${board.id}`;
+      //     return acc;
+      //   }
+      //   return acc;
+      // }, {} as Record<string, string>) : {}),
     };
 
     const route = routeMap[tab];
     if (route) {
       router.push(route);
     }
-  }, [router]);
+  }, [router, defaultBoards]);
 
   const toggleMenu = useCallback((menuId: string) => {
     setOpenMenus(prev =>
@@ -241,42 +288,96 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }, [setOpenMenus]);
 
-  const menuStructure = useMemo(() => [
-    {
-      id: 'basic-info',
-      label: '기본정보',
-      icon: Building2Icon,
-      items: [
-        { id: 'prologue', label: '프롤로그', icon: ImageIcon, route: '/admin/info/prologue' },
-        { id: 'company-info', label: '회사정보', icon: Building2Icon, route: '/admin/info/company' },
-        { id: 'business-info', label: '사업정보', icon: BriefcaseIcon, route: '/admin/info/business' },
-        { id: 'products-admin', label: '제품정보', icon: PackageIcon, route: '/admin/info/products' },
-      ],
-    },
-    {
-      id: 'customer-management',
-      label: '고객관리',
-      icon: MessageSquareIcon,
-      items: [
-        { id: 'members', label: '회원관리', icon: UsersIcon, route: '/admin/customer/members' },
-        { id: 'notices', label: '공지사항', icon: FileTextIcon, route: '/admin/boards/notices' },
-        { id: 'qna', label: 'Q&A', icon: MessageSquareIcon, route: '/admin/boards/qna' },
-        { id: 'quotes', label: '견적문의', icon: CalculatorIcon, route: '/admin/boards/quotes' },
-        { id: 'reviews', label: '고객후기', icon: StarIcon, route: '/admin/boards/reviews' },
-      ],
-    },
-    {
-      id: 'system-management',
-      label: '시스템관리',
-      icon: ServerIcon,
-      items: [
-        { id: 'admin-management', label: '관리자', icon: ShieldIcon, route: '/admin/system/administrators' },
-        { id: 'boards-management', label: '게시판 관리', icon: FileTextIcon, route: '/admin/system/boards' },
-        { id: 'logs', label: '로그', icon: ActivityIcon, route: '/admin/system/logs' },
-        { id: 'resources', label: '리소스', icon: ServerIcon, route: '/admin/system/resources' },
-      ],
-    },
-  ], []);
+  const menuStructure = useMemo(() => {
+    // 주요게시판 메뉴 아이템 생성
+    const mainBoardItems: Array<{ id: string; label: string; icon: any; route: string | null }> = [];
+
+    if (defaultBoards) {
+      const boardLabels: { [key: string]: string } = {
+        notice: '공지사항',
+        inquiry: 'Q&A',
+        pds: '자료실',
+        product: '제품',
+      };
+
+      const boardIcons: { [key: string]: any } = {
+        notice: FileTextIcon,
+        inquiry: MessageSquareIcon,
+        pds: FileIcon,
+        product: PackageIcon,
+      };
+
+      // default_boards의 각 항목을 메뉴 아이템으로 추가 (display_order 기준 정렬)
+      Object.entries(defaultBoards)
+        .sort(([, a], [, b]) => {
+          const orderA = a?.display_order ?? 999;
+          const orderB = b?.display_order ?? 999;
+          return orderA - orderB;
+        })
+        .forEach(([key, board]) => {
+          if (board) {
+            // const boardCode = board.id ? boardIdToCode[board.id] : null;
+            const boardName = board.name || boardLabels[key] || key;
+
+            if (board.id) {
+              // 연결된 게시판
+              mainBoardItems.push({
+                id: `main-board-${key}`,
+                label: boardName,
+                icon: boardIcons[key] || FileTextIcon,
+                route: `/admin/boards/${board.id}`,
+              });
+            } else {
+              // 연결되지 않은 게시판
+              mainBoardItems.push({
+                id: `main-board-${key}`,
+                label: `${boardName} (연결안됨)`,
+                icon: boardIcons[key] || FileTextIcon,
+                route: `/admin/system/board-connections`,
+              });
+            }
+          }
+        });
+    }
+
+    return [
+      {
+        id: 'site-settings',
+        label: '사이트설정',
+        icon: SettingsIcon,
+        items: [
+          { id: 'default-info', label: '기본정보', icon: Building2Icon, route: '/admin/site-settings/default' },
+          { id: 'company-info', label: '회사정보', icon: Building2Icon, route: '/admin/site-settings/company' },
+          { id: 'business-info', label: '사업정보', icon: BriefcaseIcon, route: '/admin/site-settings/business' },
+          { id: 'product-info', label: '제품정보', icon: PackageIcon, route: '/admin/site-settings/product' },
+        ],
+      },
+      {
+        id: 'customer-management',
+        label: '서비스 관리',
+        icon: MessageSquareIcon,
+        items: [
+          { id: 'members', label: '회원관리', icon: UsersIcon, route: '/admin/services/members' },
+          { id: 'board-management', label: '게시판관리', icon: FileTextIcon, route: '/admin/system/boards/list' },
+        ],
+      },
+      ...(mainBoardItems.length > 0 ? [{
+        id: 'main-boards',
+        label: '주요게시판',
+        icon: FileTextIcon,
+        items: mainBoardItems,
+      }] : []),
+      {
+        id: 'system-management',
+        label: '시스템관리',
+        icon: ServerIcon,
+        items: [
+          { id: 'admin-management', label: '관리자', icon: ShieldIcon, route: '/admin/system/administrators' },
+          { id: 'logs', label: '로그', icon: ActivityIcon, route: '/admin/system/logs' },
+        ],
+      },
+    ];
+  }, [defaultBoards]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -371,21 +472,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           const IconComponent = item.icon;
                           const isActive = getActiveTab() === item.id;
                           return (
-                            <Link
-                              key={item.id}
-                              href={item.route}
-                              onClick={() => {
-                                handleTabChange(item.id);
-                                setIsSidebarOpen(false);
-                              }}
-                              className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${isActive
-                                ? 'bg-[#1A2C6D] text-white'
-                                : 'text-gray-600 hover:bg-gray-100'
-                                }`}
-                            >
-                              <IconComponent className="h-4 w-4" />
-                              {item.label}
-                            </Link>
+                            item.route ? (
+                              <Link
+                                key={item.id}
+                                href={item.route}
+                                onClick={() => {
+                                  handleTabChange(item.id);
+                                  setIsSidebarOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${isActive
+                                  ? 'bg-[#1A2C6D] text-white'
+                                  : 'text-gray-600 hover:bg-gray-100'
+                                  }`}
+                              >
+                                <IconComponent className="h-4 w-4" />
+                                {item.label}
+                              </Link>
+                            ) : (
+                              <div
+                                key={item.id}
+                                className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-gray-400 cursor-not-allowed"
+                                title="게시판이 연결되지 않았습니다"
+                              >
+                                <IconComponent className="h-4 w-4" />
+                                {item.label}
+                              </div>
+                            )
                           );
                         })}
                       </div>
@@ -409,7 +521,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto h-full ml-0 lg:ml-0">
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto h-full ml-0 lg:ml-0">
           {/* <div className="max-w-7xl mx-auto"> */}
           {children}
           {/* </div> */}

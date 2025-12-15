@@ -15,8 +15,12 @@ export interface Profile {
     name: string | null;
     email: string | null;
     // status: 'pending' | 'approved' | 'rejected' | null;
-    last_login?: string | null;
-    phone: string | null;
+    metadata?: {
+        last_login?: string | null;
+        phone?: string | null;
+        verified?: boolean;
+        signup_provider?: string;
+    } | null;
     created_at?: string | null;
     updated_at?: string | null;
     deleted_at?: string | null;

@@ -28,7 +28,7 @@ export default function Hero({ items, defaultTitle, defaultDescription }: HeroPr
       {/* Carousel 배경 */}
       <div className="absolute inset-0 z-0">
         <HeroCarousel
-          items={items}
+          items={items?.filter((item) => item.src !== '') || []}
           defaultTitle={defaultTitle || DEFAULT_TITLE}
           defaultDescription={defaultDescription || DEFAULT_DESCRIPTION}
         />
