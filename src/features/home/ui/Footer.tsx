@@ -1,5 +1,12 @@
 import { Container } from '@/src/shared/ui';
 import Image from 'next/image';
+import type { ContactInfo } from '@/src/entities/contact/model/types';
+import type { SiteSetting } from '@/src/entities/site-setting/model/types';
+
+interface FooterProps {
+  contactInfo?: ContactInfo | null;
+  defaultBoards?: SiteSetting['default_boards'] | null;
+}
 
 // Social Media Icons (lucide-react 기반)
 const FacebookIcon = ({ className }: { className?: string }) => (
@@ -29,26 +36,35 @@ const YoutubeIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export default function Footer() {
-  const footerLinks = {
-    company: [
-      { label: '회사소개', href: '/about' },
-      { label: '사업분야', href: '/business' },
-      { label: '제품소개', href: '/products' },
-      { label: '오시는 길', href: '/contact' },
-    ],
-    support: [
-      { label: '공지사항', href: '#support' },
-      { label: 'Q&A', href: '#support' },
-      { label: '견적문의', href: '#support' },
-      { label: '갤러리', href: '#support' },
-    ],
-    legal: [
-      { label: '이용약관', href: '#' },
-      { label: '개인정보처리방침', href: '#' },
-      { label: '이메일무단수집거부', href: '#' },
-    ],
-  };
+export default function Footer({ contactInfo, defaultBoards }: FooterProps) {
+  // 회사정보 링크
+  const companyLinks = [
+    { label: '회사소개', href: '/about' },
+    { label: '사업분야', href: '/business' },
+    { label: '제품소개', href: '/products' },
+    { label: '오시는 길', href: '/contact' },
+  ];
+
+  // 고객지원 링크 - default_boards에서 동적으로 생성
+  const supportLinks = defaultBoards
+    ? Object.entries(defaultBoards)
+        .filter(([_, board]) => board && board.id) // id가 있는 게시판만 표시
+        .sort(([_, a], [__, b]) => {
+          const orderA = a?.display_order ?? 999;
+          const orderB = b?.display_order ?? 999;
+          return orderA - orderB;
+        })
+        .map(([_, board]) => ({
+          label: board!.name || '게시판',
+          href: `/boards/${board!.id}`,
+        }))
+    : [];
+
+  // 법적 링크
+  const legalLinks = [
+    { label: '이용약관', href: '/terms/2025-12-11' },
+    { label: '개인정보처리방침', href: '/privacy/2025-12-11' },
+  ];
 
   const socialLinks = [
     { icon: FacebookIcon, href: '#' },
@@ -95,7 +111,7 @@ export default function Footer() {
           <div>
             <h5 className="text-white mb-6">회사정보</h5>
             <ul className="space-y-3">
-              {footerLinks.company.map((link) => (
+              {companyLinks.map((link) => (
                 <li key={link.label}>
                   <a href={link.href} className="text-gray-400 hover:text-white transition-colors">
                     {link.label}
@@ -106,28 +122,41 @@ export default function Footer() {
           </div>
 
           {/* Support Links */}
-          <div>
-            <h5 className="text-white mb-6">고객지원</h5>
-            <ul className="space-y-3">
-              {footerLinks.support.map((link) => (
-                <li key={link.label}>
-                  <a href={link.href} className="text-gray-400 hover:text-white transition-colors">
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {supportLinks.length > 0 && (
+            <div>
+              <h5 className="text-white mb-6">고객지원</h5>
+              <ul className="space-y-3">
+                {supportLinks.map((link) => (
+                  <li key={link.label}>
+                    <a href={link.href} className="text-gray-400 hover:text-white transition-colors">
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Contact Info */}
           <div>
             <h5 className="text-white mb-6">연락처</h5>
             <ul className="space-y-3 text-gray-400 text-sm">
-              <li>경기도 화성시 팔탄면 공장길 123</li>
-              <li>도장설비 산업단지 내</li>
-              <li className="pt-2">Tel: 031-123-4567</li>
-              <li>Fax: 031-123-4568</li>
-              <li>Email: coating@zion.com</li>
+              {contactInfo?.address ? (
+                contactInfo.address.split('\n').map((line, index) => (
+                  <li key={index}>{line}</li>
+                ))
+              ) : (
+                <li>주소 정보가 없습니다</li>
+              )}
+              {contactInfo?.phone_primary && (
+                <li className="pt-2">Tel: {contactInfo.phone_primary}</li>
+              )}
+              {contactInfo?.fax && (
+                <li>Fax: {contactInfo.fax}</li>
+              )}
+              {contactInfo?.email && (
+                <li>Email: {contactInfo.email}</li>
+              )}
             </ul>
           </div>
           </div>
@@ -137,7 +166,7 @@ export default function Footer() {
             © 2024 ZION. All rights reserved.
           </p>
           <div className="flex gap-4 text-sm text-gray-400">
-            {footerLinks.legal.map((link) => (
+            {legalLinks.map((link) => (
               <a key={link.label} href={link.href} className="hover:text-white transition-colors">
                 {link.label}
               </a>

@@ -2,8 +2,13 @@
 
 import { useState } from 'react';
 import { Container, Card } from '@/src/shared/ui';
+import type { ContactInfo } from '@/src/entities/contact/model/types';
 
-export default function Contact() {
+interface ContactProps {
+  contactInfo?: ContactInfo | null;
+}
+
+export default function Contact({ contactInfo }: ContactProps) {
   const [message, setMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -39,7 +44,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <h4 className="text-xl font-normal text-[#101828] mb-1">이메일</h4>
-                    <p className="text-base text-[#4A5565]">coating@zion.com</p>
+                    <p className="text-base text-[#4A5565]">{contactInfo?.email || '이메일 정보가 없습니다'}</p>
                   </div>
                 </div>
 
@@ -51,9 +56,18 @@ export default function Contact() {
                   </div>
                   <div>
                     <h4 className="text-xl font-normal text-[#101828] mb-1">전화번호</h4>
-                    <p className="text-base text-[#4A5565]">대표: 031-123-4567</p>
-                    <p className="text-sm text-[#4A5565]">담당자: 010-1234-5678</p>
-                    <p className="text-sm text-[#4A5565]">팩스: 031-123-4568</p>
+                    {contactInfo?.phone_primary && (
+                      <p className="text-base text-[#4A5565]">대표: {contactInfo.phone_primary}</p>
+                    )}
+                    {contactInfo?.phone_secondary && (
+                      <p className="text-sm text-[#4A5565]">담당자: {contactInfo.phone_secondary}</p>
+                    )}
+                    {contactInfo?.fax && (
+                      <p className="text-sm text-[#4A5565]">팩스: {contactInfo.fax}</p>
+                    )}
+                    {!contactInfo?.phone_primary && !contactInfo?.phone_secondary && !contactInfo?.fax && (
+                      <p className="text-base text-[#4A5565]">전화번호 정보가 없습니다</p>
+                    )}
                   </div>
                 </div>
 
@@ -66,10 +80,8 @@ export default function Contact() {
                   </div>
                   <div>
                     <h4 className="text-xl font-normal text-[#101828] mb-1">본사 주소</h4>
-                    <p className="text-base text-[#4A5565]">
-                      경기도 화성시 팔탄면 공장길 123
-                      <br />
-                      도장설비 산업단지 내
+                    <p className="text-base text-[#4A5565] whitespace-pre-line">
+                      {contactInfo?.address || '주소 정보가 없습니다'}
                     </p>
                   </div>
                 </div>
@@ -83,19 +95,36 @@ export default function Contact() {
                   </div>
                   <div>
                     <h4 className="text-xl font-normal text-[#101828] mb-1">영업시간</h4>
-                    <p className="text-base text-[#4A5565]">평일: 09:00 - 18:00</p>
-                    <p className="text-sm text-[#4A5565]">토·일·공휴일 휴무</p>
+                    {contactInfo?.business_hours ? (
+                      <p className="text-base text-[#4A5565] whitespace-pre-line">{contactInfo.business_hours}</p>
+                    ) : (
+                      <p className="text-base text-[#4A5565]">영업시간 정보가 없습니다</p>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* 지도 플레이스홀더 */}
-              <div className="bg-[#E5E7EB] rounded-2xl h-64 flex items-center justify-center mt-4">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#99A1AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="#99A1AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
+              {/* 지도 */}
+              {contactInfo?.map_url ? (
+                <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-lg mt-4">
+                  <iframe
+                    src={contactInfo.map_url}
+                    width="100%"
+                    height="256"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              ) : (
+                <div className="bg-[#E5E7EB] rounded-2xl h-64 flex items-center justify-center mt-4">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#99A1AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="#99A1AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              )}
             </div>
 
             {/* 빠른 문의 폼 */}
