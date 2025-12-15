@@ -36,7 +36,7 @@ export default async function SetupPage() {
             href="/auth/sign-in"
             className="inline-block px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-md transition-colors"
           >
-            로그인 페이지로 이동
+            로그인
           </a>
         </div>
       </div>

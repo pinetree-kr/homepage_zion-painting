@@ -17,7 +17,7 @@ export default function NotFound() {
           <CardContent className="text-center">
             <p className="text-gray-500">게시글을 찾을 수 없습니다.</p>
             <Button variant="outline" className="mt-4" onClick={() => router.back()}>
-              이전으로 돌아가기
+              이전으로
             </Button>
           </CardContent>
         </Card>

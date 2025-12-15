@@ -35,7 +35,7 @@ export default function BoardError({
                         )}
                         {statusCode === 403 && (
                             <Button variant="outline" className="mt-4" onClick={handleBack}>
-                                이전으로 돌아가기
+                                이전으로
                             </Button>
                         )}
                     </CardContent>

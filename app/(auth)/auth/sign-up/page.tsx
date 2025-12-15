@@ -138,17 +138,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-8 relative">
-      <Link
-        href="/"
-        className="absolute top-8 left-8 flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span>돌아가기</span>
-      </Link>
-
+    <>
       <div className="w-full max-w-md">
         <div className="mb-8">
           <h2 className="text-gray-900 text-2xl font-bold mb-2">회원가입</h2>
@@ -349,7 +339,7 @@ export default function SignUpPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 

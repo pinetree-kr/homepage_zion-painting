@@ -5,44 +5,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { type User } from '@/src/entities/user';
-import { LogOut, Settings, Building2, Briefcase, Package, MessageSquare, Home as HomeIcon, FileText } from 'lucide-react';
-import { getScrollbarWidth } from '@/src/shared/lib/utils';
+import { Building2, Briefcase, Package, MessageSquare, Home as HomeIcon, FileText } from 'lucide-react';
 import UserMenu from '@/src/widgets/user/ui/UserMenu';
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import { getSiteSettings } from '@/src/features/post/api/post-actions';
 import { SiteSetting } from '@/src/entities/site-setting/model/types';
 
-interface HeaderProps {
-  enableScrollAnimation?: boolean;
-}
-
-export default function Header({ enableScrollAnimation = true }: HeaderProps) {
+export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(!enableScrollAnimation);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isCustomerCenterOpen, setIsCustomerCenterOpen] = useState(false);
   const [defaultBoards, setDefaultBoards] = useState<SiteSetting["default_boards"] | null>(null);
   const customerCenterRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
-  // const supabase = useSupabase();
 
-  useEffect(() => {
-    // 스크롤바 너비를 CSS 변수로 설정 (스크롤바 쉬프팅 방지용)
-    const scrollbarWidth = getScrollbarWidth();
-    document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
-
-    // 스크롤 애니메이션이 활성화된 경우에만 스크롤 이벤트 리스너 추가
-    if (enableScrollAnimation) {
-      const handleScroll = () => {
-        setIsScrolled(window.scrollY > 50);
-      };
-      window.addEventListener('scroll', handleScroll);
-      return () => window.removeEventListener('scroll', handleScroll);
-    }
-  }, [enableScrollAnimation]);
-
-  // default_boards 데이터 가져오기
   useEffect(() => {
     const loadDefaultBoards = async () => {
       try {
@@ -148,16 +125,7 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-40 h-[73px] ${enableScrollAnimation
-          ? 'transition-colors transition-shadow duration-300'
-          : ''
-          } ${
-          // 스크롤 애니메이션이 비활성화된 경우 항상 배경색과 그림자 표시
-          // 스크롤 애니메이션이 활성화된 경우: 모바일/태블릿은 항상 배경색, 데스크톱은 스크롤 시에만 배경색
-          !enableScrollAnimation || isScrolled || isMenuOpen
-            ? 'bg-white shadow-lg border-b border-gray-200'
-            : 'bg-white shadow-md border-b border-gray-200 md:bg-transparent md:shadow-none md:border-transparent'
-          }`}
+        className={'fixed top-0 left-0 right-0 z-40 h-[73px] bg-white shadow-lg border-b border-gray-200 lg:hidden'}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 h-full">
           <nav className="flex items-center justify-between h-full">
@@ -209,8 +177,7 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
                 <Link
                   key={index}
                   href={item.href}
-                  className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] ${!enableScrollAnimation || isScrolled ? 'text-[#101828]' : 'text-white'
-                    }`}
+                  className={'text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] text-[#101828]'}
                 >
                   {item.label}
                 </Link>
@@ -224,8 +191,7 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
                 >
                   <button
                     onClick={() => setIsCustomerCenterOpen(!isCustomerCenterOpen)}
-                    className={`text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] flex items-center gap-1 ${!enableScrollAnimation || isScrolled ? 'text-[#101828]' : 'text-white'
-                      }`}
+                    className={'text-base font-normal transition-colors duration-300 hover:text-[#1A2C6D] flex items-center gap-1 text-[#101828]'}
                   >
                     고객센터
                     <svg
@@ -265,13 +231,13 @@ export default function Header({ enableScrollAnimation = true }: HeaderProps) {
 
               {/* 로그인/사용자 메뉴 */}
               <div className="flex min-w-20 items-center justify-center">
-                <UserMenu isScrolled={!enableScrollAnimation || isScrolled} />
+                <UserMenu isScrolled={true} />
               </div>
             </div>
 
             {/* 모바일: 프로필 메뉴 (우측) */}
             <div className="md:hidden w-14 flex items-center justify-center">
-              <UserMenu isScrolled={!enableScrollAnimation || isScrolled} />
+              <UserMenu isScrolled={true} />
             </div>
           </nav>
         </div>

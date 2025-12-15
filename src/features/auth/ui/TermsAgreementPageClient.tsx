@@ -119,7 +119,7 @@ export default function TermsAgreementPageClient({
         return (
             <div className="min-h-screen bg-white flex flex-1 items-center justify-center p-8">
                 <div className="w-full max-w-md">
-                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+                    <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
                         <div className="text-center">
                             <div className="mb-4 flex justify-center">
                                 <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
@@ -134,9 +134,9 @@ export default function TermsAgreementPageClient({
     }
 
     return (
-        <div className="min-h-screen bg-white flex flex-1 items-center justify-center p-8">
+        <>
             <div className="w-full max-w-md">
-                <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+                <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
                     <div className="mb-6">
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">약관 동의</h2>
                         <p className="text-gray-600">서비스 이용을 위해 약관 동의가 필요합니다.</p>
@@ -217,18 +217,6 @@ export default function TermsAgreementPageClient({
                         {savingTerms ? '저장 중...' : '약관 동의 완료'}
                     </Button>
                 </div>
-
-                {/* <div className="mt-6 text-center">
-          <Link
-            href="/"
-            className="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center gap-2"
-          >
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            메인으로 돌아가기
-          </Link>
-        </div> */}
             </div>
 
             {/* 약관 모달 */}
@@ -246,7 +234,7 @@ export default function TermsAgreementPageClient({
                     </div>
                 </DialogContent>
             </Dialog>
-        </div>
+        </>
     );
 }
 

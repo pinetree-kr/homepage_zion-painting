@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import { createBrowserClient } from '@/src/shared/lib/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button } from '@/src/shared/ui';
+import { MailIcon } from 'lucide-react';
 
 function WelcomeContent({ email, error }: { email: string, error?: string }) {
   const [showModal, setShowModal] = useState(false);
@@ -61,15 +62,13 @@ function WelcomeContent({ email, error }: { email: string, error?: string }) {
   }, [email]);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
+    <>
       <div className="w-full">
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
           <div className="text-center">
             <div className="mb-4 flex justify-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                <svg width="40" height="40" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <MailIcon className='w-10 h-10 text-[#3b82f6]' />
               </div>
             </div>
             {error === 'email_not_confirmed' ? (
@@ -93,20 +92,25 @@ function WelcomeContent({ email, error }: { email: string, error?: string }) {
                 href="/auth/sign-in"
                 className="inline-block px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-md transition-colors"
               >
-                로그인 페이지로 돌아가기
+                로그인
               </Link>
-              <button
-                onClick={resendEmail}
-                disabled={isResending}
-                className="inline-block px-6 py-2 bg-teal-500 hover:bg-teal-600 disabled:bg-teal-300 disabled:cursor-not-allowed text-white rounded-md transition-colors"
-              >
-                {isResending ? '재발송 중...' : '이메일 재발송'}
-              </button>
+              {
+                error && (
+                  <button
+                    onClick={resendEmail}
+                    disabled={isResending}
+                    className="inline-block px-6 py-2 bg-teal-500 hover:bg-teal-600 disabled:bg-teal-300 disabled:cursor-not-allowed text-white rounded-md transition-colors"
+                  >
+                    {isResending ? '재발송 중...' : '재발송'}
+                  </button>
+                )
+              }
+
             </div>
           </div>
         </div>
 
-        <div className="mt-6 text-center">
+        {/* <div className="mt-6 text-center">
           <Link
             href="/"
             className="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center gap-2"
@@ -116,7 +120,7 @@ function WelcomeContent({ email, error }: { email: string, error?: string }) {
             </svg>
             메인으로 돌아가기
           </Link>
-        </div>
+        </div> */}
       </div>
 
       {/* 모달 */}
@@ -135,7 +139,7 @@ function WelcomeContent({ email, error }: { email: string, error?: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 
@@ -143,16 +147,14 @@ export default function Welcome({ email, error }: { email: string, error?: strin
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2">
-          <div className="w-full max-w-md">
-            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
-              <div className="text-center">
-                <div className="mb-4 flex justify-center">
-                  <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">로딩 중...</h2>
-                <p className="text-gray-600">페이지를 불러오는 중입니다.</p>
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200">
+            <div className="text-center">
+              <div className="mb-4 flex justify-center">
+                <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">로딩 중...</h2>
+              <p className="text-gray-600">페이지를 불러오는 중입니다.</p>
             </div>
           </div>
         </div>

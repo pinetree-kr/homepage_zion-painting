@@ -145,7 +145,7 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto h-full ml-0 lg:ml-0">
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto h-full ml-0 lg:ml-0">
           {children}
         </main>
       </div>
