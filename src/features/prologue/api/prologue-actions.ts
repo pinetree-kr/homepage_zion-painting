@@ -17,11 +17,11 @@ export async function getCarouselData() {
   const supabase = createAnonymousServerClient();
 
   try {
-    // hero_default 페이지에서 기본 설정 로드
+    // landing_page_hero_section 페이지에서 기본 설정 로드
     const { data: heroDefaultData, error: heroDefaultError } = await supabase
       .from('pages')
       .select('metadata')
-      .eq('code', 'hero_default')
+      .eq('code', 'landing_page_hero_section')
       .eq('status', 'published')
       .maybeSingle() as {
         data: {
@@ -37,7 +37,7 @@ export async function getCarouselData() {
     let settingsDefaultDescription: string | null = null;
 
     if (heroDefaultError && heroDefaultError.code !== 'PGRST116') {
-      console.error('hero_default 페이지 로드 오류:', heroDefaultError);
+      console.error('landing_page_hero_section 페이지 로드 오류:', heroDefaultError);
     } else if (heroDefaultData?.metadata) {
       settingsDefaultTitle = heroDefaultData.metadata.default_title || null;
       settingsDefaultDescription = heroDefaultData.metadata.default_description || null;
@@ -49,7 +49,7 @@ export async function getCarouselData() {
       if (carouselItemTitle) {
         return carouselItemTitle;
       }
-      // 2. hero_default의 디폴트 타이틀
+      // 2. landing_page_hero_section의 디폴트 타이틀
       if (settingsDefaultTitle) {
         return settingsDefaultTitle;
       }
@@ -63,7 +63,7 @@ export async function getCarouselData() {
       if (carouselItemDescription) {
         return carouselItemDescription;
       }
-      // 2. hero_default의 디폴트 설명
+      // 2. landing_page_hero_section의 디폴트 설명
       if (settingsDefaultDescription) {
         return settingsDefaultDescription;
       }
@@ -71,11 +71,11 @@ export async function getCarouselData() {
       return DEFAULT_DESCRIPTION;
     };
 
-    // hero_carousel_items 페이지에서 캐러셀 아이템 로드
+    // landing_page_hero_section_carousel_items 페이지에서 캐러셀 아이템 로드
     const { data: carouselData, error: carouselError } = await supabase
       .from('pages')
       .select('metadata')
-      .eq('code', 'hero_carousel_items')
+      .eq('code', 'landing_page_hero_section_carousel_items')
       .eq('status', 'published')
       .maybeSingle() as {
         data: {

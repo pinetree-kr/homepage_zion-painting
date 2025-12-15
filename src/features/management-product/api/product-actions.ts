@@ -460,7 +460,7 @@ export async function getProductInfo(): Promise<ProductInfo | null> {
     const { data, error } = await supabase
       .from('pages')
       .select('id, metadata, created_at, updated_at')
-      .eq('code', 'product_intro')
+      .eq('code', 'product_page')
       .eq('status', 'published')
       .maybeSingle() as {
         data: {
@@ -517,7 +517,7 @@ export async function saveProductInfo(productInfo: Partial<ProductInfo>): Promis
     const { data: existingPage } = await supabase
       .from('pages')
       .select('id, metadata')
-      .eq('code', 'product_intro')
+      .eq('code', 'product_page')
       .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
     const newMetadata = {
@@ -551,7 +551,7 @@ export async function saveProductInfo(productInfo: Partial<ProductInfo>): Promis
       const { error } = await supabase
         .from('pages')
         .insert({
-          code: 'product_intro',
+          code: 'product_page',
           page: 'products',
           section_type: 'rich_text',
           display_order: 0,

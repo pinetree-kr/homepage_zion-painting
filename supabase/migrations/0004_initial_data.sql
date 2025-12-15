@@ -33,10 +33,10 @@ WHERE NOT EXISTS (SELECT 1 FROM site_settings WHERE deleted_at IS NULL);
 -- 3. pages 테이블 초기 데이터 삽입
 -- ============================================================================
 
--- 3-1. hero_default (프롤로그 기본 설정)
+-- 3-1. landing_page_hero_section (프롤로그 기본 설정)
 INSERT INTO pages (code, page, section_type, display_order, status, metadata)
 VALUES (
-  'hero_default',
+  'landing_page_hero_section',
   'home',
   'hero',
   0,
@@ -45,10 +45,10 @@ VALUES (
 )
 ON CONFLICT (code) DO NOTHING;
 
--- 3-2. hero_carousel_items (프롤로그 캐러셀 아이템들)
+-- 3-2. landing_page_hero_section_carousel_items (프롤로그 캐러셀 아이템들)
 INSERT INTO pages (code, page, section_type, display_order, status, metadata)
 VALUES (
-  'hero_carousel_items',
+  'landing_page_hero_section_carousel_items',
   'home',
   'carousel',
   1,
@@ -57,10 +57,10 @@ VALUES (
 )
 ON CONFLICT (code) DO NOTHING;
 
--- 3-3. company_intro (회사 정보)
+-- 3-3. company_page (회사 정보)
 INSERT INTO pages (code, page, section_type, display_order, status, metadata)
 VALUES (
-  'company_intro',
+  'company_page',
   'about',
   'rich_text',
   0,
@@ -69,10 +69,10 @@ VALUES (
 )
 ON CONFLICT (code) DO NOTHING;
 
--- 3-4. business_areas (사업 정보)
+-- 3-4. business_page (사업 정보)
 INSERT INTO pages (code, page, section_type, display_order, status, metadata)
 VALUES (
-  'business_areas',
+  'business_page',
   'business',
   'rich_text',
   0,
@@ -81,10 +81,10 @@ VALUES (
 )
 ON CONFLICT (code) DO NOTHING;
 
--- 3-5. product_intro (제품 정보)
+-- 3-5. product_page (제품 정보)
 INSERT INTO pages (code, page, section_type, display_order, status, metadata)
 VALUES (
-  'product_intro',
+  'product_page',
   'products',
   'rich_text',
   0,

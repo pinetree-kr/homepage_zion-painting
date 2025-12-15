@@ -20,7 +20,7 @@ export async function getBusinessInfo(): Promise<BusinessInfo | null> {
     const { data, error } = await supabase
       .from('pages')
       .select('id, metadata, created_at, updated_at')
-      .eq('code', 'business_areas')
+      .eq('code', 'business_page')
       .eq('status', 'published')
       .maybeSingle() as {
         data: {
@@ -73,7 +73,7 @@ export async function saveBusinessInfo(businessInfo: Partial<BusinessInfo>): Pro
     const { data: existingPage } = await supabase
       .from('pages')
       .select('id, metadata')
-      .eq('code', 'business_areas')
+      .eq('code', 'business_page')
       .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
     const newMetadata = {
@@ -138,7 +138,7 @@ export async function saveBusinessInfo(businessInfo: Partial<BusinessInfo>): Pro
       const { error } = await supabase
         .from('pages')
         .insert({
-          code: 'business_areas',
+          code: 'business_page',
           page: 'business',
           section_type: 'rich_text',
           display_order: 0,
@@ -641,7 +641,7 @@ export async function getBusinessAreas(): Promise<BusinessArea[]> {
     const { data, error } = await supabase
       .from('pages')
       .select('metadata')
-      .eq('code', 'business_areas')
+      .eq('code', 'business_page')
       .eq('status', 'published')
       .maybeSingle() as {
         data: {

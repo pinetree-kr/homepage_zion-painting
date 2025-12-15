@@ -44,7 +44,7 @@ export async function getCompanyAboutInfo(): Promise<CompanyAbout | null> {
     const { data, error } = await supabase
       .from('pages')
       .select('metadata')
-      .eq('code', 'company_intro')
+      .eq('code', 'company_page')
       .eq('status', 'published')
       .maybeSingle() as {
         data: {
@@ -116,7 +116,7 @@ export async function saveCompanyAboutInfo(aboutInfo: CompanyAbout): Promise<{ s
     const { data: existingPage } = await supabase
       .from('pages')
       .select('id, metadata')
-      .eq('code', 'company_intro')
+      .eq('code', 'company_page')
       .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
     // metadata로 저장
@@ -152,7 +152,7 @@ export async function saveCompanyAboutInfo(aboutInfo: CompanyAbout): Promise<{ s
       const { error } = await supabase
         .from('pages')
         .insert({
-          code: 'company_intro',
+          code: 'company_page',
           page: 'about',
           section_type: 'rich_text',
           display_order: 0,
@@ -185,7 +185,7 @@ export async function saveCompanyAboutField(
     const { data: existingPage } = await supabase
       .from('pages')
       .select('id, metadata')
-      .eq('code', 'company_intro')
+      .eq('code', 'company_page')
       .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
     const newMetadata = {
@@ -213,7 +213,7 @@ export async function saveCompanyAboutField(
       const { error } = await supabase
         .from('pages')
         .insert({
-          code: 'company_intro',
+          code: 'company_page',
           page: 'about',
           section_type: 'rich_text',
           display_order: 0,
@@ -243,7 +243,7 @@ export async function getCompanyHistories(): Promise<CompanyHistory[]> {
     const { data, error } = await supabase
       .from('pages')
       .select('metadata')
-      .eq('code', 'company_intro')
+      .eq('code', 'company_page')
       .eq('status', 'published')
       .maybeSingle() as {
         data: {
@@ -295,7 +295,7 @@ export async function saveCompanyHistory(history: CompanyHistory[]): Promise<{ s
     const { data: existingPage } = await supabase
       .from('pages')
       .select('id, metadata')
-      .eq('code', 'company_intro')
+      .eq('code', 'company_page')
       .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
     // histories JSON 배열로 변환 (display_order 기준 정렬)
@@ -332,7 +332,7 @@ export async function saveCompanyHistory(history: CompanyHistory[]): Promise<{ s
       const { error } = await supabase
         .from('pages')
         .insert({
-          code: 'company_intro',
+          code: 'company_page',
           page: 'about',
           section_type: 'rich_text',
           display_order: 0,
@@ -361,7 +361,7 @@ export async function getCompanyOrganizationMembers(): Promise<OrganizationMembe
     const { data, error } = await supabase
       .from('pages')
       .select('metadata')
-      .eq('code', 'company_intro')
+      .eq('code', 'company_page')
       .eq('status', 'published')
       .maybeSingle() as {
         data: {
@@ -413,7 +413,7 @@ export async function saveCompanyOrganizationMembers(members: OrganizationMember
     const { data: existingPage } = await supabase
       .from('pages')
       .select('id, metadata')
-      .eq('code', 'company_intro')
+      .eq('code', 'company_page')
       .maybeSingle() as { data: { id: string; metadata: any } | null; error: any };
 
     // organization_members JSON 배열로 변환 (display_order 기준 정렬)
@@ -449,7 +449,7 @@ export async function saveCompanyOrganizationMembers(members: OrganizationMember
       const { error } = await supabase
         .from('pages')
         .insert({
-          code: 'company_intro',
+          code: 'company_page',
           page: 'about',
           section_type: 'rich_text',
           display_order: 0,

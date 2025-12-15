@@ -13,7 +13,7 @@ export async function fetchCompanyAboutInfo(): Promise<Partial<Page<CompanyAbout
     const { data, error } = await supabase
       .from('pages')
       .select('id, metadata->>introduction, metadata->>strengths, metadata->>vision, metadata->>values, metadata->>greetings, metadata->>mission')
-      .eq('code', 'company_intro')
+      .eq('code', 'company_page')
       .eq('status', 'published')
       .maybeSingle();
 
@@ -67,7 +67,7 @@ export async function fetchCompanyAboutField(
     const { data, error } = await supabase
       .from('pages')
       .select(selectClause)
-      .eq('code', 'company_intro')
+      .eq('code', 'company_page')
       .eq('status', 'published')
       .limit(1)
       .maybeSingle();

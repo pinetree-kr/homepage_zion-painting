@@ -24,11 +24,11 @@ export async function getPrologueManagementData(): Promise<PrologueManagementDat
   try {
     const supabase = await createServerClient();
 
-    // hero_default 페이지에서 기본 설정 로드
+    // landing_page_hero_section 페이지에서 기본 설정 로드
     const { data: heroDefaultData, error: heroDefaultError } = await supabase
       .from('pages')
       .select('id, default_title:metadata->>default_title, default_description:metadata->>default_description')
-      .eq('code', 'hero_default')
+      .eq('code', 'landing_page_hero_section')
       .eq('status', 'published')
       .maybeSingle();
 
@@ -36,17 +36,17 @@ export async function getPrologueManagementData(): Promise<PrologueManagementDat
     let defaultDescription = '';
 
     if (heroDefaultError && heroDefaultError.code !== 'PGRST116') {
-      console.error('hero_default 페이지 로드 오류:', heroDefaultError);
+      console.error('landing_page_hero_section 페이지 로드 오류:', heroDefaultError);
     } else if (heroDefaultData?.default_title && heroDefaultData?.default_description) {
       defaultTitle = heroDefaultData.default_title || '';
       defaultDescription = heroDefaultData.default_description || '';
     }
 
-    // hero_carousel_items 페이지에서 캐러셀 아이템 로드
+    // landing_page_hero_section_carousel_items 페이지에서 캐러셀 아이템 로드
     const { data: carouselData, error: carouselError } = await supabase
       .from('pages')
       .select('id, carousel_items:metadata->items')
-      .eq('code', 'hero_carousel_items')
+      .eq('code', 'landing_page_hero_section_carousel_items')
       .eq('status', 'published')
       .maybeSingle();
 

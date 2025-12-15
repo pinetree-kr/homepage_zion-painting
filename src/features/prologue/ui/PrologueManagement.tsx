@@ -551,11 +551,11 @@ export default function PrologueManagement({ data }: PrologueManagementProps) {
     try {
       setIsSavingSettings(true);
 
-      // hero_default 페이지 업데이트 또는 생성
+      // landing_page_hero_section 페이지 업데이트 또는 생성
       const { data: existingPage } = await supabaseClient
         .from('pages')
         .select('id, metadata')
-        .eq('code', 'hero_default')
+        .eq('code', 'landing_page_hero_section')
         .maybeSingle() as {
           data: {
             id: string;
@@ -589,7 +589,7 @@ export default function PrologueManagement({ data }: PrologueManagementProps) {
         const { error: insertError } = await supabaseClient
           .from('pages')
           .insert({
-            code: 'hero_default',
+            code: 'landing_page_hero_section',
             page: 'home',
             section_type: 'hero',
             display_order: 0,
@@ -656,11 +656,11 @@ export default function PrologueManagement({ data }: PrologueManagementProps) {
         display_order: index + 1,
       }));
 
-      // hero_carousel_items 페이지 업데이트 또는 생성
+      // landing_page_hero_section_carousel_items 페이지 업데이트 또는 생성
       const { data: existingPage } = await supabaseClient
         .from('pages')
         .select('id, metadata')
-        .eq('code', 'hero_carousel_items')
+        .eq('code', 'landing_page_hero_section_carousel_items')
         .maybeSingle() as {
           data: {
             id: string;
@@ -693,7 +693,7 @@ export default function PrologueManagement({ data }: PrologueManagementProps) {
         const { error: insertError } = await supabaseClient
           .from('pages')
           .insert({
-            code: 'hero_carousel_items',
+            code: 'landing_page_hero_section_carousel_items',
             page: 'home',
             section_type: 'carousel',
             display_order: 1,

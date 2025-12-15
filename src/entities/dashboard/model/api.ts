@@ -227,7 +227,7 @@ export async function getEmptyInfo(): Promise<EmptyInfo[]> {
     const { data: companyInfo, error: companyError } = await supabase
       .from('pages')
       .select('metadata->>introduction, metadata->>vision, metadata->>greetings, metadata->>mission, metadata->>strengths, metadata->>values, metadata->>histories, metadata->>organization_members')
-      .eq('code', 'company_intro')
+      .eq('code', 'company_page')
       .eq('status', 'published')
       .maybeSingle();
 
@@ -265,7 +265,7 @@ export async function getEmptyInfo(): Promise<EmptyInfo[]> {
     const { data: businessAreasInfo, error: businessAreasError } = await supabase
       .from('pages')
       .select('metadata->>areas', { count: 'exact', head: true })
-      .eq('code', 'business_areas')
+      .eq('code', 'business_page')
       .eq('status', 'published')
       .maybeSingle();
 
