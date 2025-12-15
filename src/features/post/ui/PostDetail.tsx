@@ -263,7 +263,7 @@ export default function PostDetail({
             {/* 본문 내용 */}
             <div className="pt-4">
               <div
-                className="prose max-w-none text-sm text-gray-700"
+                className="prose max-w-none text-sm text-gray-700 ck-content"
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
             </div>

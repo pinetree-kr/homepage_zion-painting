@@ -39,7 +39,7 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
         <div>
           {/* <h2 className="text-3xl font-bold text-gray-900 mb-6">회사 소개</h2> */}
           <div
-            className="prose prose-lg text-gray-700 leading-relaxed"
+            className="text-gray-700 ck-content"
             dangerouslySetInnerHTML={{ __html: introduction }}
           />
         </div>
@@ -50,7 +50,7 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 md:p-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">대표 인사말</h2>
           <div
-            className="prose prose-lg text-gray-700 leading-relaxed"
+            className="text-gray-700 ck-content"
             dangerouslySetInnerHTML={{ __html: greetings }}
           />
         </div>
@@ -63,7 +63,7 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
             <div className="bg-white border border-gray-200 rounded-2xl p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">기업 비전</h2>
               <div
-                className="prose prose-lg text-gray-700 leading-relaxed"
+                className="text-gray-700 ck-content"
                 dangerouslySetInnerHTML={{ __html: vision }}
               />
             </div>
@@ -72,7 +72,7 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
             <div className="bg-white border border-gray-200 rounded-2xl p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">기업 미션</h2>
               <div
-                className="prose prose-lg text-gray-700 leading-relaxed"
+                className="text-gray-700 ck-content"
                 dangerouslySetInnerHTML={{ __html: mission }}
               />
             </div>
@@ -98,7 +98,7 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
                     </div>
                   )}
                   <h3 className="text-xl font-bold text-gray-900 mb-2">{strength.title}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">{strength.description}</p>
+                  <p className="text-gray-600 text-sm ck-content">{strength.description}</p>
                 </div>
               );
             })}
@@ -117,7 +117,7 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
                   <div className="w-2 h-2 bg-[#2CA7DB] rounded-full mt-2 flex-shrink-0"></div>
                   <div>
                     <h4 className="text-xl font-bold text-gray-900 mb-2">{value.title}</h4>
-                    <p className="text-gray-600 leading-relaxed">{value.description}</p>
+                    <p className="text-gray-600 ck-content">{value.description}</p>
                   </div>
                 </div>
               ))}

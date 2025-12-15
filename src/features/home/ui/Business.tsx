@@ -71,7 +71,7 @@ export default function Business({ businessInfo, categories, achievements }: Bus
           <h2 className="text-4xl font-bold text-gray-900 mb-4">사업소개</h2>
           {introduction && (
             <div 
-              className="text-xl text-gray-600 max-w-3xl mx-auto"
+              className="text-xl text-gray-600 max-w-3xl mx-auto ck-content"
               dangerouslySetInnerHTML={{ __html: introduction }}
             />
           )}
@@ -214,7 +214,7 @@ export default function Business({ businessInfo, categories, achievements }: Bus
 
                     {/* 내용 */}
                     <div 
-                      className="text-gray-600 line-clamp-3"
+                      className="text-gray-600 line-clamp-3 ck-content"
                       dangerouslySetInnerHTML={{ __html: achievement.content }}
                     />
 

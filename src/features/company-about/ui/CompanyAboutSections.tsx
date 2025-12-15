@@ -76,7 +76,7 @@ export default function CompanyAboutSections({
               {/* 회사 소개글 */}
               <div>
                 <div
-                  className="prose prose-lg text-gray-700 leading-relaxed"
+                  className="text-gray-700 ck-content"
                   dangerouslySetInnerHTML={{ __html: introduction }}
                 />
               </div>
@@ -92,7 +92,7 @@ export default function CompanyAboutSections({
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 md:p-12 max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">대표 인사말</h2>
               <div
-                className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
+                className="max-w-none text-gray-700 ck-content"
                 dangerouslySetInnerHTML={{ __html: greetings }}
               />
             </div>
@@ -141,7 +141,7 @@ export default function CompanyAboutSections({
                                   </div>
                                 )}
                                 <div className="flex-1">
-                                  <p className="text-gray-700 leading-relaxed">{history.content}</p>
+                                  <p className="text-gray-700 ck-content">{history.content}</p>
                                   {history.type && (
                                     <span
                                       className={`inline-block mt-2 px-2 py-1 text-xs rounded ${
