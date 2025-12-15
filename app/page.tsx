@@ -5,14 +5,14 @@ import Business from '@/src/features/home/ui/Business';
 import Products from '@/src/features/home/ui/Products';
 import Contact from '@/src/features/home/ui/Contact';
 import Footer from '@/src/features/home/ui/Footer';
-import { getCompanyAboutInfo, getContactInfo } from '@/src/features/management-company/api/company-actions';
+import { getCompanyAboutInfo, getContactInfo, getMapApiKeys } from '@/src/features/management-company/api/company-actions';
 import { getBusinessInfo, getBusinessCategories, getBusinessAchievementsUsingAnonymous } from '@/src/features/management-business/api/business-actions';
 import { getProductsUsingAnonymous, getProductCategories } from '@/src/features/management-product/api/product-actions';
 import { getCarouselData } from '@/src/features/prologue/api/prologue-actions';
 import { getSiteSettings } from '@/src/features/post/api/post-actions';
 
 export default async function HomePage() {
-    const [aboutInfo, businessInfo, categories, achievements, carouselData, products, productCategories, contactInfo, siteSettings] = await Promise.all([
+    const [aboutInfo, businessInfo, categories, achievements, carouselData, products, productCategories, contactInfo, siteSettings, mapApiKeys] = await Promise.all([
         getCompanyAboutInfo(),
         getBusinessInfo(),
         getBusinessCategories(),
@@ -22,6 +22,7 @@ export default async function HomePage() {
         getProductCategories(),
         getContactInfo(),
         getSiteSettings(),
+        getMapApiKeys(),
     ]);
 
     return (
@@ -41,7 +42,7 @@ export default async function HomePage() {
                 achievements={achievements}
             />
             <Products products={products} categories={productCategories} />
-            <Contact contactInfo={contactInfo} />
+            <Contact contactInfo={contactInfo} mapApiKeys={mapApiKeys} />
             <Footer contactInfo={contactInfo} defaultBoards={siteSettings?.default_boards || null} />
         </main>
     );

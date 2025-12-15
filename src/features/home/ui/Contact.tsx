@@ -3,12 +3,17 @@
 import { useState } from 'react';
 import { Container, Card } from '@/src/shared/ui';
 import type { ContactInfo } from '@/src/entities/contact/model/types';
+import MapDisplay from '@/src/features/contact/ui/MapDisplay';
 
 interface ContactProps {
   contactInfo?: ContactInfo | null;
+  mapApiKeys?: {
+    kakao: string | null;
+    naver: { clientId: string | null; clientSecret: string | null };
+  };
 }
 
-export default function Contact({ contactInfo }: ContactProps) {
+export default function Contact({ contactInfo, mapApiKeys }: ContactProps) {
   const [message, setMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,7 +35,7 @@ export default function Contact({ contactInfo }: ContactProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 gap-12">
             {/* 연락처 정보 */}
             <div className="flex flex-col gap-8">
               <h3 className="text-2xl font-normal text-[#101828]">연락처 정보</h3>
@@ -105,30 +110,38 @@ export default function Contact({ contactInfo }: ContactProps) {
               </div>
 
               {/* 지도 */}
-              {contactInfo?.map_url ? (
-                <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-lg mt-4">
-                  <iframe
-                    src={contactInfo.map_url}
-                    width="100%"
-                    height="256"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
+              <div className="mt-4">
+                {mapApiKeys ? (
+                  <MapDisplay 
+                    maps={contactInfo?.maps || null} 
+                    address={contactInfo?.address || null}
+                    mapApiKeys={mapApiKeys}
                   />
-                </div>
-              ) : (
-                <div className="bg-[#E5E7EB] rounded-2xl h-64 flex items-center justify-center mt-4">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#99A1AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="#99A1AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              )}
+                ) : contactInfo?.map_url ? (
+                  <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-lg">
+                    <iframe
+                      src={contactInfo.map_url}
+                      width="100%"
+                      height="256"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                ) : (
+                  <div className="bg-[#E5E7EB] rounded-2xl h-64 flex items-center justify-center">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#99A1AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="#99A1AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* 빠른 문의 폼 */}
-            <Card className="p-8 bg-[#F9FAFB]">
+            {/* <Card className="p-8 bg-[#F9FAFB]">
               <h3 className="text-2xl font-normal text-[#101828] mb-6">빠른 문의</h3>
 
               <div className="flex flex-col items-center justify-center h-64 space-y-4">
@@ -143,7 +156,7 @@ export default function Contact({ contactInfo }: ContactProps) {
                   로그인하기
                 </button>
               </div>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </Container>
