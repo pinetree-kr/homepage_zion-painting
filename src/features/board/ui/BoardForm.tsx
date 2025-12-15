@@ -212,7 +212,7 @@ export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps)
             const result = await deleteBoard(board.id);
             if (result.success) {
                 toast.success('게시판이 삭제되었습니다.');
-                router.push('/admin/services/boards/list');
+                router.push('/admin/system/boards/list');
                 router.refresh();
             } else {
                 toast.error(result.error || '게시판 삭제에 실패했습니다.');
@@ -230,7 +230,7 @@ export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps)
             <div className="flex items-center">
                 <Button
                     variant="outline"
-                    onClick={() => router.push('/admin/services/boards/list')}
+                    onClick={() => router.push('/admin/system/boards/list')}
                     className="gap-2"
                 >
                     <ArrowLeft className="h-4 w-4" />
@@ -518,7 +518,7 @@ export default function BoardForm({ board, boardPolicies = [] }: BoardFormProps)
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => router.push('/admin/services/boards/list')}
+                            onClick={() => router.push('/admin/system/boards/list')}
                             className="h-[42px]"
                         >
                             취소

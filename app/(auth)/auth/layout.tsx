@@ -64,7 +64,8 @@ export default async function AuthLayout({
             </div>
             <Header />
             {/* <div className="min-h-screen bg-white flex items-center justify-center p-8 w-full lg:max-w-1/2"></div> */}
-            <div className="min-h-screen bg-white flex md:items-center justify-center pt-24 md:pt-8 p-6 md:p-8 w-full relative">
+            {/* <div className="min-h-screen bg-white flex items-center justify-center pt-24 md:pt-8 p-6 md:p-8 w-full relative"> */}
+            <div className="min-h-screen bg-white flex items-center justify-center p-6 md:p-8 w-full relative">
                 {/* Right Side - Form */}
                 {children}
             </div>

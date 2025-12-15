@@ -2,6 +2,7 @@ import Posts from '@/src/features/post/ui/Posts';
 import { getBoardInfoUsingAdminById } from '@/src/features/board/api/board-actions';
 import { searchPostsByBoardIdUsingAdmin } from '@/src/features/post/api/post-actions';
 import { notFound } from 'next/navigation';
+import { getUserRole } from '@/src/entities/user/model/checkPermission';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -35,6 +36,9 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
     return notFound();
   }
 
+  const userRoleInfo = await getUserRole();
+  const isAdmin = userRoleInfo?.role === 'admin';
+
   const result = await searchPostsByBoardIdUsingAdmin(board_id, searchTerm, page, ITEMS_PER_PAGE, sortColumn, sortDirection);
 
   return (
@@ -46,6 +50,7 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
       totalPages={result.totalPages}
       currentPage={page}
       searchTerm={searchTerm}
+      isAdmin={isAdmin}
     />
   );
 }

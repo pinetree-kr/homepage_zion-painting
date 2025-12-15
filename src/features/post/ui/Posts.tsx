@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Plus, Calendar, User as UserIcon, Eye, MessageSquare, ThumbsUp, Pin, Image as ImageIcon } from 'lucide-react';
+import { Plus, Calendar, User as UserIcon, Eye, MessageSquare, ThumbsUp, Pin, Image as ImageIcon, Settings } from 'lucide-react';
 import { Button } from '@/src/shared/ui';
 import { Card } from '@/src/shared/ui';
 import { DataTable, DataTableColumn, DataTableSearchBar, DataTablePagination } from '@/src/shared/ui';
@@ -18,6 +18,7 @@ interface PostsProps {
   totalPages: number;
   currentPage: number;
   searchTerm: string;
+  isAdmin?: boolean;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -29,13 +30,19 @@ export default function Posts({
   totalItems,
   totalPages,
   currentPage,
-  searchTerm
+  searchTerm,
+  isAdmin = false
 }: PostsProps) {
   const router = useRouter();
 
   const handleAdd = () => {
     const newPath = `/admin/boards/${boardId}/new`;
     router.push(newPath);
+  };
+
+  const handleEditBoard = () => {
+    const editPath = `/admin/system/boards/${boardId}/edit`;
+    router.push(editPath);
   };
 
   const postColumns: DataTableColumn<Post>[] = [
@@ -129,7 +136,20 @@ export default function Posts({
     <div className="space-y-6">
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-gray-900 text-lg font-semibold">{boardName}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-gray-900 text-lg font-semibold">{boardName}</h3>
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleEditBoard}
+                className="h-8 w-8"
+                title="게시판 설정"
+              >
+                <Settings className="h-4 w-4 text-gray-600 hover:text-gray-900" />
+              </Button>
+            )}
+          </div>
           <Button onClick={handleAdd} className="gap-2">
             <Plus className="h-4 w-4" />
             작성
