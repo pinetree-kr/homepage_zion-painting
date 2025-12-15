@@ -267,9 +267,9 @@ export default function SignInForm() {
                 기억하기
               </label>
             </div>
-            <a href="#" className="text-sm text-teal-600 hover:text-teal-700">
+            <Link href="/auth/forgot-password" className="text-sm text-teal-600 hover:text-teal-700">
               비밀번호 찾기
-            </a>
+            </Link>
           </div>
 
           <button

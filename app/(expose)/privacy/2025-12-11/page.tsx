@@ -1,11 +1,14 @@
-"use client"
-
-import { useSearchParams } from 'next/navigation';
 import { cn } from '@/src/shared/ui';
 
-export default function PrivacyPage() {
-    const searchParams = useSearchParams();
-    const wrapped = searchParams.get('wrapped') !== 'false';
+interface PrivacyPageProps {
+    searchParams: Promise<{
+        wrapped?: string;
+    }>;
+}
+
+export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
+    const { wrapped: wrappedParam = 'true' } = await searchParams;
+    const wrapped = wrappedParam !== 'false';
 
     return (
         <div className={cn("min-h-screen py-12 px-4 sm:px-6 lg:px-8", wrapped ? "bg-gray-50" : "bg-white")}>
@@ -189,4 +192,6 @@ export default function PrivacyPage() {
         </div>
     );
 }
+
+
 

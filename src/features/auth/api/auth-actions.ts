@@ -934,3 +934,99 @@ export async function getLinkedAccounts(
     };
   }
 }
+
+/**
+ * 비밀번호 찾기: 이메일로 계정 확인 및 프로바이더 확인 후 비밀번호 리셋 이메일 발송
+ * @param email 사용자 이메일
+ * @param redirectTo 비밀번호 리셋 후 리다이렉트 URL
+ * @returns 성공 여부 및 에러 메시지
+ */
+export async function requestPasswordReset(
+  email: string,
+  redirectTo: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const supabase = await createSecretClient(env.SUPABASE_SECRET_KEY);
+
+    // 1. 이메일로 계정 존재 확인
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .eq('email', email)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('프로필 조회 오류:', profileError);
+      return {
+        success: false,
+        error: '계정 확인 중 오류가 발생했습니다.'
+      };
+    }
+
+    if (!profile) {
+      // 보안을 위해 계정이 없어도 성공 메시지 반환 (이메일 열거 방지)
+      return { success: true };
+    }
+
+    // 2. 프로바이더가 이메일인지 확인
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(profile.id);
+
+    if (authError) {
+      console.error('사용자 조회 오류:', authError);
+      return {
+        success: false,
+        error: '계정 확인 중 오류가 발생했습니다.'
+      };
+    }
+
+    if (!authUser?.user) {
+      return {
+        success: false,
+        error: '계정을 찾을 수 없습니다.'
+      };
+    }
+
+    // identities에서 이메일 프로바이더 확인
+    const identities = authUser.user.identities || [];
+    const hasEmailProvider = identities.some(
+      (identity: any) => identity.provider === 'email'
+    );
+
+    if (!hasEmailProvider) {
+      // 구글/카카오 등으로 가입한 경우
+      return {
+        success: false,
+        error: '이 이메일로 가입한 계정은 소셜 로그인(구글/카카오)을 사용합니다. 해당 서비스로 로그인해주세요.'
+      };
+    }
+
+    // 3. 비밀번호 리셋 이메일 발송
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${redirectTo}?type=recovery`,
+    });
+
+    if (error) {
+      return {
+        success: false,
+        error: '비밀번호 재설정 이메일 발송에 실패했습니다: ' + error.message
+      };
+    }
+
+    if (!data) {
+      return {
+        success: false,
+        error: '비밀번호 재설정 링크 생성에 실패했습니다.'
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('비밀번호 찾기 중 오류 발생:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '비밀번호 찾기 중 오류가 발생했습니다.'
+    };
+  }
+}
