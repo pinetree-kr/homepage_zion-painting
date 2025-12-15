@@ -22,7 +22,10 @@ export default async function AboutPage() {
                 title="회사소개"
                 description={aboutInfo?.introduction ? undefined : "도장설비 전문기업으로서 최고 품질의 제품과 서비스로 고객만족을 실현합니다"}
             />
-            <CompanyAboutNavigation />
+            <CompanyAboutNavigation 
+                hasIntroduction={!!aboutInfo?.introduction} 
+                hasGreetings={!!aboutInfo?.greetings} 
+            />
             <CompanyAboutSections
                 aboutInfo={aboutInfo}
                 histories={histories}

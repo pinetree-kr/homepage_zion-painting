@@ -15,7 +15,6 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
   const mission = aboutInfo?.mission || '';
   const strengths = aboutInfo?.strengths || [];
   const values = aboutInfo?.values || [];
-  console.log({ aboutInfo })
   // Lucide 아이콘 동적 로드
   const getIconComponent = (iconName: string) => {
     if (!iconName || !(iconName in LucideIcons)) {
@@ -40,7 +39,7 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
         <div>
           {/* <h2 className="text-3xl font-bold text-gray-900 mb-6">회사 소개</h2> */}
           <div
-            className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
+            className="prose prose-lg text-gray-700 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: introduction }}
           />
         </div>
@@ -51,7 +50,7 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 md:p-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">대표 인사말</h2>
           <div
-            className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
+            className="prose prose-lg text-gray-700 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: greetings }}
           />
         </div>
@@ -64,7 +63,7 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
             <div className="bg-white border border-gray-200 rounded-2xl p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">기업 비전</h2>
               <div
-                className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
+                className="prose prose-lg text-gray-700 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: vision }}
               />
             </div>
@@ -73,7 +72,7 @@ export default function CompanyOverviewTab({ aboutInfo }: CompanyOverviewTabProp
             <div className="bg-white border border-gray-200 rounded-2xl p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">기업 미션</h2>
               <div
-                className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
+                className="prose prose-lg text-gray-700 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: mission }}
               />
             </div>
